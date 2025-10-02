@@ -147,38 +147,45 @@ export default function BarcodeScanner({
       
       let selectedDeviceId: string;
       
+      let cameraIndexToUse: number;
+      
       if (cameraIndex !== undefined && videoInputDevices[cameraIndex]) {
-        // Use specified camera
-        selectedDeviceId = videoInputDevices[cameraIndex].deviceId;
-        setCurrentCameraIndex(cameraIndex);
+        // Use specified camera (from switch button)
+        cameraIndexToUse = cameraIndex;
         console.log('Using selected camera:', videoInputDevices[cameraIndex].label);
+      } else if (currentCameraIndex >= 0 && currentCameraIndex < videoInputDevices.length) {
+        // Reuse previously selected camera
+        cameraIndexToUse = currentCameraIndex;
+        console.log('Reusing previous camera:', videoInputDevices[currentCameraIndex].label);
       } else {
-        // Try to use previously selected camera index
-        const savedIndex = currentCameraIndex;
-        if (savedIndex >= 0 && savedIndex < videoInputDevices.length) {
-          selectedDeviceId = videoInputDevices[savedIndex].deviceId;
-          console.log('Reusing previous camera:', videoInputDevices[savedIndex].label);
+        // First time: prefer back/rear/environment camera
+        // Try multiple detection methods for better reliability
+        const backCameraIndex = videoInputDevices.findIndex((device: MediaDeviceInfo) => {
+          const label = device.label.toLowerCase();
+          return label.includes('back') || 
+                 label.includes('rear') ||
+                 label.includes('rück') || // German
+                 label.includes('trasera') || // Spanish
+                 label.includes('arrière') || // French
+                 label.includes('environment');
+        });
+        
+        if (backCameraIndex !== -1) {
+          cameraIndexToUse = backCameraIndex;
+          console.log('Found back camera:', videoInputDevices[backCameraIndex].label);
+        } else if (videoInputDevices.length > 1) {
+          // On mobile, back camera is usually the last one
+          cameraIndexToUse = videoInputDevices.length - 1;
+          console.log('Using last camera (likely back):', videoInputDevices[cameraIndexToUse].label);
         } else {
-          // First time: prefer back/rear/environment camera
-          const backCameraIndex = videoInputDevices.findIndex((device: MediaDeviceInfo) => 
-            device.label.toLowerCase().includes('back') || 
-            device.label.toLowerCase().includes('rear') ||
-            device.label.toLowerCase().includes('environment')
-          );
-          
-          if (backCameraIndex !== -1) {
-            selectedDeviceId = videoInputDevices[backCameraIndex].deviceId;
-            setCurrentCameraIndex(backCameraIndex);
-            console.log('Using back camera:', videoInputDevices[backCameraIndex].label);
-          } else {
-            // If no back camera, use last camera (often back on mobile)
-            const lastIndex = videoInputDevices.length - 1;
-            selectedDeviceId = videoInputDevices[lastIndex].deviceId;
-            setCurrentCameraIndex(lastIndex);
-            console.log('Using camera:', videoInputDevices[lastIndex].label);
-          }
+          // Only one camera available
+          cameraIndexToUse = 0;
+          console.log('Using only available camera:', videoInputDevices[0].label);
         }
       }
+      
+      setCurrentCameraIndex(cameraIndexToUse);
+      selectedDeviceId = videoInputDevices[cameraIndexToUse].deviceId;
       
       // Set high resolution video constraints for better barcode detection
       const constraints = {
@@ -240,18 +247,25 @@ export default function BarcodeScanner({
   };
 
   const switchCamera = async () => {
-    if (availableCameras.length <= 1) return;
+    if (availableCameras.length <= 1) {
+      console.log('Only one camera available, cannot switch');
+      return;
+    }
     
-    // Stop current camera
+    console.log('Switching camera from index:', currentCameraIndex);
+    
+    // Calculate next camera index
+    const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
+    console.log('Switching to camera index:', nextIndex);
+    
+    // Stop current camera and wait for cleanup
     stopCamera();
     
-    // Switch to next camera
-    const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
+    // Wait a bit for proper cleanup, then start new camera
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Small delay to ensure camera is released
-    setTimeout(() => {
-      startCamera(nextIndex);
-    }, 300);
+    // Start camera with new index
+    await startCamera(nextIndex);
   };
 
   const stopCamera = () => {
