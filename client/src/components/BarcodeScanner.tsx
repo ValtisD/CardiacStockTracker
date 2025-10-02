@@ -103,12 +103,28 @@ export default function BarcodeScanner({
     try {
       console.log('Starting camera for barcode scanning...');
       
-      setTimeout(() => {
-        console.log('Camera initialized (simulated)');
-      }, 1000);
+      // Request camera access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Use back camera on mobile
+      });
+      
+      console.log('Camera access granted');
+      
+      // Note: In a real implementation, you would need to:
+      // 1. Create a video element to display the camera feed
+      // 2. Use a barcode scanning library (like @zxing/library or quagga2)
+      // 3. Process video frames to detect barcodes
+      
+      // For now, showing manual entry is the most reliable option
+      setError('Camera started. Please use manual entry for barcode input.');
+      
+      // Stop the stream after showing the message
+      stream.getTracks().forEach(track => track.stop());
+      setIsScanning(false);
       
     } catch (err) {
-      setError('Unable to access camera. Please check permissions.');
+      console.error('Camera access error:', err);
+      setError('Unable to access camera. Please use manual entry or check camera permissions in your browser settings.');
       setIsScanning(false);
     }
   };
@@ -119,12 +135,8 @@ export default function BarcodeScanner({
   };
 
   const simulateScan = () => {
-    const randomCodes = ['123456789012', '987654321098', '456789012345'];
-    const randomBarcode = randomCodes[Math.floor(Math.random() * randomCodes.length)];
-    
-    setTimeout(() => {
-      handleBarcodeDetected(randomBarcode);
-    }, 2000);
+    // Removed simulation - users should use manual entry
+    setError('Please use manual entry to input barcode numbers.');
   };
 
   const handleBarcodeDetected = async (barcode: string) => {
