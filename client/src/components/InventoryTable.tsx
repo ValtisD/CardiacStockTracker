@@ -65,6 +65,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
       toast({
         title: "Transfer successful",
         description: "Stock has been transferred successfully.",
