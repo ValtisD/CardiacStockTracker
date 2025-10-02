@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera, Scan, X, CheckCircle, Upload, Loader2 } from "lucide-react";
+import { Camera, Scan, X, CheckCircle, Upload, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,8 @@ export default function BarcodeScanner({
   const [showInventoryUpdate, setShowInventoryUpdate] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [quantityAdjustment, setQuantityAdjustment] = useState<string>('');
+  const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  const [currentCameraIndex, setCurrentCameraIndex] = useState<number>(-1);
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const isProcessingRef = useRef<boolean>(false);
@@ -114,7 +116,7 @@ export default function BarcodeScanner({
     };
   }, []);
 
-  const startCamera = async () => {
+  const startCamera = async (cameraIndex?: number) => {
     setIsScanning(true);
     setError('');
     
@@ -135,14 +137,44 @@ export default function BarcodeScanner({
         return;
       }
       
-      // Try to find back camera, otherwise use first available
-      const backCamera = videoInputDevices.find((device: MediaDeviceInfo) => 
-        device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('rear')
-      );
-      const selectedDeviceId = backCamera?.deviceId || videoInputDevices[0].deviceId;
+      setAvailableCameras(videoInputDevices);
       
-      // Start continuous decoding
+      let selectedDeviceId: string;
+      
+      if (cameraIndex !== undefined && videoInputDevices[cameraIndex]) {
+        // Use specified camera
+        selectedDeviceId = videoInputDevices[cameraIndex].deviceId;
+        setCurrentCameraIndex(cameraIndex);
+        console.log('Using selected camera:', videoInputDevices[cameraIndex].label);
+      } else {
+        // Try to use previously selected camera index
+        const savedIndex = currentCameraIndex;
+        if (savedIndex >= 0 && savedIndex < videoInputDevices.length) {
+          selectedDeviceId = videoInputDevices[savedIndex].deviceId;
+          console.log('Reusing previous camera:', videoInputDevices[savedIndex].label);
+        } else {
+          // First time: prefer back/rear/environment camera
+          const backCameraIndex = videoInputDevices.findIndex((device: MediaDeviceInfo) => 
+            device.label.toLowerCase().includes('back') || 
+            device.label.toLowerCase().includes('rear') ||
+            device.label.toLowerCase().includes('environment')
+          );
+          
+          if (backCameraIndex !== -1) {
+            selectedDeviceId = videoInputDevices[backCameraIndex].deviceId;
+            setCurrentCameraIndex(backCameraIndex);
+            console.log('Using back camera:', videoInputDevices[backCameraIndex].label);
+          } else {
+            // If no back camera, use last camera (often back on mobile)
+            const lastIndex = videoInputDevices.length - 1;
+            selectedDeviceId = videoInputDevices[lastIndex].deviceId;
+            setCurrentCameraIndex(lastIndex);
+            console.log('Using camera:', videoInputDevices[lastIndex].label);
+          }
+        }
+      }
+      
+      // Start continuous decoding with optimized video constraints
       await codeReaderRef.current.decodeFromVideoDevice(
         selectedDeviceId,
         videoRef.current!,
@@ -152,9 +184,21 @@ export default function BarcodeScanner({
             console.log('Barcode detected:', barcode);
             handleBarcodeDetected(barcode);
           }
-          // Ignore errors (they happen continuously when no barcode is visible)
         }
       );
+      
+      // Set video to higher resolution for better detection
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          await videoTrack.applyConstraints({
+            advanced: [{ zoom: 2.0 }] as any
+          }).catch(() => {
+            // Zoom not supported, ignore
+          });
+        }
+      }
       
       console.log('Camera started and scanning for barcodes...');
       
@@ -163,6 +207,21 @@ export default function BarcodeScanner({
       setError('Unable to access camera. Please use manual entry or check camera permissions in your browser settings.');
       setIsScanning(false);
     }
+  };
+
+  const switchCamera = async () => {
+    if (availableCameras.length <= 1) return;
+    
+    // Stop current camera
+    stopCamera();
+    
+    // Switch to next camera
+    const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
+    
+    // Small delay to ensure camera is released
+    setTimeout(() => {
+      startCamera(nextIndex);
+    }, 300);
   };
 
   const stopCamera = () => {
@@ -251,6 +310,7 @@ export default function BarcodeScanner({
     setSelectedLocation('');
     setQuantityAdjustment('');
     isProcessingRef.current = false;
+    // Keep currentCameraIndex and availableCameras to remember user's camera choice
   };
 
   const handleClose = () => {
@@ -476,7 +536,7 @@ export default function BarcodeScanner({
           <div className="flex gap-2">
             {!isScanning && !scannedCode && (
               <Button 
-                onClick={startCamera} 
+                onClick={() => startCamera()} 
                 className="flex-1"
                 data-testid="button-start-camera"
               >
@@ -486,15 +546,28 @@ export default function BarcodeScanner({
             )}
             
             {isScanning && (
-              <Button 
-                onClick={stopCamera} 
-                variant="outline" 
-                className="flex-1"
-                data-testid="button-stop-camera"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Stop Scanning
-              </Button>
+              <>
+                {availableCameras.length > 1 && (
+                  <Button 
+                    onClick={switchCamera} 
+                    variant="outline"
+                    size="icon"
+                    data-testid="button-switch-camera"
+                    title="Switch Camera"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button 
+                  onClick={stopCamera} 
+                  variant="outline" 
+                  className="flex-1"
+                  data-testid="button-stop-camera"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Stop Scanning
+                </Button>
+              </>
             )}
             
             {scannedCode && (
