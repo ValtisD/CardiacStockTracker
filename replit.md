@@ -178,7 +178,11 @@ Currently not implemented - the application appears to be designed for single-us
 ### Fonts
 - **Google Fonts** - Inter, Architects Daughter, DM Sans, Fira Code, Geist Mono loaded via CDN
 
-### Optional Future Integrations
-The codebase includes barcode scanning UI components that could integrate with:
-- Camera-based barcode scanning libraries (not currently implemented)
-- Barcode scanner hardware via USB/Bluetooth APIs
+### Barcode Scanning Implementation
+The application includes real-time camera-based barcode scanning using @zxing/library:
+- **Camera Selection**: Automatically prefers back/rear/environment cameras on first use
+- **Camera Persistence**: Remembers user's camera choice across scan sessions (within component lifecycle)
+- **Camera Switching**: Button to cycle through available cameras when multiple devices detected
+- **Optimized Detection**: Uses default ZXing settings for fast barcode detection
+- **Camera Index Sentinel**: Initializes to -1 to force back-camera selection on first use
+- Future enhancement: Could add localStorage persistence for camera preference across page reloads
