@@ -1,9 +1,14 @@
-import { useState } from "react";
-import { Building2, Phone, MapPin, Plus, Edit, Search, User } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Building2, Phone, MapPin, Plus, Edit, Search, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +17,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
   Table,
   TableBody,
   TableCell,
@@ -19,99 +42,136 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import type { Hospital, InsertHospital, ImplantProcedure } from "@shared/schema";
+import { insertHospitalSchema } from "@shared/schema";
 
-interface Hospital {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  primaryPhysician?: string;
-  contactPhone?: string;
-  notes?: string;
+type HospitalFormData = InsertHospital;
+
+interface HospitalWithProcedures extends Hospital {
   recentProcedures: number;
 }
 
-interface HospitalManagerProps {
-  hospitals?: Hospital[];
-  onAddHospital?: (hospital: Omit<Hospital, 'id' | 'recentProcedures'>) => void;
-  onEditHospital?: (id: string, hospital: Partial<Hospital>) => void;
-}
-
-// Todo: remove mock functionality
-const mockHospitals: Hospital[] = [
-  {
-    id: '1',
-    name: 'St. Mary\'s Medical Center',
-    address: '123 Healthcare Blvd',
-    city: 'Springfield',
-    state: 'IL',
-    zipCode: '62701',
-    primaryPhysician: 'Dr. Sarah Johnson',
-    contactPhone: '(555) 123-4567',
-    notes: 'Large cardiac unit, frequent implant procedures',
-    recentProcedures: 8
-  },
-  {
-    id: '2',
-    name: 'Regional Heart Institute',
-    address: '456 Cardiac Way',
-    city: 'Chicago',
-    state: 'IL',
-    zipCode: '60601',
-    primaryPhysician: 'Dr. Michael Chen',
-    contactPhone: '(555) 987-6543',
-    notes: 'Specialized cardiac facility',
-    recentProcedures: 12
-  },
-  {
-    id: '3',
-    name: 'Community General Hospital',
-    address: '789 Main Street',
-    city: 'Peoria',
-    state: 'IL',
-    zipCode: '61602',
-    primaryPhysician: 'Dr. Emily Davis',
-    contactPhone: '(555) 456-7890',
-    notes: 'Small but active cardiac program',
-    recentProcedures: 3
-  }
-];
-
-export default function HospitalManager({ hospitals = mockHospitals, onAddHospital, onEditHospital }: HospitalManagerProps) {
+export default function HospitalManager() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
+  const [deletingHospitalId, setDeletingHospitalId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredHospitals = hospitals.filter(hospital =>
+  // Fetch hospitals
+  const { data: hospitals, isLoading: hospitalsLoading } = useQuery<Hospital[]>({
+    queryKey: ["/api/hospitals"],
+  });
+
+  // Fetch procedures to calculate recent procedures count
+  const { data: procedures } = useQuery<ImplantProcedure[]>({
+    queryKey: ["/api/implant-procedures"],
+  });
+
+  // Calculate recent procedures for each hospital
+  const hospitalsWithProcedures: HospitalWithProcedures[] = useMemo(() => {
+    if (!hospitals) return [];
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return hospitals.map(hospital => {
+      const recentProcedures = procedures?.filter(proc => {
+        const procDate = new Date(proc.implantDate);
+        return proc.hospitalId === hospital.id && procDate >= thirtyDaysAgo;
+      }).length || 0;
+      
+      return {
+        ...hospital,
+        recentProcedures,
+      };
+    });
+  }, [hospitals, procedures]);
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: HospitalFormData) => {
+      const res = await apiRequest("POST", "/api/hospitals", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hospitals"] });
+      toast({
+        title: "Success",
+        description: "Hospital added successfully",
+      });
+      setIsAddDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add hospital",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<HospitalFormData> }) => {
+      const res = await apiRequest("PATCH", `/api/hospitals/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hospitals"] });
+      toast({
+        title: "Success",
+        description: "Hospital updated successfully",
+      });
+      setEditingHospital(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update hospital",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/hospitals/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hospitals"] });
+      toast({
+        title: "Success",
+        description: "Hospital deleted successfully",
+      });
+      setDeletingHospitalId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete hospital",
+        variant: "destructive",
+      });
+      setDeletingHospitalId(null);
+    },
+  });
+
+  const filteredHospitals = hospitalsWithProcedures.filter(hospital =>
     hospital.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     hospital.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
     hospital.primaryPhysician?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddHospital = () => {
-    // Todo: remove mock functionality
-    const newHospital = {
-      name: 'New Hospital',
-      address: '123 New Street',
-      city: 'New City',
-      state: 'IL',
-      zipCode: '12345',
-      primaryPhysician: 'Dr. New Doctor',
-      contactPhone: '(555) 000-0000',
-      notes: 'Newly added hospital'
-    };
-    console.log('Adding new hospital:', newHospital);
-    onAddHospital?.(newHospital);
-    setIsAddDialogOpen(false);
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
-  const handleEditHospital = (hospital: Hospital) => {
-    console.log('Editing hospital:', hospital);
-    setSelectedHospital(hospital);
-    onEditHospital?.(hospital.id, hospital);
-  };
+  if (hospitalsLoading) {
+    return <HospitalManagerSkeleton />;
+  }
 
   return (
     <div className="space-y-4">
@@ -130,23 +190,15 @@ export default function HospitalManager({ hospitals = mockHospitals, onAddHospit
                   Add Hospital
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Add New Hospital</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Hospital form would be here with all fields for adding a new facility.
-                  </p>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddHospital} data-testid="button-save-hospital">
-                      Add Hospital
-                    </Button>
-                  </div>
-                </div>
+                <HospitalForm
+                  onSubmit={(data) => createMutation.mutate(data)}
+                  onCancel={() => setIsAddDialogOpen(false)}
+                  isSubmitting={createMutation.isPending}
+                />
               </DialogContent>
             </Dialog>
           </div>
@@ -221,14 +273,24 @@ export default function HospitalManager({ hospitals = mockHospitals, onAddHospit
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleEditHospital(hospital)}
-                        data-testid={`button-edit-hospital-${hospital.id}`}
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setEditingHospital(hospital)}
+                          data-testid={`button-edit-hospital-${hospital.id}`}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setDeletingHospitalId(hospital.id)}
+                          data-testid={`button-delete-hospital-${hospital.id}`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -246,14 +308,14 @@ export default function HospitalManager({ hospitals = mockHospitals, onAddHospit
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
             <Card>
               <CardContent className="p-4">
-                <div className="text-2xl font-bold">{hospitals.length}</div>
+                <div className="text-2xl font-bold">{hospitalsWithProcedures.length}</div>
                 <p className="text-xs text-muted-foreground">Total Hospitals</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
-                  {hospitals.reduce((sum, h) => sum + h.recentProcedures, 0)}
+                  {hospitalsWithProcedures.reduce((sum, h) => sum + h.recentProcedures, 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">Total Procedures (30 days)</p>
               </CardContent>
@@ -261,11 +323,276 @@ export default function HospitalManager({ hospitals = mockHospitals, onAddHospit
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
-                  {hospitals.filter(h => h.recentProcedures > 0).length}
+                  {hospitalsWithProcedures.filter(h => h.recentProcedures > 0).length}
                 </div>
                 <p className="text-xs text-muted-foreground">Active Facilities</p>
               </CardContent>
             </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      {editingHospital && (
+        <Dialog open={!!editingHospital} onOpenChange={() => setEditingHospital(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Hospital</DialogTitle>
+            </DialogHeader>
+            <HospitalForm
+              initialData={editingHospital}
+              onSubmit={(data) => updateMutation.mutate({ id: editingHospital.id, data })}
+              onCancel={() => setEditingHospital(null)}
+              isSubmitting={updateMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingHospitalId} onOpenChange={() => setDeletingHospitalId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this hospital. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingHospitalId && handleDelete(deletingHospitalId)}
+              data-testid="button-confirm-delete"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+interface HospitalFormProps {
+  initialData?: Hospital;
+  onSubmit: (data: HospitalFormData) => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+}
+
+function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: HospitalFormProps) {
+  const form = useForm<HospitalFormData>({
+    resolver: zodResolver(insertHospitalSchema),
+    defaultValues: {
+      name: initialData?.name || "",
+      address: initialData?.address || "",
+      city: initialData?.city || "",
+      state: initialData?.state || "",
+      zipCode: initialData?.zipCode || "",
+      primaryPhysician: initialData?.primaryPhysician || undefined,
+      contactPhone: initialData?.contactPhone || undefined,
+      notes: initialData?.notes || undefined,
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hospital Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., St. Mary's Medical Center"
+                  {...field}
+                  data-testid="input-hospital-name"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., 123 Healthcare Blvd"
+                  {...field}
+                  data-testid="input-hospital-address"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Springfield"
+                    {...field}
+                    data-testid="input-hospital-city"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="state"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>State</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., IL"
+                    {...field}
+                    data-testid="input-hospital-state"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="zipCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Zip Code</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., 62701"
+                    {...field}
+                    data-testid="input-hospital-zipcode"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="primaryPhysician"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Primary Physician (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Dr. Sarah Johnson"
+                    {...field}
+                    value={field.value || ""}
+                    data-testid="input-hospital-physician"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="contactPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contact Phone (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., (555) 123-4567"
+                    {...field}
+                    value={field.value || ""}
+                    data-testid="input-hospital-phone"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes (Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Additional notes about this facility..."
+                  {...field}
+                  value={field.value || ""}
+                  data-testid="input-hospital-notes"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-4 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            data-testid="button-cancel-form"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            data-testid="button-save-hospital"
+          >
+            {isSubmitting ? "Saving..." : initialData ? "Update Hospital" : "Add Hospital"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+function HospitalManagerSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-10 w-full mb-4" />
+          <div className="border rounded-md p-4 space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
           </div>
         </CardContent>
       </Card>

@@ -48,46 +48,15 @@ function HomePage() {
 }
 
 function HomeInventoryPage() {
-  const handleTransfer = (itemId: string, quantity: number, direction: 'in' | 'out') => {
-    console.log(`Transfer ${direction} ${quantity} units of item ${itemId} for home inventory`);
-  };
-
-  return (
-    <InventoryTable 
-      location="home" 
-      onTransfer={handleTransfer}
-    />
-  );
+  return <InventoryTable location="home" />;
 }
 
 function CarInventoryPage() {
-  const handleTransfer = (itemId: string, quantity: number, direction: 'in' | 'out') => {
-    console.log(`Transfer ${direction} ${quantity} units of item ${itemId} for car inventory`);
-  };
-
-  return (
-    <InventoryTable 
-      location="car" 
-      onTransfer={handleTransfer}
-    />
-  );
+  return <InventoryTable location="car" />;
 }
 
 function HospitalsPage() {
-  const handleAddHospital = (hospital: any) => {
-    console.log('Adding hospital:', hospital);
-  };
-
-  const handleEditHospital = (id: string, hospital: any) => {
-    console.log('Editing hospital:', id, hospital);
-  };
-
-  return (
-    <HospitalManager 
-      onAddHospital={handleAddHospital}
-      onEditHospital={handleEditHospital}
-    />
-  );
+  return <HospitalManager />;
 }
 
 function ImplantReportsPage() {
