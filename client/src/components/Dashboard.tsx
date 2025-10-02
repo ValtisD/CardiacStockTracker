@@ -11,19 +11,19 @@ interface InventoryWithProduct extends Inventory {
 
 export default function Dashboard() {
   const { data: homeInventory, isLoading: homeLoading, error: homeError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory", { location: "home" }],
+    queryKey: ["/api/inventory", "home"],
   });
 
   const { data: carInventory, isLoading: carLoading, error: carError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory", { location: "car" }],
+    queryKey: ["/api/inventory", "car"],
   });
 
   const { data: homeLowStock, isLoading: homeLowStockLoading, error: homeLowStockError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory/low-stock", { location: "home" }],
+    queryKey: ["/api/inventory/low-stock", "home"],
   });
 
   const { data: carLowStock, isLoading: carLowStockLoading, error: carLowStockError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory/low-stock", { location: "car" }],
+    queryKey: ["/api/inventory/low-stock", "car"],
   });
 
   const { data: procedures, isLoading: proceduresLoading, error: proceduresError } = useQuery<ImplantProcedure[]>({

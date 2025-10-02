@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Search, Package, AlertTriangle, ArrowUpDown, Plus, Minus, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,104 +21,134 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import type { Inventory, Product } from "@shared/schema";
 
-interface InventoryItem {
-  id: string;
-  name: string;
-  modelNumber: string;
-  category: string;
-  quantity: number;
-  minStockLevel: number;
-  expirationDate?: string;
-  serialNumber?: string;
-  location: 'home' | 'car';
-}
+type InventoryWithProduct = Inventory & { product: Product };
 
 interface InventoryTableProps {
   location: 'home' | 'car';
-  items?: InventoryItem[];
-  onTransfer?: (itemId: string, quantity: number, direction: 'in' | 'out') => void;
 }
 
-// Todo: remove mock functionality
-const mockItems: InventoryItem[] = [
-  {
-    id: '1',
-    name: 'Medtronic Azure Pacemaker',
-    modelNumber: 'XT1234',
-    category: 'Device',
-    quantity: 5,
-    minStockLevel: 2,
-    expirationDate: '2025-12-31',
-    serialNumber: 'MD001234',
-    location: 'home'
-  },
-  {
-    id: '2',
-    name: 'Boston Scientific ICD Lead',
-    modelNumber: 'BS5678',
-    category: 'Lead/Electrode',
-    quantity: 1,
-    minStockLevel: 3,
-    expirationDate: '2024-06-15',
-    serialNumber: 'BS005678',
-    location: 'home'
-  },
-  {
-    id: '3',
-    name: 'Surgical Gloves (Size M)',
-    modelNumber: 'SG001',
-    category: 'Material',
-    quantity: 25,
-    minStockLevel: 10,
-    location: 'home'
-  },
-  {
-    id: '4',
-    name: 'Abbott CRT Device',
-    modelNumber: 'AB9012',
-    category: 'Device',
-    quantity: 2,
-    minStockLevel: 1,
-    expirationDate: '2026-03-20',
-    serialNumber: 'AB009012',
-    location: 'car'
-  }
-];
-
-export default function InventoryTable({ location, items = mockItems, onTransfer }: InventoryTableProps) {
+export default function InventoryTable({ location }: InventoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const { toast } = useToast();
+
+  const { data: inventoryData, isLoading, error } = useQuery<InventoryWithProduct[]>({
+    queryKey: ["/api/inventory", location],
+    queryFn: async () => {
+      const response = await fetch(`/api/inventory?location=${location}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch inventory');
+      }
+      return response.json();
+    },
+  });
+
+  const transferMutation = useMutation({
+    mutationFn: async ({ productId, fromLocation, toLocation, quantity }: { 
+      productId: string; 
+      fromLocation: string; 
+      toLocation: string; 
+      quantity: number;
+    }) => {
+      return await apiRequest('/api/stock-transfers', 'POST', {
+        productId,
+        fromLocation,
+        toLocation,
+        quantity,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Transfer successful",
+        description: "Stock has been transferred successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Transfer failed",
+        description: error.message || "Failed to transfer stock. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const items = inventoryData || [];
 
   const filteredItems = items
-    .filter(item => item.location === location)
     .filter(item => 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.modelNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.product.modelNumber.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(item => categoryFilter === 'all' || item.category === categoryFilter)
+    .filter(item => categoryFilter === 'all' || item.product.category === categoryFilter)
     .sort((a, b) => {
       if (sortBy === 'quantity') return a.quantity - b.quantity;
-      if (sortBy === 'expiration') return (a.expirationDate || '9999') < (b.expirationDate || '9999') ? -1 : 1;
-      return a.name.localeCompare(b.name);
+      if (sortBy === 'expiration') {
+        const dateA = a.product.expirationDate || '9999';
+        const dateB = b.product.expirationDate || '9999';
+        return dateA < dateB ? -1 : 1;
+      }
+      return a.product.name.localeCompare(b.product.name);
     });
 
   const lowStockItems = filteredItems.filter(item => item.quantity <= item.minStockLevel);
   const stockLevel = filteredItems.length > 0 ? (filteredItems.reduce((sum, item) => sum + item.quantity, 0) / filteredItems.length) * 10 : 0;
 
-  const handleTransfer = (itemId: string, direction: 'in' | 'out') => {
-    console.log(`Transfer ${direction} for item ${itemId}`);
-    onTransfer?.(itemId, 1, direction);
+  const handleTransfer = (item: InventoryWithProduct, direction: 'in' | 'out') => {
+    const toLocation = location === 'home' ? 'car' : 'home';
+    const fromLocation = location;
+
+    if (direction === 'out') {
+      if (item.quantity < 1) {
+        toast({
+          title: "Insufficient stock",
+          description: "Not enough stock to transfer.",
+          variant: "destructive",
+        });
+        return;
+      }
+      transferMutation.mutate({
+        productId: item.productId,
+        fromLocation,
+        toLocation,
+        quantity: 1,
+      });
+    } else {
+      transferMutation.mutate({
+        productId: item.productId,
+        fromLocation: toLocation,
+        toLocation: fromLocation,
+        quantity: 1,
+      });
+    }
   };
 
-  const isExpiringSoon = (date?: string) => {
+  const isExpiringSoon = (date?: string | null) => {
     if (!date) return false;
     const expDate = new Date(date);
     const threeMonthsFromNow = new Date();
     threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
     return expDate < threeMonthsFromNow;
   };
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-destructive">
+            <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+            <p>Failed to load inventory. Please try again.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -200,16 +231,27 @@ export default function InventoryTable({ location, items = mockItems, onTransfer
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredItems.map((item) => (
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-10 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-16 mx-auto" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredItems.map((item) => (
                   <TableRow key={item.id} data-testid={`row-item-${item.id}`}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-muted-foreground">{item.modelNumber}</div>
+                        <div className="font-medium">{item.product.name}</div>
+                        <div className="text-sm text-muted-foreground">{item.product.modelNumber}</div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{item.category}</Badge>
+                      <Badge variant="outline">{item.product.category}</Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
@@ -225,24 +267,25 @@ export default function InventoryTable({ location, items = mockItems, onTransfer
                       </div>
                     </TableCell>
                     <TableCell>
-                      {item.expirationDate && (
-                        <div className={isExpiringSoon(item.expirationDate) ? 'text-destructive' : ''}>
-                          {new Date(item.expirationDate).toLocaleDateString()}
-                          {isExpiringSoon(item.expirationDate) && (
+                      {item.product.expirationDate && (
+                        <div className={isExpiringSoon(item.product.expirationDate) ? 'text-destructive' : ''}>
+                          {new Date(item.product.expirationDate).toLocaleDateString()}
+                          {isExpiringSoon(item.product.expirationDate) && (
                             <div className="text-xs">Expiring Soon!</div>
                           )}
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {item.serialNumber}
+                      {item.product.serialNumber}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => handleTransfer(item.id, 'out')}
+                          onClick={() => handleTransfer(item, 'out')}
+                          disabled={transferMutation.isPending || item.quantity < 1}
                           data-testid={`button-transfer-out-${item.id}`}
                         >
                           <Minus className="h-3 w-3" />
@@ -250,7 +293,8 @@ export default function InventoryTable({ location, items = mockItems, onTransfer
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => handleTransfer(item.id, 'in')}
+                          onClick={() => handleTransfer(item, 'in')}
+                          disabled={transferMutation.isPending}
                           data-testid={`button-transfer-in-${item.id}`}
                         >
                           <Plus className="h-3 w-3" />
@@ -270,7 +314,7 @@ export default function InventoryTable({ location, items = mockItems, onTransfer
             </Table>
           </div>
 
-          {filteredItems.length === 0 && (
+          {!isLoading && filteredItems.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No items found matching your criteria.
             </div>
