@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Heart, Calendar, Building2, Plus, Minus, Scan } from "lucide-react";
+import { Heart, Calendar, Building2, Plus, Minus, Scan, AlertCircle } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Hospital, Product, Inventory, InsertProcedureMaterial } from "@shared/schema";
 
 const implantReportSchema = z.object({
   hospitalId: z.string().min(1, "Hospital is required"),
@@ -37,6 +41,7 @@ type ImplantReportData = z.infer<typeof implantReportSchema>;
 
 interface MaterialItem {
   id: string;
+  productId?: string;
   name: string;
   quantity: number;
   source: 'car' | 'external' | 'hospital';
@@ -44,26 +49,18 @@ interface MaterialItem {
 }
 
 interface ImplantReportFormProps {
-  onSubmit: (data: ImplantReportData & { materials: MaterialItem[] }) => void;
+  onSubmit?: (data: any) => void;
   onCancel?: () => void;
 }
 
-// Todo: remove mock functionality
-const mockHospitals = [
-  { id: '1', name: "St. Mary's Medical Center" },
-  { id: '2', name: "Regional Heart Institute" },
-  { id: '3', name: "Community General Hospital" }
-];
-
-const mockDevices = [
-  { id: '1', name: 'Medtronic Azure Pacemaker (XT1234)' },
-  { id: '2', name: 'Boston Scientific ICD (BS5678)' },
-  { id: '3', name: 'Abbott CRT Device (AB9012)' }
-];
+interface InventoryWithProduct extends Inventory {
+  product: Product;
+}
 
 export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportFormProps) {
+  const { toast } = useToast();
+
   const [materials, setMaterials] = useState<MaterialItem[]>([
-    // Pre-populated with typical procedure materials
     { id: '1', name: '', quantity: 1, source: 'car' },
     { id: '2', name: '', quantity: 1, source: 'car' },
     { id: '3', name: '', quantity: 1, source: 'car' }
@@ -80,6 +77,54 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     { id: '2', name: '', quantity: 1, source: 'car' }
   ]);
 
+  const { data: hospitals = [], isLoading: hospitalsLoading } = useQuery<Hospital[]>({
+    queryKey: ['/api/hospitals'],
+  });
+
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
+
+  const { data: carInventory = [], isLoading: inventoryLoading } = useQuery<InventoryWithProduct[]>({
+    queryKey: ['/api/inventory', { location: 'car' }],
+    queryFn: async () => {
+      const res = await fetch('/api/inventory?location=car', {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch inventory');
+      }
+      return res.json();
+    },
+  });
+
+  const createProcedureMutation = useMutation({
+    mutationFn: async (data: ImplantReportData & { materials: InsertProcedureMaterial[] }) => {
+      const res = await apiRequest('POST', '/api/implant-procedures', data);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/implant-procedures'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
+      
+      toast({
+        title: "Success",
+        description: "Implant procedure report saved successfully",
+      });
+
+      if (onSubmit) {
+        onSubmit(data);
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save implant procedure report",
+        variant: "destructive",
+      });
+    },
+  });
+
   const form = useForm<ImplantReportData>({
     resolver: zodResolver(implantReportSchema),
     defaultValues: {
@@ -92,10 +137,43 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     },
   });
 
+  const deviceProducts = products.filter(p => p.category === 'Device');
+
   const handleSubmit = (data: ImplantReportData) => {
     const allMaterials = [...materials, ...leads, ...otherMaterials].filter(m => m.name.trim() !== '');
-    console.log('Implant report submitted:', { ...data, materials: allMaterials });
-    onSubmit({ ...data, materials: allMaterials });
+    
+    const procedureMaterials: InsertProcedureMaterial[] = allMaterials.map(m => ({
+      productId: m.productId || null,
+      materialName: m.name,
+      quantity: m.quantity,
+      source: m.source,
+    }));
+
+    const carStockMaterials = procedureMaterials.filter(m => m.source === 'car' && m.productId);
+    for (const material of carStockMaterials) {
+      const inventoryItem = carInventory.find(inv => inv.productId === material.productId);
+      if (!inventoryItem) {
+        toast({
+          title: "Stock Error",
+          description: `Product ${material.materialName} not found in car inventory`,
+          variant: "destructive",
+        });
+        return;
+      }
+      if (material.quantity && inventoryItem.quantity < material.quantity) {
+        toast({
+          title: "Insufficient Stock",
+          description: `Not enough stock for ${material.materialName}. Available: ${inventoryItem.quantity}, Required: ${material.quantity}`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    createProcedureMutation.mutate({
+      ...data,
+      materials: procedureMaterials,
+    });
   };
 
   const updateMaterialItem = (
@@ -112,102 +190,203 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     ));
   };
 
-  const scanBarcode = (type: 'materials' | 'leads' | 'others', id: string) => {
-    // Todo: remove mock functionality
-    const mockBarcode = "123456789012";
-    const mockProductName = "Scanned Medical Device";
-    updateMaterialItem(type, id, 'name', mockProductName);
-    updateMaterialItem(type, id, 'scanned', true);
-    console.log(`Barcode scanned for ${type}:`, mockBarcode);
+  const selectProduct = (type: 'materials' | 'leads' | 'others', id: string, productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const setter = type === 'materials' ? setMaterials : 
+                    type === 'leads' ? setLeads : setOtherMaterials;
+      
+      setter(prev => prev.map(item => 
+        item.id === id ? { ...item, productId, name: product.name } : item
+      ));
+    }
+  };
+
+  const scanBarcode = async (type: 'materials' | 'leads' | 'others', id: string) => {
+    toast({
+      title: "Barcode Scanner",
+      description: "Barcode scanning functionality would be implemented here",
+    });
+  };
+
+  const getInventoryQuantity = (productId?: string): number => {
+    if (!productId) return 0;
+    const inventoryItem = carInventory.find(inv => inv.productId === productId);
+    return inventoryItem?.quantity || 0;
   };
 
   const MaterialSection = ({ 
     title, 
     items, 
     type, 
-    icon 
+    icon,
+    categoryFilter
   }: { 
     title: string; 
     items: MaterialItem[]; 
     type: 'materials' | 'leads' | 'others';
     icon: React.ReactNode;
-  }) => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          {icon}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {items.map((item, index) => (
-          <div key={item.id} className="grid grid-cols-12 gap-2 items-center">
-            <div className="col-span-6">
-              <Input
-                placeholder={`${title.slice(0, -1)} ${index + 1}`}
-                value={item.name}
-                onChange={(e) => updateMaterialItem(type, item.id, 'name', e.target.value)}
-                data-testid={`input-${type}-${item.id}-name`}
-              />
-            </div>
-            <div className="col-span-2">
-              <div className="flex items-center">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => updateMaterialItem(type, item.id, 'quantity', Math.max(0, item.quantity - 1))}
-                  className="h-8 w-8"
-                >
-                  <Minus className="h-3 w-3" />
-                </Button>
-                <span className="mx-2 w-8 text-center">{item.quantity}</span>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => updateMaterialItem(type, item.id, 'quantity', item.quantity + 1)}
-                  className="h-8 w-8"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
+    categoryFilter?: string;
+  }) => {
+    const filteredProducts = categoryFilter 
+      ? products.filter(p => p.category === categoryFilter)
+      : products;
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            {icon}
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {items.map((item, index) => {
+            const availableQty = getInventoryQuantity(item.productId);
+            const isLowStock = item.source === 'car' && item.productId && availableQty < item.quantity;
+
+            return (
+              <div key={item.id} className="space-y-2">
+                <div className="grid grid-cols-12 gap-2 items-center">
+                  <div className="col-span-6">
+                    <Select
+                      value={item.productId || ''}
+                      onValueChange={(value) => {
+                        if (value === 'manual') {
+                          updateMaterialItem(type, item.id, 'productId', undefined);
+                          updateMaterialItem(type, item.id, 'name', '');
+                        } else {
+                          selectProduct(type, item.id, value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-8" data-testid={`select-${type}-${item.id}-product`}>
+                        <SelectValue placeholder={`Select ${title.slice(0, -1).toLowerCase()} ${index + 1}`}>
+                          {item.name || `Select ${title.slice(0, -1).toLowerCase()} ${index + 1}`}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">Enter manually...</SelectItem>
+                        {filteredProducts.map(product => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} ({product.modelNumber})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!item.productId && (
+                      <Input
+                        className="mt-1 h-8"
+                        placeholder="Enter name manually"
+                        value={item.name}
+                        onChange={(e) => updateMaterialItem(type, item.id, 'name', e.target.value)}
+                        data-testid={`input-${type}-${item.id}-name`}
+                      />
+                    )}
+                  </div>
+                  <div className="col-span-2">
+                    <div className="flex items-center">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => updateMaterialItem(type, item.id, 'quantity', Math.max(1, item.quantity - 1))}
+                        className="h-8 w-8"
+                        data-testid={`button-decrease-${type}-${item.id}`}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="mx-2 w-8 text-center" data-testid={`text-quantity-${type}-${item.id}`}>{item.quantity}</span>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => updateMaterialItem(type, item.id, 'quantity', item.quantity + 1)}
+                        className="h-8 w-8"
+                        data-testid={`button-increase-${type}-${item.id}`}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <Select 
+                      value={item.source} 
+                      onValueChange={(value) => updateMaterialItem(type, item.id, 'source', value as any)}
+                    >
+                      <SelectTrigger className="h-8" data-testid={`select-${type}-${item.id}-source`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="car">Car Stock</SelectItem>
+                        <SelectItem value="external">External</SelectItem>
+                        <SelectItem value="hospital">Hospital</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2 flex gap-1">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => scanBarcode(type, item.id)}
+                      className="h-8 w-8"
+                      data-testid={`button-scan-${type}-${item.id}`}
+                    >
+                      <Scan className="h-3 w-3" />
+                    </Button>
+                    {item.scanned && (
+                      <Badge variant="secondary" className="text-xs">Scanned</Badge>
+                    )}
+                  </div>
+                </div>
+                {item.source === 'car' && item.productId && (
+                  <div className="flex items-center gap-2 text-xs ml-1">
+                    {isLowStock ? (
+                      <>
+                        <AlertCircle className="h-3 w-3 text-destructive" />
+                        <span className="text-destructive" data-testid={`text-stock-warning-${type}-${item.id}`}>
+                          Insufficient stock! Available: {availableQty}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground" data-testid={`text-stock-available-${type}-${item.id}`}>
+                        Available in car: {availableQty}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const isLoading = hospitalsLoading || productsLoading || inventoryLoading;
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5" />
+              Implant Procedure Report
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="h-10 bg-muted animate-pulse rounded" />
+              <div className="h-10 bg-muted animate-pulse rounded" />
+              <div className="h-10 bg-muted animate-pulse rounded" />
             </div>
-            <div className="col-span-2">
-              <Select 
-                value={item.source} 
-                onValueChange={(value) => updateMaterialItem(type, item.id, 'source', value as any)}
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="car">Car Stock</SelectItem>
-                  <SelectItem value="external">External</SelectItem>
-                  <SelectItem value="hospital">Hospital</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="col-span-2 flex gap-1">
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={() => scanBarcode(type, item.id)}
-                className="h-8 w-8"
-                data-testid={`button-scan-${type}-${item.id}`}
-              >
-                <Scan className="h-3 w-3" />
-              </Button>
-              {item.scanned && (
-                <Badge variant="secondary" className="text-xs">Scanned</Badge>
-              )}
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -221,7 +400,6 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -236,7 +414,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {mockHospitals.map(hospital => (
+                          {hospitals.map(hospital => (
                             <SelectItem key={hospital.id} value={hospital.id}>
                               {hospital.name}
                             </SelectItem>
@@ -306,9 +484,9 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {mockDevices.map(device => (
+                          {deviceProducts.map(device => (
                             <SelectItem key={device.id} value={device.id}>
-                              {device.name}
+                              {device.name} ({device.modelNumber})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -337,13 +515,13 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                 )}
               />
 
-              {/* Materials Sections */}
               <div className="space-y-4">
                 <MaterialSection 
                   title="Leads/Electrodes" 
                   items={leads} 
                   type="leads"
                   icon={<Heart className="h-4 w-4" />}
+                  categoryFilter="Lead/Electrode"
                 />
                 
                 <MaterialSection 
@@ -351,6 +529,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   items={materials} 
                   type="materials"
                   icon={<Building2 className="h-4 w-4" />}
+                  categoryFilter="Material"
                 />
                 
                 <MaterialSection 
@@ -386,6 +565,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                     type="button" 
                     variant="outline" 
                     onClick={onCancel}
+                    disabled={createProcedureMutation.isPending}
                     data-testid="button-cancel-report"
                   >
                     Cancel
@@ -393,9 +573,10 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                 )}
                 <Button 
                   type="submit" 
+                  disabled={createProcedureMutation.isPending}
                   data-testid="button-save-report"
                 >
-                  Save Implant Report
+                  {createProcedureMutation.isPending ? "Saving..." : "Save Implant Report"}
                 </Button>
               </div>
             </form>
