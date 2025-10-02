@@ -52,11 +52,12 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       name: product?.name || "",
       category: product?.category || "",
       manufacturer: product?.manufacturer || "",
-      description: product?.description || "",
+      description: product?.description ?? undefined,
+      gtin: product?.gtin ?? undefined,
       expirationDate: product?.expirationDate || undefined,
-      serialNumber: product?.serialNumber || "",
-      lotNumber: product?.lotNumber || "",
-      barcode: product?.barcode || "",
+      serialNumber: product?.serialNumber ?? undefined,
+      lotNumber: product?.lotNumber ?? undefined,
+      barcode: product?.barcode ?? undefined,
     },
   });
 
@@ -124,6 +125,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       form.setValue("category", productInfo.category);
       form.setValue("manufacturer", productInfo.manufacturer);
       if (productInfo.description) form.setValue("description", productInfo.description);
+      if (productInfo.gtin) form.setValue("gtin", productInfo.gtin);
       if (productInfo.serialNumber) form.setValue("serialNumber", productInfo.serialNumber);
       if (productInfo.lotNumber) form.setValue("lotNumber", productInfo.lotNumber);
       if (productInfo.expirationDate) form.setValue("expirationDate", productInfo.expirationDate);
@@ -142,13 +144,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     // Override with GS1 data if available (more specific to this exact item)
     if (gs1Data) {
       if (gs1Data.gtin) {
-        form.setValue("modelNumber", gs1Data.gtin);
+        form.setValue("gtin", gs1Data.gtin);
       }
       if (gs1Data.expirationDate) {
         form.setValue("expirationDate", gs1Data.expirationDate);
         toast({
           title: "GS1 Data Extracted",
-          description: `Expiration date: ${gs1Data.expirationDate}${gs1Data.serialNumber ? `, Serial: ${gs1Data.serialNumber}` : ''}`,
+          description: `GTIN: ${gs1Data.gtin || 'N/A'}, Expiration: ${gs1Data.expirationDate}${gs1Data.serialNumber ? `, Serial: ${gs1Data.serialNumber}` : ''}`,
         });
       }
       if (gs1Data.serialNumber) {
@@ -195,6 +197,27 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
               <FormField
                 control={form.control}
+                name="gtin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>GTIN (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., 05414734218320" 
+                        {...field} 
+                        data-testid="input-gtin"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
@@ -220,6 +243,25 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="manufacturer"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Manufacturer</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., Medtronic, Boston Scientific, Abbott" 
+                        {...field} 
+                        data-testid="input-manufacturer"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <FormField
@@ -233,25 +275,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                       placeholder="e.g., Medtronic Azure Pacemaker" 
                       {...field} 
                       data-testid="input-product-name"
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="manufacturer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Manufacturer</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="e.g., Medtronic, Boston Scientific, Abbott" 
-                      {...field} 
-                      data-testid="input-manufacturer"
                       disabled={isSubmitting}
                     />
                   </FormControl>

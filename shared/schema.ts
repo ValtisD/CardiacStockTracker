@@ -11,6 +11,7 @@ export const products = pgTable("products", {
   category: text("category").notNull(), // Device, Lead/Electrode, Material, Other
   manufacturer: text("manufacturer").notNull(),
   description: text("description"),
+  gtin: text("gtin"), // Global Trade Item Number from GS1 barcodes
   expirationDate: date("expiration_date"),
   serialNumber: text("serial_number"),
   lotNumber: text("lot_number"),
