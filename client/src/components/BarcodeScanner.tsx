@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Camera, Scan, X, CheckCircle, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +44,8 @@ export default function BarcodeScanner({
   const [showInventoryUpdate, setShowInventoryUpdate] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [quantityAdjustment, setQuantityAdjustment] = useState<string>('');
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; minStockLevel: number; product: Product }>>({
     queryKey: ['/api/inventory'],
@@ -96,6 +98,22 @@ export default function BarcodeScanner({
     }
   };
 
+  useEffect(() => {
+    // Connect stream to video element when stream changes
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  useEffect(() => {
+    // Clean up stream when component unmounts or dialog closes
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
+
   const startCamera = async () => {
     setIsScanning(true);
     setError('');
@@ -104,23 +122,16 @@ export default function BarcodeScanner({
       console.log('Starting camera for barcode scanning...');
       
       // Request camera access
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } // Use back camera on mobile
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment', // Use back camera on mobile
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       
       console.log('Camera access granted');
-      
-      // Note: In a real implementation, you would need to:
-      // 1. Create a video element to display the camera feed
-      // 2. Use a barcode scanning library (like @zxing/library or quagga2)
-      // 3. Process video frames to detect barcodes
-      
-      // For now, showing manual entry is the most reliable option
-      setError('Camera started. Please use manual entry for barcode input.');
-      
-      // Stop the stream after showing the message
-      stream.getTracks().forEach(track => track.stop());
-      setIsScanning(false);
+      setStream(mediaStream);
       
     } catch (err) {
       console.error('Camera access error:', err);
@@ -130,6 +141,10 @@ export default function BarcodeScanner({
   };
 
   const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
     setIsScanning(false);
     console.log('Camera stopped');
   };
@@ -221,25 +236,22 @@ export default function BarcodeScanner({
         <div className="space-y-4">
           <Card>
             <CardContent className="p-4">
-              <div className="relative bg-muted rounded-lg aspect-square flex items-center justify-center">
+              <div className="relative bg-muted rounded-lg aspect-square flex items-center justify-center overflow-hidden">
                 {isScanning ? (
-                  <div className="text-center">
-                    <div className="animate-pulse">
-                      <Camera className="h-16 w-16 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">Scanning...</p>
-                      <div className="mt-4">
-                        <div className="border-2 border-primary rounded-lg w-32 h-20 mx-auto animate-pulse"></div>
-                      </div>
+                  stream ? (
+                    <video 
+                      ref={videoRef}
+                      autoPlay 
+                      playsInline
+                      muted
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <Loader2 className="h-16 w-16 mx-auto mb-2 text-primary animate-spin" />
+                      <p className="text-sm text-muted-foreground">Starting camera...</p>
                     </div>
-                    <Button 
-                      size="sm" 
-                      className="mt-4"
-                      onClick={simulateScan}
-                      data-testid="button-simulate-scan"
-                    >
-                      Simulate Scan
-                    </Button>
-                  </div>
+                  )
                 ) : isSearching ? (
                   <div className="text-center">
                     <Loader2 className="h-16 w-16 mx-auto mb-2 text-primary animate-spin" />
