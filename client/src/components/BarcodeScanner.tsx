@@ -47,6 +47,7 @@ export default function BarcodeScanner({
   const [quantityAdjustment, setQuantityAdjustment] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const isProcessingRef = useRef<boolean>(false);
 
   const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; minStockLevel: number; product: Product }>>({
     queryKey: ['/api/inventory'],
@@ -183,13 +184,22 @@ export default function BarcodeScanner({
   };
 
   const handleBarcodeDetected = async (barcode: string) => {
-    // Stop camera first to prevent multiple detections
+    // Prevent multiple rapid detections
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    
+    // Stop camera first to prevent more detections
     stopCamera();
     
     setScannedCode(barcode);
     console.log('Barcode detected:', barcode);
     
     await searchProduct(barcode);
+    
+    // Reset processing flag after a short delay
+    setTimeout(() => {
+      isProcessingRef.current = false;
+    }, 1000);
   };
 
   const handleManualEntry = () => {
@@ -240,6 +250,7 @@ export default function BarcodeScanner({
     setShowInventoryUpdate(false);
     setSelectedLocation('');
     setQuantityAdjustment('');
+    isProcessingRef.current = false;
   };
 
   const handleClose = () => {
@@ -498,7 +509,6 @@ export default function BarcodeScanner({
                 <Button 
                   onClick={handleConfirm} 
                   className="flex-1"
-                  disabled={!productInfo}
                   data-testid="button-confirm-scan"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
