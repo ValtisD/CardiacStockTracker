@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, date, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, date, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -26,7 +26,9 @@ export const inventory = pgTable("inventory", {
   quantity: integer("quantity").notNull().default(0),
   minStockLevel: integer("min_stock_level").notNull().default(1),
   updatedAt: timestamp("updated_at").default(sql`now()`),
-});
+}, (table) => ({
+  uniqueProductLocation: unique("unique_product_location").on(table.productId, table.location),
+}));
 
 // Hospitals/Customers
 export const hospitals = pgTable("hospitals", {
@@ -98,6 +100,7 @@ export const insertImplantProcedureSchema = createInsertSchema(implantProcedures
 
 export const insertProcedureMaterialSchema = createInsertSchema(procedureMaterials).omit({
   id: true,
+  procedureId: true,
 });
 
 export const insertStockTransferSchema = createInsertSchema(stockTransfers).omit({

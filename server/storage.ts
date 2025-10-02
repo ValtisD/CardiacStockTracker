@@ -1,38 +1,352 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { eq, and, sql, desc } from "drizzle-orm";
+import { db } from "./db";
+import {
+  products,
+  inventory,
+  hospitals,
+  implantProcedures,
+  procedureMaterials,
+  stockTransfers,
+  type Product,
+  type InsertProduct,
+  type Inventory,
+  type InsertInventory,
+  type Hospital,
+  type InsertHospital,
+  type ImplantProcedure,
+  type InsertImplantProcedure,
+  type ProcedureMaterial,
+  type InsertProcedureMaterial,
+  type StockTransfer,
+  type InsertStockTransfer,
+} from "@shared/schema";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Products
+  getProducts(): Promise<Product[]>;
+  getProduct(id: string): Promise<Product | undefined>;
+  getProductByBarcode(barcode: string): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: string): Promise<boolean>;
+
+  // Inventory
+  getInventory(location?: string): Promise<(Inventory & { product: Product })[]>;
+  getInventoryItem(productId: string, location: string): Promise<Inventory | undefined>;
+  createInventoryItem(item: InsertInventory): Promise<Inventory>;
+  updateInventoryQuantity(productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
+  getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]>;
+
+  // Hospitals
+  getHospitals(): Promise<Hospital[]>;
+  getHospital(id: string): Promise<Hospital | undefined>;
+  createHospital(hospital: InsertHospital): Promise<Hospital>;
+  updateHospital(id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined>;
+  deleteHospital(id: string): Promise<boolean>;
+
+  // Implant Procedures
+  getImplantProcedures(): Promise<(ImplantProcedure & { hospital: Hospital })[]>;
+  getImplantProcedure(id: string): Promise<ImplantProcedure | undefined>;
+  createImplantProcedure(procedure: InsertImplantProcedure, materials: InsertProcedureMaterial[]): Promise<ImplantProcedure>;
+  getProcedureMaterials(procedureId: string): Promise<ProcedureMaterial[]>;
+
+  // Stock Transfers
+  getStockTransfers(): Promise<(StockTransfer & { product: Product })[]>;
+  createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  // Products
+  async getProducts(): Promise<Product[]> {
+    return await db.select().from(products);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getProduct(id: string): Promise<Product | undefined> {
+    const result = await db.select().from(products).where(eq(products.id, id));
+    return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getProductByBarcode(barcode: string): Promise<Product | undefined> {
+    const result = await db.select().from(products).where(eq(products.barcode, barcode));
+    return result[0];
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const result = await db.insert(products).values(product).returning();
+    return result[0];
+  }
+
+  async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
+    const result = await db
+      .update(products)
+      .set(product)
+      .where(eq(products.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Inventory
+  async getInventory(location?: string): Promise<(Inventory & { product: Product })[]> {
+    const query = db
+      .select({
+        id: inventory.id,
+        productId: inventory.productId,
+        location: inventory.location,
+        quantity: inventory.quantity,
+        minStockLevel: inventory.minStockLevel,
+        updatedAt: inventory.updatedAt,
+        product: products,
+      })
+      .from(inventory)
+      .innerJoin(products, eq(inventory.productId, products.id));
+
+    if (location) {
+      return await query.where(eq(inventory.location, location));
+    }
+
+    return await query;
+  }
+
+  async getInventoryItem(productId: string, location: string): Promise<Inventory | undefined> {
+    const result = await db
+      .select()
+      .from(inventory)
+      .where(and(eq(inventory.productId, productId), eq(inventory.location, location)));
+    return result[0];
+  }
+
+  async createInventoryItem(item: InsertInventory): Promise<Inventory> {
+    const result = await db.insert(inventory).values(item).returning();
+    return result[0];
+  }
+
+  async updateInventoryQuantity(
+    productId: string,
+    location: string,
+    quantity: number
+  ): Promise<Inventory | undefined> {
+    const result = await db
+      .update(inventory)
+      .set({ quantity, updatedAt: new Date() })
+      .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
+      .returning();
+    return result[0];
+  }
+
+  async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
+    let whereClause = sql`${inventory.quantity} <= ${inventory.minStockLevel}`;
+    
+    if (location) {
+      whereClause = and(
+        whereClause,
+        eq(inventory.location, location)
+      ) as any;
+    }
+
+    return await db
+      .select({
+        id: inventory.id,
+        productId: inventory.productId,
+        location: inventory.location,
+        quantity: inventory.quantity,
+        minStockLevel: inventory.minStockLevel,
+        updatedAt: inventory.updatedAt,
+        product: products,
+      })
+      .from(inventory)
+      .innerJoin(products, eq(inventory.productId, products.id))
+      .where(whereClause);
+  }
+
+  // Hospitals
+  async getHospitals(): Promise<Hospital[]> {
+    return await db.select().from(hospitals);
+  }
+
+  async getHospital(id: string): Promise<Hospital | undefined> {
+    const result = await db.select().from(hospitals).where(eq(hospitals.id, id));
+    return result[0];
+  }
+
+  async createHospital(hospital: InsertHospital): Promise<Hospital> {
+    const result = await db.insert(hospitals).values(hospital).returning();
+    return result[0];
+  }
+
+  async updateHospital(id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined> {
+    const result = await db
+      .update(hospitals)
+      .set(hospital)
+      .where(eq(hospitals.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteHospital(id: string): Promise<boolean> {
+    const result = await db.delete(hospitals).where(eq(hospitals.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Implant Procedures
+  async getImplantProcedures(): Promise<(ImplantProcedure & { hospital: Hospital })[]> {
+    return await db
+      .select({
+        id: implantProcedures.id,
+        hospitalId: implantProcedures.hospitalId,
+        patientId: implantProcedures.patientId,
+        implantDate: implantProcedures.implantDate,
+        procedureType: implantProcedures.procedureType,
+        deviceUsed: implantProcedures.deviceUsed,
+        notes: implantProcedures.notes,
+        createdAt: implantProcedures.createdAt,
+        hospital: hospitals,
+      })
+      .from(implantProcedures)
+      .innerJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
+      .orderBy(desc(implantProcedures.implantDate));
+  }
+
+  async getImplantProcedure(id: string): Promise<ImplantProcedure | undefined> {
+    const result = await db
+      .select()
+      .from(implantProcedures)
+      .where(eq(implantProcedures.id, id));
+    return result[0];
+  }
+
+  async createImplantProcedure(
+    procedure: InsertImplantProcedure,
+    materials: InsertProcedureMaterial[]
+  ): Promise<ImplantProcedure> {
+    // Validate stock availability before proceeding
+    for (const material of materials) {
+      if (material.source === 'car' && material.productId && material.quantity) {
+        const inventoryItem = await this.getInventoryItem(material.productId, 'car');
+        if (!inventoryItem) {
+          throw new Error(`Product ${material.productId} not found in car inventory`);
+        }
+        if (inventoryItem.quantity < material.quantity) {
+          throw new Error(
+            `Insufficient stock for product ${material.productId}. Available: ${inventoryItem.quantity}, Required: ${material.quantity}`
+          );
+        }
+      }
+    }
+
+    try {
+      // Create procedure
+      const procedureResult = await db
+        .insert(implantProcedures)
+        .values(procedure)
+        .returning();
+      const createdProcedure = procedureResult[0];
+
+      // Insert materials and deduct from car inventory
+      for (const material of materials) {
+        await db.insert(procedureMaterials).values({
+          ...material,
+          procedureId: createdProcedure.id,
+        });
+
+        // Deduct from car inventory if source is 'car'
+        if (material.source === 'car' && material.productId && material.quantity) {
+          const inventoryItem = await this.getInventoryItem(material.productId, 'car');
+          if (inventoryItem) {
+            const newQuantity = inventoryItem.quantity - material.quantity;
+            await this.updateInventoryQuantity(material.productId, 'car', newQuantity);
+          }
+        }
+      }
+
+      return createdProcedure;
+    } catch (error) {
+      // If any part fails, log error - note: neon-http doesn't support transactions
+      // In a production app, consider using a different driver or implementing compensating transactions
+      console.error('Failed to create implant procedure:', error);
+      throw new Error('Failed to create implant procedure. Database operation failed.');
+    }
+  }
+
+  async getProcedureMaterials(procedureId: string): Promise<ProcedureMaterial[]> {
+    return await db
+      .select()
+      .from(procedureMaterials)
+      .where(eq(procedureMaterials.procedureId, procedureId));
+  }
+
+  // Stock Transfers
+  async getStockTransfers(): Promise<(StockTransfer & { product: Product })[]> {
+    return await db
+      .select({
+        id: stockTransfers.id,
+        productId: stockTransfers.productId,
+        fromLocation: stockTransfers.fromLocation,
+        toLocation: stockTransfers.toLocation,
+        quantity: stockTransfers.quantity,
+        transferDate: stockTransfers.transferDate,
+        notes: stockTransfers.notes,
+        product: products,
+      })
+      .from(stockTransfers)
+      .innerJoin(products, eq(stockTransfers.productId, products.id))
+      .orderBy(desc(stockTransfers.transferDate));
+  }
+
+  async createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer> {
+    // Validate stock availability before proceeding
+    const fromInventory = await this.getInventoryItem(transfer.productId, transfer.fromLocation);
+    
+    if (!fromInventory) {
+      throw new Error(
+        `Product ${transfer.productId} not found in ${transfer.fromLocation} inventory`
+      );
+    }
+    
+    if (fromInventory.quantity < transfer.quantity) {
+      throw new Error(
+        `Insufficient stock for transfer. Available: ${fromInventory.quantity}, Required: ${transfer.quantity}`
+      );
+    }
+
+    try {
+      // Create the transfer record
+      const result = await db.insert(stockTransfers).values(transfer).returning();
+      const createdTransfer = result[0];
+
+      // Update inventory quantities
+      const toInventory = await this.getInventoryItem(transfer.productId, transfer.toLocation);
+
+      // Deduct from source
+      const newFromQuantity = fromInventory.quantity - transfer.quantity;
+      await this.updateInventoryQuantity(transfer.productId, transfer.fromLocation, newFromQuantity);
+
+      // Add to destination
+      if (toInventory) {
+        const newToQuantity = toInventory.quantity + transfer.quantity;
+        await this.updateInventoryQuantity(transfer.productId, transfer.toLocation, newToQuantity);
+      } else {
+        // Create inventory item if it doesn't exist at destination
+        await this.createInventoryItem({
+          productId: transfer.productId,
+          location: transfer.toLocation,
+          quantity: transfer.quantity,
+          minStockLevel: 1,
+        });
+      }
+
+      return createdTransfer;
+    } catch (error) {
+      // If any part fails, log error - note: neon-http doesn't support transactions
+      // In a production app, consider using a different driver or implementing compensating transactions
+      console.error('Failed to create stock transfer:', error);
+      throw new Error('Failed to create stock transfer. Database operation failed.');
+    }
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
