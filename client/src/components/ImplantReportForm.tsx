@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Hospital, Product, Inventory, InsertProcedureMaterial } from "@shared/schema";
+import BarcodeScanner from "@/components/BarcodeScanner";
 
 const implantReportSchema = z.object({
   hospitalId: z.string().min(1, "Hospital is required"),
@@ -58,6 +59,9 @@ interface InventoryWithProduct extends Inventory {
 
 export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportFormProps) {
   const { toast } = useToast();
+  
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [scanningItem, setScanningItem] = useState<{ type: 'materials' | 'leads' | 'others', id: string } | null>(null);
 
   const [materials, setMaterials] = useState<MaterialItem[]>([
     { id: '1', name: '', quantity: 1, source: 'car' },
@@ -202,10 +206,38 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
   };
 
   const scanBarcode = async (type: 'materials' | 'leads' | 'others', id: string) => {
-    toast({
-      title: "Barcode Scanner",
-      description: "Barcode scanning functionality would be implemented here",
-    });
+    setScanningItem({ type, id });
+    setShowBarcodeScanner(true);
+  };
+
+  const handleScanComplete = (barcode: string, productInfo?: Product) => {
+    if (!scanningItem) return;
+    
+    const { type, id } = scanningItem;
+    
+    if (productInfo) {
+      // Found product in database - set it
+      selectProduct(type, id, productInfo.id);
+      updateMaterialItem(type, id, 'scanned', true);
+      
+      toast({
+        title: "Product Scanned",
+        description: `${productInfo.name} added successfully`,
+      });
+    } else {
+      // Product not found - clear productId and set barcode as manual entry
+      updateMaterialItem(type, id, 'productId', undefined);
+      updateMaterialItem(type, id, 'name', barcode);
+      updateMaterialItem(type, id, 'scanned', true);
+      
+      toast({
+        title: "Barcode Scanned",
+        description: "Product not found in database. Barcode added as product name.",
+        variant: "default",
+      });
+    }
+    
+    setScanningItem(null);
   };
 
   const getInventoryQuantity = (productId?: string): number => {
@@ -564,6 +596,16 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
           </Form>
         </CardContent>
       </Card>
+      
+      <BarcodeScanner
+        isOpen={showBarcodeScanner}
+        onClose={() => {
+          setShowBarcodeScanner(false);
+          setScanningItem(null);
+        }}
+        onScanComplete={handleScanComplete}
+        title="Scan Product Barcode"
+      />
     </div>
   );
 }
