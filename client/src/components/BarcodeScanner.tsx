@@ -437,7 +437,7 @@ export default function BarcodeScanner({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scan className="h-5 w-5" />
@@ -445,7 +445,7 @@ export default function BarcodeScanner({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1">
           <Card>
             <CardContent className="p-4">
               <div className="relative bg-muted rounded-lg aspect-square flex items-center justify-center overflow-hidden">
