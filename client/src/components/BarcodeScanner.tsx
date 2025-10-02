@@ -103,22 +103,22 @@ export default function BarcodeScanner({
   };
 
   useEffect(() => {
-    // Clean up barcode reader when component unmounts or dialog closes
+    // Clean up barcode reader and media stream when component unmounts or dialog closes
     return () => {
-      if (codeReaderRef.current) {
-        try {
-          // @ts-ignore - reset method exists but isn't in types
-          codeReaderRef.current.reset();
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      }
+      stopCamera();
     };
   }, []);
 
   const startCamera = async (cameraIndex?: number) => {
     setIsScanning(true);
     setError('');
+    
+    // Stop any existing stream before starting a new one
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
     
     try {
       console.log('Starting camera for barcode scanning...');
@@ -174,38 +174,54 @@ export default function BarcodeScanner({
         }
       }
       
-      // Start continuous decoding with optimized video constraints
-      await codeReaderRef.current.decodeFromVideoDevice(
-        selectedDeviceId,
-        videoRef.current!,
-        (result) => {
-          if (result) {
-            const barcode = result.getText();
-            console.log('Barcode detected:', barcode);
-            handleBarcodeDetected(barcode);
+      // Set high resolution video constraints for better barcode detection
+      const constraints = {
+        video: {
+          deviceId: { exact: selectedDeviceId },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          focusMode: 'continuous' as any,
+          aspectRatio: { ideal: 16/9 }
+        }
+      };
+      
+      // Get media stream with high resolution
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        
+        // Start continuous decoding
+        await codeReaderRef.current.decodeFromVideoElement(
+          videoRef.current,
+          (result) => {
+            if (result) {
+              const barcode = result.getText();
+              console.log('Barcode detected:', barcode);
+              handleBarcodeDetected(barcode);
+            }
           }
-        }
-      );
-      
-      // Set video to higher resolution for better detection
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack) {
-          await videoTrack.applyConstraints({
-            advanced: [{ zoom: 2.0 }] as any
-          }).catch(() => {
-            // Zoom not supported, ignore
-          });
-        }
+        );
+        
+        console.log('Camera started and scanning for barcodes...');
+      } else {
+        // Component unmounted before stream could be attached - clean up
+        stream.getTracks().forEach(track => track.stop());
+        console.log('Component unmounted, stream cleaned up');
+        setIsScanning(false);
       }
-      
-      console.log('Camera started and scanning for barcodes...');
       
     } catch (err) {
       console.error('Camera access error:', err);
       setError('Unable to access camera. Please use manual entry or check camera permissions in your browser settings.');
       setIsScanning(false);
+      
+      // Clean up any partially initialized stream
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
     }
   };
 
@@ -225,6 +241,7 @@ export default function BarcodeScanner({
   };
 
   const stopCamera = () => {
+    // Stop the code reader
     if (codeReaderRef.current) {
       try {
         // @ts-ignore - reset method exists but isn't in types
@@ -233,6 +250,17 @@ export default function BarcodeScanner({
         // Ignore errors
       }
     }
+    
+    // Stop all media stream tracks to release camera
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log('Stopped camera track:', track.kind);
+      });
+      videoRef.current.srcObject = null;
+    }
+    
     setIsScanning(false);
     console.log('Camera stopped');
   };
