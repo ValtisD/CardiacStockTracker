@@ -21,6 +21,7 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 
 interface BarcodeScannerProps {
   isOpen: boolean;
@@ -44,8 +45,8 @@ export default function BarcodeScanner({
   const [showInventoryUpdate, setShowInventoryUpdate] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [quantityAdjustment, setQuantityAdjustment] = useState<string>('');
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
 
   const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; minStockLevel: number; product: Product }>>({
     queryKey: ['/api/inventory'],
@@ -99,20 +100,17 @@ export default function BarcodeScanner({
   };
 
   useEffect(() => {
-    // Connect stream to video element when stream changes
-    if (stream && videoRef.current) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
-
-  useEffect(() => {
-    // Clean up stream when component unmounts or dialog closes
+    // Clean up barcode reader when component unmounts or dialog closes
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (codeReaderRef.current) {
+        try {
+          codeReaderRef.current.stopContinuousDecode();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
       }
     };
-  }, [stream]);
+  }, []);
 
   const startCamera = async () => {
     setIsScanning(true);
@@ -121,17 +119,42 @@ export default function BarcodeScanner({
     try {
       console.log('Starting camera for barcode scanning...');
       
-      // Request camera access
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
+      // Create barcode reader if it doesn't exist
+      if (!codeReaderRef.current) {
+        codeReaderRef.current = new BrowserMultiFormatReader();
+      }
       
-      console.log('Camera access granted');
-      setStream(mediaStream);
+      // Get available video devices (static method)
+      const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices();
+      
+      if (videoInputDevices.length === 0) {
+        setError('No camera found on this device.');
+        setIsScanning(false);
+        return;
+      }
+      
+      // Try to find back camera, otherwise use first available
+      const backCamera = videoInputDevices.find((device: MediaDeviceInfo) => 
+        device.label.toLowerCase().includes('back') || 
+        device.label.toLowerCase().includes('rear')
+      );
+      const selectedDeviceId = backCamera?.deviceId || videoInputDevices[0].deviceId;
+      
+      // Start continuous decoding
+      await codeReaderRef.current.decodeFromVideoDevice(
+        selectedDeviceId,
+        videoRef.current!,
+        (result) => {
+          if (result) {
+            const barcode = result.getText();
+            console.log('Barcode detected:', barcode);
+            handleBarcodeDetected(barcode);
+          }
+          // Ignore errors (they happen continuously when no barcode is visible)
+        }
+      );
+      
+      console.log('Camera started and scanning for barcodes...');
       
     } catch (err) {
       console.error('Camera access error:', err);
@@ -141,9 +164,12 @@ export default function BarcodeScanner({
   };
 
   const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
+    if (codeReaderRef.current) {
+      try {
+        codeReaderRef.current.stopContinuousDecode();
+      } catch (e) {
+        // Ignore errors
+      }
     }
     setIsScanning(false);
     console.log('Camera stopped');
@@ -238,20 +264,13 @@ export default function BarcodeScanner({
             <CardContent className="p-4">
               <div className="relative bg-muted rounded-lg aspect-square flex items-center justify-center overflow-hidden">
                 {isScanning ? (
-                  stream ? (
-                    <video 
-                      ref={videoRef}
-                      autoPlay 
-                      playsInline
-                      muted
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-center">
-                      <Loader2 className="h-16 w-16 mx-auto mb-2 text-primary animate-spin" />
-                      <p className="text-sm text-muted-foreground">Starting camera...</p>
-                    </div>
-                  )
+                  <video 
+                    ref={videoRef}
+                    autoPlay 
+                    playsInline
+                    muted
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 ) : isSearching ? (
                   <div className="text-center">
                     <Loader2 className="h-16 w-16 mx-auto mb-2 text-primary animate-spin" />
