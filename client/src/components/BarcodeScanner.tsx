@@ -104,7 +104,8 @@ export default function BarcodeScanner({
     return () => {
       if (codeReaderRef.current) {
         try {
-          codeReaderRef.current.stopContinuousDecode();
+          // @ts-ignore - reset method exists but isn't in types
+          codeReaderRef.current.reset();
         } catch (e) {
           // Ignore cleanup errors
         }
@@ -166,7 +167,8 @@ export default function BarcodeScanner({
   const stopCamera = () => {
     if (codeReaderRef.current) {
       try {
-        codeReaderRef.current.stopContinuousDecode();
+        // @ts-ignore - reset method exists but isn't in types
+        codeReaderRef.current.reset();
       } catch (e) {
         // Ignore errors
       }
@@ -181,12 +183,13 @@ export default function BarcodeScanner({
   };
 
   const handleBarcodeDetected = async (barcode: string) => {
+    // Stop camera first to prevent multiple detections
+    stopCamera();
+    
     setScannedCode(barcode);
-    setIsScanning(false);
+    console.log('Barcode detected:', barcode);
     
     await searchProduct(barcode);
-    
-    console.log('Barcode detected:', barcode);
   };
 
   const handleManualEntry = () => {

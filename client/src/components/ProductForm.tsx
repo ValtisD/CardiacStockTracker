@@ -32,6 +32,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertProductSchema, type Product, type InsertProduct } from "@shared/schema";
+import BarcodeScanner from "@/components/BarcodeScanner";
 
 interface ProductFormProps {
   product?: Product;
@@ -40,7 +41,7 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
-  const [isScanning, setIsScanning] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<InsertProduct>({
@@ -111,13 +112,31 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     }
   };
 
-  const handleScanBarcode = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      const mockBarcode = "123456789012";
-      form.setValue("barcode", mockBarcode);
-      setIsScanning(false);
-    }, 2000);
+  const handleScanComplete = (barcode: string, productInfo?: Product) => {
+    // Set the barcode from scanning
+    form.setValue("barcode", barcode);
+    
+    // If we found product info, auto-populate fields
+    if (productInfo) {
+      form.setValue("modelNumber", productInfo.modelNumber);
+      form.setValue("name", productInfo.name);
+      form.setValue("category", productInfo.category);
+      form.setValue("manufacturer", productInfo.manufacturer);
+      if (productInfo.description) form.setValue("description", productInfo.description);
+      if (productInfo.serialNumber) form.setValue("serialNumber", productInfo.serialNumber);
+      if (productInfo.lotNumber) form.setValue("lotNumber", productInfo.lotNumber);
+      if (productInfo.expirationDate) form.setValue("expirationDate", productInfo.expirationDate);
+      
+      toast({
+        title: "Product Found",
+        description: "Barcode scanned and product information loaded",
+      });
+    } else {
+      toast({
+        title: "Barcode Scanned",
+        description: "Barcode added to form. Product not found in database - please fill in details manually.",
+      });
+    }
   };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
@@ -334,16 +353,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={handleScanBarcode}
-                        disabled={isScanning || isSubmitting}
+                        onClick={() => setShowBarcodeScanner(true)}
+                        disabled={isSubmitting}
                         data-testid="button-scan-barcode"
                       >
                         <Scan className="h-4 w-4" />
                       </Button>
                     </div>
-                    {isScanning && (
-                      <p className="text-sm text-muted-foreground">Scanning barcode...</p>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -373,6 +389,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           </form>
         </Form>
       </CardContent>
+      
+      <BarcodeScanner
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScanComplete={handleScanComplete}
+        title="Scan Product Barcode"
+      />
     </Card>
   );
 }
