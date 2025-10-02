@@ -12,18 +12,38 @@ interface InventoryWithProduct extends Inventory {
 export default function Dashboard() {
   const { data: homeInventory, isLoading: homeLoading, error: homeError } = useQuery<InventoryWithProduct[]>({
     queryKey: ["/api/inventory", "home"],
+    queryFn: async () => {
+      const response = await fetch('/api/inventory?location=home');
+      if (!response.ok) throw new Error('Failed to fetch home inventory');
+      return response.json();
+    },
   });
 
   const { data: carInventory, isLoading: carLoading, error: carError } = useQuery<InventoryWithProduct[]>({
     queryKey: ["/api/inventory", "car"],
+    queryFn: async () => {
+      const response = await fetch('/api/inventory?location=car');
+      if (!response.ok) throw new Error('Failed to fetch car inventory');
+      return response.json();
+    },
   });
 
   const { data: homeLowStock, isLoading: homeLowStockLoading, error: homeLowStockError } = useQuery<InventoryWithProduct[]>({
     queryKey: ["/api/inventory/low-stock", "home"],
+    queryFn: async () => {
+      const response = await fetch('/api/inventory/low-stock?location=home');
+      if (!response.ok) throw new Error('Failed to fetch home low stock');
+      return response.json();
+    },
   });
 
   const { data: carLowStock, isLoading: carLowStockLoading, error: carLowStockError } = useQuery<InventoryWithProduct[]>({
     queryKey: ["/api/inventory/low-stock", "car"],
+    queryFn: async () => {
+      const response = await fetch('/api/inventory/low-stock?location=car');
+      if (!response.ok) throw new Error('Failed to fetch car low stock');
+      return response.json();
+    },
   });
 
   const { data: procedures, isLoading: proceduresLoading, error: proceduresError } = useQuery<ImplantProcedure[]>({
