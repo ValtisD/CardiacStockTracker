@@ -168,7 +168,7 @@ function Router() {
   );
 }
 
-export default function App() {
+function AppContent() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showStockTransfer, setShowStockTransfer] = useState(false);
@@ -200,7 +200,6 @@ export default function App() {
 
   const handleNavigate = (path: string) => {
     setCurrentPath(path);
-    // In a real app, this would integrate with wouter's navigation
     window.history.pushState({}, '', path);
     console.log('Navigated to:', path);
   };
@@ -220,73 +219,78 @@ export default function App() {
     setShowBarcodeScanner(false);
   };
 
-  // Sidebar style configuration
   const sidebarStyle = {
     "--sidebar-width": "20rem",
     "--sidebar-width-icon": "4rem",
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <SidebarProvider style={sidebarStyle as React.CSSProperties}>
-          <div className="flex h-screen w-full">
-            <AppSidebar 
-              currentPath={currentPath}
-              onNavigate={handleNavigate}
-              lowStockAlerts={lowStockAlerts}
-            />
-            <div className="flex flex-col flex-1">
-              <header className="flex items-center justify-between p-4 border-b border-card-border bg-card">
-                <div className="flex items-center gap-4">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" />
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-semibold">CRM Inventory</h1>
-                  </div>
-                </div>
-                
+    <TooltipProvider>
+      <SidebarProvider style={sidebarStyle as React.CSSProperties}>
+        <div className="flex h-screen w-full">
+          <AppSidebar 
+            currentPath={currentPath}
+            onNavigate={handleNavigate}
+            lowStockAlerts={lowStockAlerts}
+          />
+          <div className="flex flex-col flex-1">
+            <header className="flex items-center justify-between p-4 border-b border-card-border bg-card">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger data-testid="button-sidebar-toggle" />
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowStockTransfer(true)}
-                    data-testid="button-quick-transfer"
-                  >
-                    Quick Transfer
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowBarcodeScanner(true)}
-                    data-testid="button-quick-scan"
-                  >
-                    Quick Scan
-                  </Button>
-                  <ThemeToggle />
+                  <h1 className="text-xl font-semibold">CRM Inventory</h1>
                 </div>
-              </header>
+              </div>
               
-              <main className="flex-1 overflow-auto">
-                <Router />
-              </main>
-            </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowStockTransfer(true)}
+                  data-testid="button-quick-transfer"
+                >
+                  Quick Transfer
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBarcodeScanner(true)}
+                  data-testid="button-quick-scan"
+                >
+                  Quick Scan
+                </Button>
+                <ThemeToggle />
+              </div>
+            </header>
+            
+            <main className="flex-1 overflow-auto">
+              <Router />
+            </main>
           </div>
+        </div>
 
-          {/* Global Modals */}
-          <StockTransfer 
-            onTransfer={handleStockTransfer}
-            onCancel={() => setShowStockTransfer(false)}
-          />
-          
-          <BarcodeScanner
-            isOpen={showBarcodeScanner}
-            onClose={() => setShowBarcodeScanner(false)}
-            onScanComplete={handleScanComplete}
-            title="Quick Barcode Scan"
-          />
-        </SidebarProvider>
-        <Toaster />
-      </TooltipProvider>
+        {/* Global Modals */}
+        <StockTransfer 
+          onTransfer={handleStockTransfer}
+          onCancel={() => setShowStockTransfer(false)}
+        />
+        
+        <BarcodeScanner
+          isOpen={showBarcodeScanner}
+          onClose={() => setShowBarcodeScanner(false)}
+          onScanComplete={handleScanComplete}
+          title="Quick Barcode Scan"
+        />
+      </SidebarProvider>
+      <Toaster />
+    </TooltipProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
     </QueryClientProvider>
   );
 }
