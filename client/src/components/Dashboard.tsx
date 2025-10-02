@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import type { Inventory, ImplantProcedure, Product } from "@shared/schema";
 
 interface InventoryWithProduct extends Inventory {
@@ -211,18 +212,24 @@ export default function Dashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button className="justify-start gap-2" data-testid="button-new-procedure">
-            <Calendar className="h-4 w-4" />
-            New Implant Report
-          </Button>
-          <Button variant="secondary" className="justify-start gap-2" data-testid="button-stock-transfer">
-            <Package className="h-4 w-4" />
-            Transfer Stock
-          </Button>
-          <Button variant="outline" className="justify-start gap-2" data-testid="button-scan-barcode">
-            <Package className="h-4 w-4" />
-            Scan Barcode
-          </Button>
+          <Link href="/reports">
+            <Button className="justify-start gap-2 w-full" data-testid="button-new-procedure">
+              <Calendar className="h-4 w-4" />
+              New Implant Report
+            </Button>
+          </Link>
+          <Link href="/inventory/home">
+            <Button variant="secondary" className="justify-start gap-2 w-full" data-testid="button-stock-transfer">
+              <Package className="h-4 w-4" />
+              Transfer Stock
+            </Button>
+          </Link>
+          <Link href="/products">
+            <Button variant="outline" className="justify-start gap-2 w-full" data-testid="button-scan-barcode">
+              <Package className="h-4 w-4" />
+              Scan Barcode
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 
@@ -240,17 +247,21 @@ export default function Dashboard() {
               {homeLowStockCount > 0 && (
                 <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-md">
                   <span className="text-sm">Home inventory has {homeLowStockCount} items running low</span>
-                  <Button size="sm" variant="destructive" data-testid="button-view-home-alerts">
-                    View Items
-                  </Button>
+                  <Link href="/inventory/home">
+                    <Button size="sm" variant="destructive" data-testid="button-view-home-alerts">
+                      View Items
+                    </Button>
+                  </Link>
                 </div>
               )}
               {carLowStockCount > 0 && (
                 <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-md">
                   <span className="text-sm">Car inventory needs restocking: {carLowStockCount} items</span>
-                  <Button size="sm" variant="destructive" data-testid="button-view-car-alerts">
-                    Restock Now
-                  </Button>
+                  <Link href="/inventory/car">
+                    <Button size="sm" variant="destructive" data-testid="button-view-car-alerts">
+                      Restock Now
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
