@@ -30,7 +30,6 @@ import type { Hospital, Product, Inventory, InsertProcedureMaterial } from "@sha
 
 const implantReportSchema = z.object({
   hospitalId: z.string().min(1, "Hospital is required"),
-  patientId: z.string().optional(),
   implantDate: z.string().min(1, "Implant date is required"),
   procedureType: z.string().min(1, "Procedure type is required"),
   deviceUsed: z.string().optional(),
@@ -130,7 +129,6 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     resolver: zodResolver(implantReportSchema),
     defaultValues: {
       hospitalId: "",
-      patientId: "",
       implantDate: new Date().toISOString().split('T')[0],
       procedureType: "",
       deviceUsed: "",
@@ -497,24 +495,6 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name="patientId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Patient ID (Optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Patient identifier (if applicable)" 
-                        {...field} 
-                        data-testid="input-patient-id"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <div className="space-y-4">
                 <MaterialSection 
