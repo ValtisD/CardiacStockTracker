@@ -77,6 +77,7 @@ Preferred communication style: Simple, everyday language.
 
 1. **Products Table** - Core medical device catalog
    - Stores device information (model, name, category, manufacturer)
+   - GTIN field for Global Trade Item Number (extracted from GS1 barcodes)
    - Optional fields for expiration dates, serial numbers, lot numbers
    - Barcode field for scanning integration
 
@@ -197,8 +198,9 @@ The application includes real-time camera-based barcode scanning using @zxing/li
 - **Automatic Detection**: Recognizes GS1-compliant barcodes by Application Identifier prefix
 - **Field Extraction**: Parses (01) GTIN/item number, (17) expiration date, (21) serial number, (10) lot/batch number
 - **Smart Product Lookup**: Uses GTIN for database search instead of full barcode string for more accurate matching
+- **Separate GTIN Storage**: GTIN is saved to dedicated `gtin` field, NOT in `modelNumber` field
 - **Date Conversion**: Converts GS1 YYMMDD format to YYYY-MM-DD (handles century with YY < 50 = 20xx, else 19xx)
 - **Variable-Length Support**: Correctly handles both fixed-length (GTIN, exp date) and variable-length (serial, lot) fields
-- **Auto-Population**: Automatically fills product form fields (expiration date, serial number, lot number) from scanned GS1 data
+- **Auto-Population**: Automatically fills product form fields (GTIN, expiration date, serial number, lot number) from scanned GS1 data
 - **State Management**: Clears GS1 data when non-GS1 barcodes are scanned to prevent stale data issues
 - **User Feedback**: Displays extracted GS1 data in dedicated card with formatted Application Identifier labels
