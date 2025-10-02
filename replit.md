@@ -183,6 +183,7 @@ The application includes real-time camera-based barcode scanning using @zxing/li
 - **Camera Selection**: Automatically prefers back/rear/environment cameras on first use
 - **Camera Persistence**: Remembers user's camera choice across scan sessions (within component lifecycle)
 - **Camera Switching**: Button to cycle through available cameras when multiple devices detected
-- **Optimized Detection**: Uses default ZXing settings for fast barcode detection
+- **High-Resolution Detection**: Uses 1920x1080 ideal resolution with continuous focus mode for detecting barcodes in any part of the camera frame
+- **Partial Frame Detection**: Barcodes can be detected even when small in the frame, not requiring full-frame coverage
 - **Camera Index Sentinel**: Initializes to -1 to force back-camera selection on first use
-- Future enhancement: Could add localStorage persistence for camera preference across page reloads
+- **Resource Management**: Comprehensive MediaStream cleanup in all lifecycle paths (unmount, error, switch) prevents camera LED leaks
