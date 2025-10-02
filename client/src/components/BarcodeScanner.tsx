@@ -50,6 +50,8 @@ export default function BarcodeScanner({
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const isProcessingRef = useRef<boolean>(false);
+  const lastDetectedRef = useRef<string>('');
+  const lastDetectionTimeRef = useRef<number>(0);
 
   const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; minStockLevel: number; product: Product }>>({
     queryKey: ['/api/inventory'],
@@ -126,6 +128,9 @@ export default function BarcodeScanner({
       // Create barcode reader if it doesn't exist
       if (!codeReaderRef.current) {
         codeReaderRef.current = new BrowserMultiFormatReader();
+        // Set scan timing for better performance (300ms between scans)
+        // @ts-ignore - timeBetweenScansMillis exists but isn't in types
+        codeReaderRef.current.timeBetweenScansMillis = 300;
       }
       
       // Get available video devices (static method)
@@ -192,12 +197,12 @@ export default function BarcodeScanner({
         videoRef.current.srcObject = stream;
         
         // Start continuous decoding
+        // Reader is configured with 300ms between scans for better performance
         await codeReaderRef.current.decodeFromVideoElement(
           videoRef.current,
           (result) => {
             if (result) {
               const barcode = result.getText();
-              console.log('Barcode detected:', barcode);
               handleBarcodeDetected(barcode);
             }
           }
@@ -271,9 +276,23 @@ export default function BarcodeScanner({
   };
 
   const handleBarcodeDetected = async (barcode: string) => {
-    // Prevent multiple rapid detections
-    if (isProcessingRef.current) return;
+    const now = Date.now();
+    
+    // Prevent multiple rapid detections of the same barcode
+    if (isProcessingRef.current) {
+      console.log('Already processing, ignoring duplicate');
+      return;
+    }
+    
+    // Ignore if same barcode detected within last 2 seconds
+    if (lastDetectedRef.current === barcode && now - lastDetectionTimeRef.current < 2000) {
+      console.log('Duplicate barcode within 2s, ignoring');
+      return;
+    }
+    
     isProcessingRef.current = true;
+    lastDetectedRef.current = barcode;
+    lastDetectionTimeRef.current = now;
     
     // Stop camera first to prevent more detections
     stopCamera();
@@ -283,10 +302,8 @@ export default function BarcodeScanner({
     
     await searchProduct(barcode);
     
-    // Reset processing flag after a short delay
-    setTimeout(() => {
-      isProcessingRef.current = false;
-    }, 1000);
+    // Reset processing flag
+    isProcessingRef.current = false;
   };
 
   const handleManualEntry = () => {
@@ -338,6 +355,8 @@ export default function BarcodeScanner({
     setSelectedLocation('');
     setQuantityAdjustment('');
     isProcessingRef.current = false;
+    lastDetectedRef.current = '';
+    lastDetectionTimeRef.current = 0;
     // Keep currentCameraIndex and availableCameras to remember user's camera choice
   };
 
