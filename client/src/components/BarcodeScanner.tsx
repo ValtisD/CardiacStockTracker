@@ -112,9 +112,20 @@ export default function BarcodeScanner({
     };
   }, []);
 
+  useEffect(() => {
+    // Reset scanner state when dialog opens
+    if (isOpen) {
+      resetScanner();
+    }
+  }, [isOpen]);
+
   const startCamera = async (cameraIndex?: number) => {
     setIsScanning(true);
     setError('');
+    
+    // Clear any previous barcode detection state
+    lastDetectedRef.current = '';
+    lastDetectionTimeRef.current = 0;
     
     // Stop any existing stream before starting a new one
     if (videoRef.current && videoRef.current.srcObject) {
