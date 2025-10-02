@@ -48,6 +48,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/products/search/:query", async (req, res) => {
+    try {
+      const products = await storage.searchProducts(req.params.query);
+      if (products.length === 0) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      res.json(products);
+    } catch (error) {
+      console.error("Error searching products:", error);
+      res.status(500).json({ error: "Failed to search products" });
+    }
+  });
+
   app.post("/api/products", async (req, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);

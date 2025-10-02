@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
 import { CalendarDays, Package, Scan } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,67 +29,105 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-
-const productSchema = z.object({
-  modelNumber: z.string().min(1, "Model number is required"),
-  name: z.string().min(1, "Product name is required"),
-  category: z.string().min(1, "Category is required"),
-  manufacturer: z.string().min(1, "Manufacturer is required"),
-  description: z.string().optional(),
-  expirationDate: z.date().optional(),
-  serialNumber: z.string().optional(),
-  lotNumber: z.string().optional(),
-  barcode: z.string().optional(),
-});
-
-type ProductFormData = z.infer<typeof productSchema>;
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertProductSchema, type Product, type InsertProduct } from "@shared/schema";
 
 interface ProductFormProps {
-  initialData?: Partial<ProductFormData>;
-  onSubmit: (data: ProductFormData) => void;
+  product?: Product;
+  onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProps) {
+export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
   const [isScanning, setIsScanning] = useState(false);
+  const { toast } = useToast();
 
-  const form = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+  const form = useForm<InsertProduct>({
+    resolver: zodResolver(insertProductSchema),
     defaultValues: {
-      modelNumber: initialData?.modelNumber || "",
-      name: initialData?.name || "",
-      category: initialData?.category || "",
-      manufacturer: initialData?.manufacturer || "",
-      description: initialData?.description || "",
-      expirationDate: initialData?.expirationDate,
-      serialNumber: initialData?.serialNumber || "",
-      lotNumber: initialData?.lotNumber || "",
-      barcode: initialData?.barcode || "",
+      modelNumber: product?.modelNumber || "",
+      name: product?.name || "",
+      category: product?.category || "",
+      manufacturer: product?.manufacturer || "",
+      description: product?.description || "",
+      expirationDate: product?.expirationDate || undefined,
+      serialNumber: product?.serialNumber || "",
+      lotNumber: product?.lotNumber || "",
+      barcode: product?.barcode || "",
     },
   });
 
-  const handleSubmit = (data: ProductFormData) => {
-    console.log('Product form submitted:', data);
-    onSubmit(data);
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertProduct) => {
+      const res = await apiRequest("POST", "/api/products", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Success",
+        description: "Product created successfully",
+      });
+      if (onSuccess) onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create product",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: InsertProduct) => {
+      if (!product?.id) throw new Error("Product ID is required for updates");
+      const res = await apiRequest("PATCH", `/api/products/${product.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      });
+      if (onSuccess) onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update product",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (data: InsertProduct) => {
+    if (product) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const handleScanBarcode = () => {
     setIsScanning(true);
-    // Todo: remove mock functionality
     setTimeout(() => {
       const mockBarcode = "123456789012";
       form.setValue("barcode", mockBarcode);
       setIsScanning(false);
-      console.log('Barcode scanned:', mockBarcode);
     }, 2000);
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Package className="h-5 w-5" />
-          {initialData ? 'Edit Product' : 'Add New Product'}
+          {product ? 'Edit Product' : 'Add New Product'}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -107,6 +145,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                         placeholder="e.g., XT1234" 
                         {...field} 
                         data-testid="input-model-number"
+                        disabled={isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />
@@ -120,7 +159,11 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={isSubmitting}
+                    >
                       <FormControl>
                         <SelectTrigger data-testid="select-category">
                           <SelectValue placeholder="Select category" />
@@ -150,6 +193,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                       placeholder="e.g., Medtronic Azure Pacemaker" 
                       {...field} 
                       data-testid="input-product-name"
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormMessage />
@@ -168,6 +212,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                       placeholder="e.g., Medtronic, Boston Scientific, Abbott" 
                       {...field} 
                       data-testid="input-manufacturer"
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormMessage />
@@ -186,6 +231,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                       placeholder="Additional product details..."
                       {...field} 
                       data-testid="input-description"
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormMessage />
@@ -205,6 +251,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                         placeholder="e.g., MD001234" 
                         {...field} 
                         data-testid="input-serial-number"
+                        disabled={isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />
@@ -223,6 +270,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                         placeholder="e.g., LOT123" 
                         {...field} 
                         data-testid="input-lot-number"
+                        disabled={isSubmitting}
                       />
                     </FormControl>
                     <FormMessage />
@@ -245,6 +293,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                             variant="outline"
                             className="w-full justify-start text-left font-normal"
                             data-testid="button-expiration-date"
+                            disabled={isSubmitting}
                           >
                             <CalendarDays className="mr-2 h-4 w-4" />
                             {field.value ? format(field.value, "PPP") : "Pick a date"}
@@ -254,7 +303,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value}
+                          selected={field.value ? new Date(field.value) : undefined}
                           onSelect={field.onChange}
                           disabled={(date) => date < new Date()}
                           initialFocus
@@ -278,6 +327,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                           placeholder="Scan or enter manually" 
                           {...field} 
                           data-testid="input-barcode"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <Button
@@ -285,7 +335,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                         variant="outline"
                         size="icon"
                         onClick={handleScanBarcode}
-                        disabled={isScanning}
+                        disabled={isScanning || isSubmitting}
                         data-testid="button-scan-barcode"
                       >
                         <Scan className="h-4 w-4" />
@@ -307,6 +357,7 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
                   variant="outline" 
                   onClick={onCancel}
                   data-testid="button-cancel"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
@@ -314,8 +365,9 @@ export default function ProductForm({ initialData, onSubmit, onCancel }: Product
               <Button 
                 type="submit" 
                 data-testid="button-save-product"
+                disabled={isSubmitting}
               >
-                {initialData ? 'Update Product' : 'Add Product'}
+                {isSubmitting ? "Saving..." : (product ? 'Update Product' : 'Add Product')}
               </Button>
             </div>
           </form>

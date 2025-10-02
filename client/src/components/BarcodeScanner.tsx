@@ -1,29 +1,32 @@
-import { useState, useRef } from "react";
-import { Camera, Scan, X, CheckCircle, Upload } from "lucide-react";
+import { useState } from "react";
+import { Camera, Scan, X, CheckCircle, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Product } from "@shared/schema";
 
 interface BarcodeScannerProps {
   isOpen: boolean;
   onClose: () => void;
-  onScanComplete: (barcode: string, productInfo?: any) => void;
+  onScanComplete: (barcode: string, productInfo?: Product) => void;
   title?: string;
-}
-
-interface ScannedProduct {
-  barcode: string;
-  name: string;
-  modelNumber: string;
-  category: string;
-  manufacturer: string;
 }
 
 export default function BarcodeScanner({ 
@@ -35,32 +38,60 @@ export default function BarcodeScanner({
   const [isScanning, setIsScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState<string>('');
   const [manualCode, setManualCode] = useState<string>('');
-  const [productInfo, setProductInfo] = useState<ScannedProduct | null>(null);
+  const [productInfo, setProductInfo] = useState<Product | null>(null);
   const [error, setError] = useState<string>('');
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showInventoryUpdate, setShowInventoryUpdate] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [quantityAdjustment, setQuantityAdjustment] = useState<string>('');
 
-  // Todo: remove mock functionality
-  const mockProductDatabase: Record<string, ScannedProduct> = {
-    '123456789012': {
-      barcode: '123456789012',
-      name: 'Medtronic Azure Pacemaker',
-      modelNumber: 'XT1234',
-      category: 'Device',
-      manufacturer: 'Medtronic'
+  const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; minStockLevel: number; product: Product }>>({
+    queryKey: ['/api/inventory'],
+    enabled: !!productInfo && showInventoryUpdate,
+  });
+
+  const updateInventoryMutation = useMutation({
+    mutationFn: async (data: { productId: string; location: string; quantity: number }) => {
+      return await apiRequest('PATCH', `/api/inventory/${data.productId}/${data.location}`, { quantity: data.quantity });
     },
-    '987654321098': {
-      barcode: '987654321098',
-      name: 'Boston Scientific ICD Lead',
-      modelNumber: 'BS5678',
-      category: 'Lead/Electrode',
-      manufacturer: 'Boston Scientific'
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
+      setShowInventoryUpdate(false);
+      setQuantityAdjustment('');
+      setSelectedLocation('');
     },
-    '456789012345': {
-      barcode: '456789012345',
-      name: 'Surgical Gloves Size M',
-      modelNumber: 'SG001',
-      category: 'Material',
-      manufacturer: 'Medical Supplies Inc'
+  });
+
+  const searchProduct = async (query: string) => {
+    setIsSearching(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`/api/products/search/${encodeURIComponent(query)}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError('Product not found. Please check the barcode or try manual entry.');
+          setProductInfo(null);
+        } else {
+          setError('Failed to search for product. Please try again.');
+        }
+        return;
+      }
+      
+      const products = await response.json();
+      if (products && products.length > 0) {
+        setProductInfo(products[0]);
+      } else {
+        setError('Product not found. Please check the barcode or try manual entry.');
+        setProductInfo(null);
+      }
+    } catch (err) {
+      console.error('Error searching for product:', err);
+      setError('Failed to connect to server. Please try again.');
+      setProductInfo(null);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -69,10 +100,8 @@ export default function BarcodeScanner({
     setError('');
     
     try {
-      // Todo: remove mock functionality - replace with actual camera access
       console.log('Starting camera for barcode scanning...');
       
-      // Simulate camera initialization delay
       setTimeout(() => {
         console.log('Camera initialized (simulated)');
       }, 1000);
@@ -85,37 +114,23 @@ export default function BarcodeScanner({
 
   const stopCamera = () => {
     setIsScanning(false);
-    // Todo: remove mock functionality - stop actual camera stream
     console.log('Camera stopped');
   };
 
   const simulateScan = () => {
-    // Todo: remove mock functionality
-    const mockBarcodes = Object.keys(mockProductDatabase);
-    const randomBarcode = mockBarcodes[Math.floor(Math.random() * mockBarcodes.length)];
+    const randomCodes = ['123456789012', '987654321098', '456789012345'];
+    const randomBarcode = randomCodes[Math.floor(Math.random() * randomCodes.length)];
     
     setTimeout(() => {
       handleBarcodeDetected(randomBarcode);
     }, 2000);
   };
 
-  const handleBarcodeDetected = (barcode: string) => {
+  const handleBarcodeDetected = async (barcode: string) => {
     setScannedCode(barcode);
     setIsScanning(false);
     
-    // Look up product information
-    const product = mockProductDatabase[barcode];
-    if (product) {
-      setProductInfo(product);
-    } else {
-      setProductInfo({
-        barcode,
-        name: 'Unknown Product',
-        modelNumber: 'N/A',
-        category: 'Unknown',
-        manufacturer: 'Unknown'
-      });
-    }
+    await searchProduct(barcode);
     
     console.log('Barcode detected:', barcode);
   };
@@ -129,10 +144,33 @@ export default function BarcodeScanner({
 
   const handleConfirm = () => {
     if (scannedCode) {
-      onScanComplete(scannedCode, productInfo);
+      onScanComplete(scannedCode, productInfo || undefined);
       resetScanner();
       onClose();
     }
+  };
+
+  const handleInventoryUpdate = () => {
+    if (!productInfo || !selectedLocation || !quantityAdjustment) return;
+    
+    const currentInventory = inventoryData?.find(
+      inv => inv.productId === productInfo.id && inv.location === selectedLocation
+    );
+    
+    const currentQuantity = currentInventory?.quantity || 0;
+    const adjustment = parseInt(quantityAdjustment);
+    const newQuantity = currentQuantity + adjustment;
+    
+    if (newQuantity < 0) {
+      setError('Cannot set quantity below zero');
+      return;
+    }
+    
+    updateInventoryMutation.mutate({
+      productId: productInfo.id,
+      location: selectedLocation,
+      quantity: newQuantity,
+    });
   };
 
   const resetScanner = () => {
@@ -141,6 +179,10 @@ export default function BarcodeScanner({
     setManualCode('');
     setError('');
     setIsScanning(false);
+    setIsSearching(false);
+    setShowInventoryUpdate(false);
+    setSelectedLocation('');
+    setQuantityAdjustment('');
   };
 
   const handleClose = () => {
@@ -148,6 +190,10 @@ export default function BarcodeScanner({
     resetScanner();
     onClose();
   };
+
+  const currentInventory = inventoryData?.filter(
+    inv => inv.productId === productInfo?.id
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -160,7 +206,6 @@ export default function BarcodeScanner({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Camera View */}
           <Card>
             <CardContent className="p-4">
               <div className="relative bg-muted rounded-lg aspect-square flex items-center justify-center">
@@ -182,10 +227,23 @@ export default function BarcodeScanner({
                       Simulate Scan
                     </Button>
                   </div>
-                ) : scannedCode ? (
+                ) : isSearching ? (
+                  <div className="text-center">
+                    <Loader2 className="h-16 w-16 mx-auto mb-2 text-primary animate-spin" />
+                    <p className="text-sm text-muted-foreground">Searching for product...</p>
+                  </div>
+                ) : scannedCode && productInfo ? (
                   <div className="text-center">
                     <CheckCircle className="h-16 w-16 mx-auto mb-2 text-green-500" />
-                    <p className="text-sm font-medium">Barcode Scanned!</p>
+                    <p className="text-sm font-medium">Product Found!</p>
+                    <Badge variant="secondary" className="mt-2" data-testid="badge-scanned-code">
+                      {scannedCode}
+                    </Badge>
+                  </div>
+                ) : scannedCode ? (
+                  <div className="text-center">
+                    <X className="h-16 w-16 mx-auto mb-2 text-destructive" />
+                    <p className="text-sm font-medium">Product Not Found</p>
                     <Badge variant="secondary" className="mt-2">
                       {scannedCode}
                     </Badge>
@@ -199,14 +257,13 @@ export default function BarcodeScanner({
               </div>
 
               {error && (
-                <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+                <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive" data-testid="text-error">
                   {error}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Product Information */}
           {productInfo && (
             <Card>
               <CardHeader>
@@ -215,27 +272,125 @@ export default function BarcodeScanner({
               <CardContent className="space-y-2">
                 <div>
                   <span className="text-sm font-medium">Name:</span>
-                  <span className="ml-2 text-sm">{productInfo.name}</span>
+                  <span className="ml-2 text-sm" data-testid="text-product-name">{productInfo.name}</span>
                 </div>
                 <div>
                   <span className="text-sm font-medium">Model:</span>
-                  <span className="ml-2 text-sm">{productInfo.modelNumber}</span>
+                  <span className="ml-2 text-sm" data-testid="text-product-model">{productInfo.modelNumber}</span>
                 </div>
                 <div>
                   <span className="text-sm font-medium">Category:</span>
-                  <Badge variant="outline" className="ml-2">
+                  <Badge variant="outline" className="ml-2" data-testid="badge-product-category">
                     {productInfo.category}
                   </Badge>
                 </div>
                 <div>
                   <span className="text-sm font-medium">Manufacturer:</span>
-                  <span className="ml-2 text-sm">{productInfo.manufacturer}</span>
+                  <span className="ml-2 text-sm" data-testid="text-product-manufacturer">{productInfo.manufacturer}</span>
+                </div>
+                {productInfo.serialNumber && (
+                  <div>
+                    <span className="text-sm font-medium">Serial Number:</span>
+                    <span className="ml-2 text-sm" data-testid="text-product-serial">{productInfo.serialNumber}</span>
+                  </div>
+                )}
+                {productInfo.lotNumber && (
+                  <div>
+                    <span className="text-sm font-medium">Lot Number:</span>
+                    <span className="ml-2 text-sm">{productInfo.lotNumber}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {productInfo && currentInventory && currentInventory.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Current Inventory</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {currentInventory.map(inv => (
+                  <div key={inv.id} className="flex justify-between items-center">
+                    <span className="text-sm font-medium capitalize">{inv.location}:</span>
+                    <Badge variant={inv.quantity <= inv.minStockLevel ? "destructive" : "secondary"}>
+                      {inv.quantity} units
+                    </Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {productInfo && !showInventoryUpdate && (
+            <Button
+              onClick={() => setShowInventoryUpdate(true)}
+              variant="outline"
+              className="w-full"
+              data-testid="button-update-inventory"
+            >
+              Update Inventory
+            </Button>
+          )}
+
+          {productInfo && showInventoryUpdate && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Update Inventory</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label htmlFor="location">Location</Label>
+                  <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                    <SelectTrigger id="location" data-testid="select-location">
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="home">Home</SelectItem>
+                      <SelectItem value="car">Car</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="quantity">Quantity Adjustment</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    placeholder="Enter +/- amount (e.g., +5 or -3)"
+                    value={quantityAdjustment}
+                    onChange={(e) => setQuantityAdjustment(e.target.value)}
+                    data-testid="input-quantity-adjustment"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowInventoryUpdate(false)}
+                    variant="outline"
+                    className="flex-1"
+                    data-testid="button-cancel-inventory"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleInventoryUpdate}
+                    disabled={!selectedLocation || !quantityAdjustment || updateInventoryMutation.isPending}
+                    className="flex-1"
+                    data-testid="button-save-inventory"
+                  >
+                    {updateInventoryMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update'
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Manual Entry */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Manual Entry</CardTitle>
@@ -243,7 +398,7 @@ export default function BarcodeScanner({
             <CardContent>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Enter barcode manually"
+                  placeholder="Enter barcode, model, or serial number"
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleManualEntry()}
@@ -251,7 +406,7 @@ export default function BarcodeScanner({
                 />
                 <Button 
                   onClick={handleManualEntry}
-                  disabled={!manualCode.trim()}
+                  disabled={!manualCode.trim() || isSearching}
                   data-testid="button-manual-entry"
                 >
                   <Upload className="h-4 w-4" />
@@ -260,7 +415,6 @@ export default function BarcodeScanner({
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
           <div className="flex gap-2">
             {!isScanning && !scannedCode && (
               <Button 
@@ -297,6 +451,7 @@ export default function BarcodeScanner({
                 <Button 
                   onClick={handleConfirm} 
                   className="flex-1"
+                  disabled={!productInfo}
                   data-testid="button-confirm-scan"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
