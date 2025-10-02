@@ -56,7 +56,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       toLocation: string; 
       quantity: number;
     }) => {
-      return await apiRequest('/api/stock-transfers', 'POST', {
+      return await apiRequest('POST', '/api/stock-transfers', {
         productId,
         fromLocation,
         toLocation,
