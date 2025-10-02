@@ -2,28 +2,74 @@ import { Package, Car, Hospital, AlertTriangle, TrendingUp, Calendar } from "luc
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query";
+import type { Inventory, ImplantProcedure, Product } from "@shared/schema";
 
-interface DashboardStats {
-  homeStock: { total: number; lowStock: number };
-  carStock: { total: number; lowStock: number };
-  recentProcedures: number;
-  expiringItems: number;
+interface InventoryWithProduct extends Inventory {
+  product?: Product;
 }
 
-interface DashboardProps {
-  stats?: DashboardStats;
-}
+export default function Dashboard() {
+  const { data: homeInventory, isLoading: homeLoading, error: homeError } = useQuery<InventoryWithProduct[]>({
+    queryKey: ["/api/inventory", { location: "home" }],
+  });
 
-// Todo: remove mock functionality
-const mockStats: DashboardStats = {
-  homeStock: { total: 156, lowStock: 8 },
-  carStock: { total: 42, lowStock: 3 },
-  recentProcedures: 12,
-  expiringItems: 5
-};
+  const { data: carInventory, isLoading: carLoading, error: carError } = useQuery<InventoryWithProduct[]>({
+    queryKey: ["/api/inventory", { location: "car" }],
+  });
 
-export default function Dashboard({ stats = mockStats }: DashboardProps) {
+  const { data: homeLowStock, isLoading: homeLowStockLoading, error: homeLowStockError } = useQuery<InventoryWithProduct[]>({
+    queryKey: ["/api/inventory/low-stock", { location: "home" }],
+  });
+
+  const { data: carLowStock, isLoading: carLowStockLoading, error: carLowStockError } = useQuery<InventoryWithProduct[]>({
+    queryKey: ["/api/inventory/low-stock", { location: "car" }],
+  });
+
+  const { data: procedures, isLoading: proceduresLoading, error: proceduresError } = useQuery<ImplantProcedure[]>({
+    queryKey: ["/api/implant-procedures"],
+  });
+
+  const isLoading = homeLoading || carLoading || homeLowStockLoading || carLowStockLoading || proceduresLoading;
+  const hasError = homeError || carError || homeLowStockError || carLowStockError || proceduresError;
+
+  const homeStockTotal = homeInventory?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const carStockTotal = carInventory?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const homeLowStockCount = homeLowStock?.length || 0;
+  const carLowStockCount = carLowStock?.length || 0;
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentProceduresCount = procedures?.filter(proc => {
+    const procDate = new Date(proc.implantDate);
+    return procDate >= thirtyDaysAgo;
+  }).length || 0;
+
+  const expiringItemsCount = 0;
+
+  if (hasError) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">Dashboard</h2>
+        </div>
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Error Loading Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Unable to load dashboard data. Please try again later.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -41,13 +87,21 @@ export default function Dashboard({ stats = mockStats }: DashboardProps) {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-home-stock-total">
-              {stats.homeStock.total}
-            </div>
+            {isLoading ? (
+              <div className="text-2xl font-bold text-muted-foreground" data-testid="text-home-stock-total">
+                ...
+              </div>
+            ) : (
+              <div className="text-2xl font-bold" data-testid="text-home-stock-total">
+                {homeStockTotal}
+              </div>
+            )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {stats.homeStock.lowStock > 0 ? (
+              {isLoading ? (
+                <span>Loading...</span>
+              ) : homeLowStockCount > 0 ? (
                 <Badge variant="destructive" className="text-xs">
-                  {stats.homeStock.lowStock} low stock
+                  {homeLowStockCount} low stock
                 </Badge>
               ) : (
                 <span className="text-green-600">All items in stock</span>
@@ -62,13 +116,21 @@ export default function Dashboard({ stats = mockStats }: DashboardProps) {
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-car-stock-total">
-              {stats.carStock.total}
-            </div>
+            {isLoading ? (
+              <div className="text-2xl font-bold text-muted-foreground" data-testid="text-car-stock-total">
+                ...
+              </div>
+            ) : (
+              <div className="text-2xl font-bold" data-testid="text-car-stock-total">
+                {carStockTotal}
+              </div>
+            )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {stats.carStock.lowStock > 0 ? (
+              {isLoading ? (
+                <span>Loading...</span>
+              ) : carLowStockCount > 0 ? (
                 <Badge variant="destructive" className="text-xs">
-                  {stats.carStock.lowStock} low stock
+                  {carLowStockCount} low stock
                 </Badge>
               ) : (
                 <span className="text-green-600">All items ready</span>
@@ -83,9 +145,15 @@ export default function Dashboard({ stats = mockStats }: DashboardProps) {
             <Hospital className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-recent-procedures">
-              {stats.recentProcedures}
-            </div>
+            {isLoading ? (
+              <div className="text-2xl font-bold text-muted-foreground" data-testid="text-recent-procedures">
+                ...
+              </div>
+            ) : (
+              <div className="text-2xl font-bold" data-testid="text-recent-procedures">
+                {recentProceduresCount}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Last 30 days
             </p>
@@ -98,9 +166,15 @@ export default function Dashboard({ stats = mockStats }: DashboardProps) {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-expiring-items">
-              {stats.expiringItems}
-            </div>
+            {isLoading ? (
+              <div className="text-2xl font-bold text-muted-foreground" data-testid="text-expiring-items">
+                ...
+              </div>
+            ) : (
+              <div className="text-2xl font-bold" data-testid="text-expiring-items">
+                {expiringItemsCount}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Next 90 days
             </p>
@@ -133,7 +207,7 @@ export default function Dashboard({ stats = mockStats }: DashboardProps) {
       </Card>
 
       {/* Low Stock Alerts */}
-      {(stats.homeStock.lowStock > 0 || stats.carStock.lowStock > 0) && (
+      {!isLoading && (homeLowStockCount > 0 || carLowStockCount > 0) && (
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
@@ -143,17 +217,17 @@ export default function Dashboard({ stats = mockStats }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {stats.homeStock.lowStock > 0 && (
+              {homeLowStockCount > 0 && (
                 <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-md">
-                  <span className="text-sm">Home inventory has {stats.homeStock.lowStock} items running low</span>
+                  <span className="text-sm">Home inventory has {homeLowStockCount} items running low</span>
                   <Button size="sm" variant="destructive" data-testid="button-view-home-alerts">
                     View Items
                   </Button>
                 </div>
               )}
-              {stats.carStock.lowStock > 0 && (
+              {carLowStockCount > 0 && (
                 <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-md">
-                  <span className="text-sm">Car inventory needs restocking: {stats.carStock.lowStock} items</span>
+                  <span className="text-sm">Car inventory needs restocking: {carLowStockCount} items</span>
                   <Button size="sm" variant="destructive" data-testid="button-view-car-alerts">
                     Restock Now
                   </Button>
