@@ -45,6 +45,7 @@ export default function BarcodeScanner({
   const [error, setError] = useState<string>('');
   const [isSearching, setIsSearching] = useState(false);
   const [showInventoryUpdate, setShowInventoryUpdate] = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [quantityAdjustment, setQuantityAdjustment] = useState<string>('');
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -416,6 +417,7 @@ export default function BarcodeScanner({
     setIsScanning(false);
     setIsSearching(false);
     setShowInventoryUpdate(false);
+    setShowManualEntry(false);
     setSelectedLocation('');
     setQuantityAdjustment('');
     isProcessingRef.current = false;
@@ -659,29 +661,42 @@ export default function BarcodeScanner({
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Manual Entry</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter barcode, model, or serial number"
-                  value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleManualEntry()}
-                  data-testid="input-manual-barcode"
-                />
-                <Button 
-                  onClick={handleManualEntry}
-                  disabled={!manualCode.trim() || isSearching}
-                  data-testid="button-manual-entry"
-                >
-                  <Upload className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {!showManualEntry ? (
+            <Button
+              onClick={() => setShowManualEntry(true)}
+              variant="outline"
+              className="w-full"
+              data-testid="button-show-manual-entry"
+            >
+              Enter Code Manually
+            </Button>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Manual Entry</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter barcode, model, or serial number"
+                    value={manualCode}
+                    onChange={(e) => setManualCode(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleManualEntry()}
+                    autoComplete="off"
+                    autoFocus
+                    data-testid="input-manual-barcode"
+                  />
+                  <Button 
+                    onClick={handleManualEntry}
+                    disabled={!manualCode.trim() || isSearching}
+                    data-testid="button-manual-entry"
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex gap-2">
             {!isScanning && !scannedCode && (
