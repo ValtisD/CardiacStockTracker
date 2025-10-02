@@ -52,6 +52,7 @@ export default function BarcodeScanner({
   const isProcessingRef = useRef<boolean>(false);
   const lastDetectedRef = useRef<string>('');
   const lastDetectionTimeRef = useRef<number>(0);
+  const isScanningActiveRef = useRef<boolean>(false);
 
   const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; minStockLevel: number; product: Product }>>({
     queryKey: ['/api/inventory'],
@@ -196,11 +197,19 @@ export default function BarcodeScanner({
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
+        // Mark scanning as active
+        isScanningActiveRef.current = true;
+        
         // Start continuous decoding
         // Reader is configured with 300ms between scans for better performance
         await codeReaderRef.current.decodeFromVideoElement(
           videoRef.current,
           (result) => {
+            // Immediately check if scanning is still active
+            if (!isScanningActiveRef.current) {
+              return; // Camera was stopped, ignore this callback
+            }
+            
             if (result) {
               const barcode = result.getText();
               handleBarcodeDetected(barcode);
@@ -246,6 +255,9 @@ export default function BarcodeScanner({
   };
 
   const stopCamera = () => {
+    // Immediately mark scanning as inactive to stop all callbacks
+    isScanningActiveRef.current = false;
+    
     // Stop the code reader
     if (codeReaderRef.current) {
       try {
@@ -355,6 +367,7 @@ export default function BarcodeScanner({
     setSelectedLocation('');
     setQuantityAdjustment('');
     isProcessingRef.current = false;
+    isScanningActiveRef.current = false;
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
     // Keep currentCameraIndex and availableCameras to remember user's camera choice
