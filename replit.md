@@ -179,7 +179,9 @@ Currently not implemented - the application appears to be designed for single-us
 - **Google Fonts** - Inter, Architects Daughter, DM Sans, Fira Code, Geist Mono loaded via CDN
 
 ### Barcode Scanning Implementation
-The application includes real-time camera-based barcode scanning using @zxing/library:
+The application includes real-time camera-based barcode scanning using @zxing/library with GS1 barcode parsing:
+
+**Camera Features**:
 - **Multi-language Camera Detection**: Detects back cameras in multiple languages (English "back/rear/environment", German "rück", Spanish "trasera", French "arrière")
 - **Smart Camera Selection**: On first use, automatically finds back camera by label; falls back to last camera (typically back on mobile) if label detection fails; handles single-camera devices gracefully
 - **Camera Persistence**: Remembers user's camera choice across scan sessions (within component lifecycle)
@@ -190,3 +192,13 @@ The application includes real-time camera-based barcode scanning using @zxing/li
 - **Duplicate Prevention**: 2-second cooldown prevents repeated processing of same barcode
 - **Single-Detection Guarantee**: isScanningActiveRef flag prevents queued callbacks from executing after camera stops
 - **Resource Management**: Comprehensive MediaStream cleanup in all lifecycle paths (unmount, error, switch) prevents camera LED leaks
+
+**GS1 Barcode Parsing** (`client/src/lib/gs1Parser.ts`):
+- **Automatic Detection**: Recognizes GS1-compliant barcodes by Application Identifier prefix
+- **Field Extraction**: Parses (01) GTIN/item number, (17) expiration date, (21) serial number, (10) lot/batch number
+- **Smart Product Lookup**: Uses GTIN for database search instead of full barcode string for more accurate matching
+- **Date Conversion**: Converts GS1 YYMMDD format to YYYY-MM-DD (handles century with YY < 50 = 20xx, else 19xx)
+- **Variable-Length Support**: Correctly handles both fixed-length (GTIN, exp date) and variable-length (serial, lot) fields
+- **Auto-Population**: Automatically fills product form fields (expiration date, serial number, lot number) from scanned GS1 data
+- **State Management**: Clears GS1 data when non-GS1 barcodes are scanned to prevent stale data issues
+- **User Feedback**: Displays extracted GS1 data in dedicated card with formatted Application Identifier labels

@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertProductSchema, type Product, type InsertProduct } from "@shared/schema";
 import BarcodeScanner from "@/components/BarcodeScanner";
+import { GS1Data } from "@/lib/gs1Parser";
 
 interface ProductFormProps {
   product?: Product;
@@ -112,7 +113,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     }
   };
 
-  const handleScanComplete = (barcode: string, productInfo?: Product) => {
+  const handleScanComplete = (barcode: string, productInfo?: Product, gs1Data?: GS1Data) => {
     // Set the barcode from scanning
     form.setValue("barcode", barcode);
     
@@ -136,6 +137,26 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         title: "Barcode Scanned",
         description: "Barcode added to form. Product not found in database - please fill in details manually.",
       });
+    }
+    
+    // Override with GS1 data if available (more specific to this exact item)
+    if (gs1Data) {
+      if (gs1Data.gtin) {
+        form.setValue("modelNumber", gs1Data.gtin);
+      }
+      if (gs1Data.expirationDate) {
+        form.setValue("expirationDate", gs1Data.expirationDate);
+        toast({
+          title: "GS1 Data Extracted",
+          description: `Expiration date: ${gs1Data.expirationDate}${gs1Data.serialNumber ? `, Serial: ${gs1Data.serialNumber}` : ''}`,
+        });
+      }
+      if (gs1Data.serialNumber) {
+        form.setValue("serialNumber", gs1Data.serialNumber);
+      }
+      if (gs1Data.lotNumber) {
+        form.setValue("lotNumber", gs1Data.lotNumber);
+      }
     }
   };
 

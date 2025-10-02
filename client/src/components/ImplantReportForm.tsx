@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Hospital, Product, Inventory, InsertProcedureMaterial } from "@shared/schema";
 import BarcodeScanner from "@/components/BarcodeScanner";
+import { GS1Data } from "@/lib/gs1Parser";
 
 const implantReportSchema = z.object({
   hospitalId: z.string().min(1, "Hospital is required"),
@@ -210,7 +211,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     setShowBarcodeScanner(true);
   };
 
-  const handleScanComplete = (barcode: string, productInfo?: Product) => {
+  const handleScanComplete = (barcode: string, productInfo?: Product, gs1Data?: GS1Data) => {
     if (!scanningItem) return;
     
     const { type, id } = scanningItem;
@@ -220,9 +221,13 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       selectProduct(type, id, productInfo.id);
       updateMaterialItem(type, id, 'scanned', true);
       
+      const toastDescription = gs1Data?.serialNumber 
+        ? `${productInfo.name} added (Serial: ${gs1Data.serialNumber})`
+        : `${productInfo.name} added successfully`;
+      
       toast({
         title: "Product Scanned",
-        description: `${productInfo.name} added successfully`,
+        description: toastDescription,
       });
     } else {
       // Product not found - clear productId and set barcode as manual entry

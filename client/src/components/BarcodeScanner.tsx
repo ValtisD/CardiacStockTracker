@@ -22,11 +22,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 import { BrowserMultiFormatReader } from "@zxing/browser";
+import { parseGS1Barcode, formatGS1Display, isGS1Barcode, GS1Data } from "@/lib/gs1Parser";
 
 interface BarcodeScannerProps {
   isOpen: boolean;
   onClose: () => void;
-  onScanComplete: (barcode: string, productInfo?: Product) => void;
+  onScanComplete: (barcode: string, productInfo?: Product, gs1Data?: GS1Data) => void;
   title?: string;
 }
 
@@ -40,6 +41,7 @@ export default function BarcodeScanner({
   const [scannedCode, setScannedCode] = useState<string>('');
   const [manualCode, setManualCode] = useState<string>('');
   const [productInfo, setProductInfo] = useState<Product | null>(null);
+  const [gs1Data, setGs1Data] = useState<GS1Data | null>(null);
   const [error, setError] = useState<string>('');
   const [isSearching, setIsSearching] = useState(false);
   const [showInventoryUpdate, setShowInventoryUpdate] = useState(false);
@@ -76,8 +78,32 @@ export default function BarcodeScanner({
     setIsSearching(true);
     setError('');
     
+    // Parse GS1 barcode if applicable
+    let parsedData: GS1Data | null = null;
+    let searchQuery = query;
+    
+    if (isGS1Barcode(query)) {
+      parsedData = parseGS1Barcode(query);
+      setGs1Data(parsedData);
+      
+      // Use GTIN for product lookup if available
+      if (parsedData.gtin) {
+        searchQuery = parsedData.gtin;
+        console.log('GS1 barcode detected. Using GTIN for search:', searchQuery);
+        console.log('Extracted data:', {
+          expirationDate: parsedData.expirationDate,
+          serialNumber: parsedData.serialNumber,
+          lotNumber: parsedData.lotNumber
+        });
+      }
+    } else {
+      // Clear GS1 data for non-GS1 barcodes to prevent stale data
+      setGs1Data(null);
+      console.log('Non-GS1 barcode, searching with full barcode:', query);
+    }
+    
     try {
-      const response = await fetch(`/api/products/search/${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/products/search/${encodeURIComponent(searchQuery)}`);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -352,7 +378,7 @@ export default function BarcodeScanner({
 
   const handleConfirm = () => {
     if (scannedCode) {
-      onScanComplete(scannedCode, productInfo || undefined);
+      onScanComplete(scannedCode, productInfo || undefined, gs1Data || undefined);
       resetScanner();
       onClose();
     }
@@ -384,6 +410,7 @@ export default function BarcodeScanner({
   const resetScanner = () => {
     setScannedCode('');
     setProductInfo(null);
+    setGs1Data(null);
     setManualCode('');
     setError('');
     setIsScanning(false);
@@ -466,6 +493,44 @@ export default function BarcodeScanner({
               )}
             </CardContent>
           </Card>
+
+          {gs1Data && (gs1Data.gtin || gs1Data.expirationDate || gs1Data.serialNumber || gs1Data.lotNumber) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Barcode Data (GS1)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {gs1Data.gtin && (
+                  <div>
+                    <span className="text-sm font-medium">Item Number (GTIN):</span>
+                    <span className="ml-2 text-sm font-mono" data-testid="text-gs1-gtin">{gs1Data.gtin}</span>
+                  </div>
+                )}
+                {gs1Data.expirationDate && (
+                  <div>
+                    <span className="text-sm font-medium">Expiration Date:</span>
+                    <span className="ml-2 text-sm" data-testid="text-gs1-expiration">{gs1Data.expirationDate}</span>
+                  </div>
+                )}
+                {gs1Data.serialNumber && (
+                  <div>
+                    <span className="text-sm font-medium">Serial Number:</span>
+                    <span className="ml-2 text-sm font-mono" data-testid="text-gs1-serial">{gs1Data.serialNumber}</span>
+                  </div>
+                )}
+                {gs1Data.lotNumber && (
+                  <div>
+                    <span className="text-sm font-medium">Lot Number:</span>
+                    <span className="ml-2 text-sm font-mono" data-testid="text-gs1-lot">{gs1Data.lotNumber}</span>
+                  </div>
+                )}
+                <div className="pt-2 border-t">
+                  <span className="text-xs text-muted-foreground">Raw: </span>
+                  <span className="text-xs font-mono text-muted-foreground">{formatGS1Display(gs1Data)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {productInfo && (
             <Card>
