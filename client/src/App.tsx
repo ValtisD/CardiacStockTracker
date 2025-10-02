@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
+import type { Inventory } from "@shared/schema";
 
 // Components
 import AppHeader from "@/components/AppHeader";
@@ -173,6 +174,30 @@ export default function App() {
   const [showStockTransfer, setShowStockTransfer] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
+  // Fetch real low stock data from backend
+  const { data: homeLowStock } = useQuery<Inventory[]>({
+    queryKey: ["/api/inventory/low-stock", "home"],
+    queryFn: async () => {
+      const response = await fetch('/api/inventory/low-stock?location=home');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const { data: carLowStock } = useQuery<Inventory[]>({
+    queryKey: ["/api/inventory/low-stock", "car"],
+    queryFn: async () => {
+      const response = await fetch('/api/inventory/low-stock?location=car');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const lowStockAlerts = {
+    home: homeLowStock?.length || 0,
+    car: carLowStock?.length || 0,
+  };
+
   const handleNavigate = (path: string) => {
     setCurrentPath(path);
     // In a real app, this would integrate with wouter's navigation
@@ -209,7 +234,7 @@ export default function App() {
             <AppSidebar 
               currentPath={currentPath}
               onNavigate={handleNavigate}
-              lowStockAlerts={{ home: 3, car: 2 }}
+              lowStockAlerts={lowStockAlerts}
             />
             <div className="flex flex-col flex-1">
               <header className="flex items-center justify-between p-4 border-b border-card-border bg-card">

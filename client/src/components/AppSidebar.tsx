@@ -20,7 +20,7 @@ interface AppSidebarProps {
 export default function AppSidebar({ 
   currentPath = '/', 
   onNavigate,
-  lowStockAlerts = { home: 3, car: 2 }
+  lowStockAlerts = { home: 0, car: 0 }
 }: AppSidebarProps) {
   const handleNavigation = (path: string) => {
     console.log('Navigating to:', path);
