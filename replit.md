@@ -185,5 +185,7 @@ The application includes real-time camera-based barcode scanning using @zxing/li
 - **Camera Switching**: Button to cycle through available cameras when multiple devices detected
 - **High-Resolution Detection**: Uses 1920x1080 ideal resolution with continuous focus mode for detecting barcodes in any part of the camera frame
 - **Partial Frame Detection**: Barcodes can be detected even when small in the frame, not requiring full-frame coverage
+- **Optimized Scan Timing**: 300ms interval between scans for optimal balance of speed, reliability, and battery life
+- **Duplicate Prevention**: 2-second cooldown prevents repeated processing of same barcode
 - **Camera Index Sentinel**: Initializes to -1 to force back-camera selection on first use
 - **Resource Management**: Comprehensive MediaStream cleanup in all lifecycle paths (unmount, error, switch) prevents camera LED leaks
