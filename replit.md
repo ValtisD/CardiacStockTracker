@@ -180,12 +180,13 @@ Currently not implemented - the application appears to be designed for single-us
 
 ### Barcode Scanning Implementation
 The application includes real-time camera-based barcode scanning using @zxing/library:
-- **Camera Selection**: Automatically prefers back/rear/environment cameras on first use
+- **Multi-language Camera Detection**: Detects back cameras in multiple languages (English "back/rear/environment", German "rück", Spanish "trasera", French "arrière")
+- **Smart Camera Selection**: On first use, automatically finds back camera by label; falls back to last camera (typically back on mobile) if label detection fails; handles single-camera devices gracefully
 - **Camera Persistence**: Remembers user's camera choice across scan sessions (within component lifecycle)
-- **Camera Switching**: Button to cycle through available cameras when multiple devices detected
+- **Reliable Camera Switching**: Async/await pattern with 500ms cleanup delay ensures proper camera resource release before switching
 - **High-Resolution Detection**: Uses 1920x1080 ideal resolution with continuous focus mode for detecting barcodes in any part of the camera frame
 - **Partial Frame Detection**: Barcodes can be detected even when small in the frame, not requiring full-frame coverage
 - **Optimized Scan Timing**: 300ms interval between scans for optimal balance of speed, reliability, and battery life
 - **Duplicate Prevention**: 2-second cooldown prevents repeated processing of same barcode
-- **Camera Index Sentinel**: Initializes to -1 to force back-camera selection on first use
+- **Single-Detection Guarantee**: isScanningActiveRef flag prevents queued callbacks from executing after camera stops
 - **Resource Management**: Comprehensive MediaStream cleanup in all lifecycle paths (unmount, error, switch) prevents camera LED leaks
