@@ -392,6 +392,30 @@ export class DatabaseStorage implements IStorage {
       .where(eq(procedureMaterials.procedureId, procedureId));
   }
 
+  async updateImplantProcedure(
+    id: string,
+    procedureData: Partial<InsertImplantProcedure>
+  ): Promise<ImplantProcedure | null> {
+    const result = await db
+      .update(implantProcedures)
+      .set(procedureData)
+      .where(eq(implantProcedures.id, id))
+      .returning();
+    return result[0] || null;
+  }
+
+  async deleteImplantProcedure(id: string): Promise<boolean> {
+    // First delete all associated materials
+    await db.delete(procedureMaterials).where(eq(procedureMaterials.procedureId, id));
+    
+    // Then delete the procedure
+    const result = await db
+      .delete(implantProcedures)
+      .where(eq(implantProcedures.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
   // Stock Transfers
   async getStockTransfers(): Promise<(StockTransfer & { product: Product })[]> {
     return await db

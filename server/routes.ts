@@ -288,6 +288,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/implant-procedures/:id", async (req, res) => {
+    try {
+      const procedure = await storage.updateImplantProcedure(req.params.id, req.body);
+      if (!procedure) {
+        return res.status(404).json({ error: "Procedure not found" });
+      }
+      res.json(procedure);
+    } catch (error) {
+      console.error("Error updating implant procedure:", error);
+      res.status(400).json({ error: "Failed to update implant procedure" });
+    }
+  });
+
+  app.delete("/api/implant-procedures/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteImplantProcedure(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Procedure not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting implant procedure:", error);
+      res.status(500).json({ error: "Failed to delete implant procedure" });
+    }
+  });
+
   // Stock Transfers
   app.get("/api/stock-transfers", async (req, res) => {
     try {
