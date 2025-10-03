@@ -61,6 +61,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [gs1Data, setGs1Data] = useState<GS1Data | null>(null);
+  const [manualGtin, setManualGtin] = useState("");
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<AddInventoryFormData>({
@@ -104,8 +106,57 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
     form.reset();
     setSelectedProduct(null);
     setGs1Data(null);
+    setManualGtin("");
     setShowBarcodeScanner(false);
     onOpenChange(false);
+  };
+
+  const handleManualGtinLookup = async () => {
+    if (!manualGtin.trim()) {
+      toast({
+        title: "GTIN required",
+        description: "Please enter a GTIN to search for a product.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoadingProduct(true);
+    try {
+      const response = await fetch(`/api/products?gtin=${encodeURIComponent(manualGtin.trim())}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch product');
+      }
+      
+      const products: Product[] = await response.json();
+      
+      if (products.length === 0) {
+        toast({
+          title: "Product not found",
+          description: `No product found with GTIN: ${manualGtin}`,
+          variant: "destructive",
+        });
+        setIsLoadingProduct(false);
+        return;
+      }
+
+      const product = products[0];
+      setSelectedProduct(product);
+      form.setValue("productId", product.id);
+      
+      toast({
+        title: "Product found",
+        description: `${product.name} (${product.modelNumber})`,
+      });
+    } catch (error) {
+      toast({
+        title: "Lookup failed",
+        description: error instanceof Error ? error.message : "Failed to lookup product by GTIN",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingProduct(false);
+    }
   };
 
   const handleScanComplete = async (barcode: string, productInfo?: Product, parsedGs1Data?: GS1Data) => {
@@ -245,6 +296,32 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                 >
                   <Scan className="h-4 w-4 mr-2" />
                   Scan Barcode
+                </Button>
+              </div>
+
+              {/* Manual GTIN Entry */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Or enter GTIN manually..."
+                  value={manualGtin}
+                  onChange={(e) => setManualGtin(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleManualGtinLookup();
+                    }
+                  }}
+                  disabled={isLoadingProduct || addInventoryMutation.isPending}
+                  data-testid="input-manual-gtin"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  onClick={handleManualGtinLookup}
+                  disabled={!manualGtin.trim() || isLoadingProduct || addInventoryMutation.isPending}
+                  data-testid="button-lookup-gtin"
+                >
+                  {isLoadingProduct ? "Looking up..." : "Lookup"}
                 </Button>
               </div>
 
@@ -393,36 +470,57 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                 <FormField
                   control={form.control}
                   name="expirationDate"
-                  render={({ field }) => (
-                    <FormItem className={trackingMode === "serial" ? "md:col-span-2" : ""}>
-                      <FormLabel>Expiration Date (Optional)</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start text-left font-normal"
-                              data-testid="button-expiration-date"
-                              disabled={addInventoryMutation.isPending}
-                            >
-                              <CalendarDays className="mr-2 h-4 w-4" />
-                              {field.value ? format(field.value, "PPP") : "Pick a date"}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    // Parse YYYY-MM-DD string to Date object safely (timezone-agnostic)
+                    const parseDateString = (dateStr: string | undefined) => {
+                      if (!dateStr) return undefined;
+                      const [year, month, day] = dateStr.split('-').map(Number);
+                      return new Date(year, month - 1, day);
+                    };
+
+                    const selectedDate = parseDateString(field.value);
+
+                    return (
+                      <FormItem className={trackingMode === "serial" ? "md:col-span-2" : ""}>
+                        <FormLabel>Expiration Date (Optional)</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal"
+                                data-testid="button-expiration-date"
+                                disabled={addInventoryMutation.isPending}
+                              >
+                                <CalendarDays className="mr-2 h-4 w-4" />
+                                {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={selectedDate}
+                              onSelect={(date) => {
+                                // Convert Date to YYYY-MM-DD string format for Zod validation
+                                if (date) {
+                                  const year = date.getFullYear();
+                                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                                  const day = String(date.getDate()).padStart(2, '0');
+                                  field.onChange(`${year}-${month}-${day}`);
+                                } else {
+                                  field.onChange(undefined);
+                                }
+                              }}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
 
