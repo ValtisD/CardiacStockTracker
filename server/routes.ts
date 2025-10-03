@@ -126,8 +126,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertInventorySchema.parse(req.body);
       const inventory = await storage.createInventoryItem(validatedData);
       res.status(201).json(inventory);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating inventory item:", error);
+      
+      // Check for unique constraint violation on serial number
+      if (error.code === '23505' && error.constraint === 'inventory_serial_number_unique') {
+        return res.status(409).json({ 
+          error: "Serial number already exists in inventory",
+          field: "serialNumber"
+        });
+      }
+      
       res.status(400).json({ error: "Failed to create inventory item" });
     }
   });
