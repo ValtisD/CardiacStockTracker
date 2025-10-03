@@ -675,6 +675,8 @@ export class DatabaseStorage implements IStorage {
         materialName: procedureMaterials.materialName,
         quantity: procedureMaterials.quantity,
         source: procedureMaterials.source,
+        serialNumber: procedureMaterials.serialNumber,
+        lotNumber: procedureMaterials.lotNumber,
         product: products,
       })
       .from(procedureMaterials)
