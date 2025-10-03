@@ -156,7 +156,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
-    let whereClause = sql`${inventory.quantity} <= ${inventory.minStockLevel}`;
+    let whereClause = sql`${inventory.quantity} < ${inventory.minStockLevel}`;
     
     if (location) {
       whereClause = and(

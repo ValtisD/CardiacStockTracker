@@ -399,12 +399,6 @@ export default function Dashboard() {
               New Implant Report
             </Button>
           </Link>
-          <Link href="/transfer">
-            <Button variant="secondary" className="justify-start gap-2 w-full" data-testid="button-transfer-stock">
-              <Package className="h-4 w-4" />
-              Transfer Stock
-            </Button>
-          </Link>
           <Link href="/products">
             <Button variant="outline" className="justify-start gap-2 w-full" data-testid="button-add-product">
               <Plus className="h-4 w-4" />

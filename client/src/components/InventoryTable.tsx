@@ -147,7 +147,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       return a.product.name.localeCompare(b.product.name);
     });
 
-  const lowStockItems = filteredItems.filter(item => item.quantity <= item.minStockLevel);
+  const lowStockItems = filteredItems.filter(item => item.quantity < item.minStockLevel);
   const stockLevel = filteredItems.length > 0 ? (filteredItems.reduce((sum, item) => sum + item.quantity, 0) / filteredItems.length) * 10 : 0;
 
   const handleQuantityChange = (item: InventoryWithProduct, direction: 'increase' | 'decrease') => {
@@ -325,10 +325,10 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <span className={item.quantity <= item.minStockLevel ? 'text-destructive font-medium' : ''}>
+                        <span className={item.quantity < item.minStockLevel ? 'text-destructive font-medium' : ''}>
                           {item.quantity}
                         </span>
-                        {item.quantity <= item.minStockLevel && (
+                        {item.quantity < item.minStockLevel && (
                           <AlertTriangle className="h-3 w-3 text-destructive" />
                         )}
                       </div>
