@@ -454,18 +454,18 @@ export default function Dashboard() {
               
               autoTable(doc, {
                 startY: 40,
-                head: [['Product', 'Model', 'GTIN', 'Current', 'Min', 'Transfer Qty']],
+                head: [['Product', 'Model', 'GTIN', 'Cur', 'Min', 'Xfer']],
                 body: tableData,
                 theme: 'striped',
                 headStyles: { fillColor: [59, 130, 246] },
-                styles: { fontSize: 9 },
+                styles: { fontSize: 8 },
                 columnStyles: {
-                  0: { cellWidth: 45 },
-                  1: { cellWidth: 32 },
-                  2: { cellWidth: 32 },
-                  3: { cellWidth: 20 },
-                  4: { cellWidth: 18 },
-                  5: { cellWidth: 23 }
+                  0: { cellWidth: 'auto' },
+                  1: { cellWidth: 'auto' },
+                  2: { cellWidth: 'auto' },
+                  3: { cellWidth: 'auto' },
+                  4: { cellWidth: 'auto' },
+                  5: { cellWidth: 'auto' }
                 }
               });
               
@@ -508,18 +508,18 @@ export default function Dashboard() {
               
               autoTable(doc, {
                 startY: 40,
-                head: [['Product', 'Model', 'GTIN', 'Current', 'Min', 'Reorder Qty']],
+                head: [['Product', 'Model', 'GTIN', 'Cur', 'Min', 'Reord']],
                 body: tableData,
                 theme: 'striped',
                 headStyles: { fillColor: [239, 68, 68] },
-                styles: { fontSize: 9 },
+                styles: { fontSize: 8 },
                 columnStyles: {
-                  0: { cellWidth: 45 },
-                  1: { cellWidth: 32 },
-                  2: { cellWidth: 32 },
-                  3: { cellWidth: 20 },
-                  4: { cellWidth: 18 },
-                  5: { cellWidth: 23 }
+                  0: { cellWidth: 'auto' },
+                  1: { cellWidth: 'auto' },
+                  2: { cellWidth: 'auto' },
+                  3: { cellWidth: 'auto' },
+                  4: { cellWidth: 'auto' },
+                  5: { cellWidth: 'auto' }
                 }
               });
               
