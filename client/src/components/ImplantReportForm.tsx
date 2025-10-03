@@ -47,6 +47,8 @@ interface MaterialItem {
   quantity: number;
   source: 'car' | 'external' | 'hospital';
   scanned?: boolean;
+  serialNumber?: string;  // Store GS1 serial number for duplicate detection
+  lotNumber?: string;     // Store GS1 lot number
 }
 
 interface ImplantReportFormProps {
@@ -62,7 +64,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
   const { toast } = useToast();
   
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
-  const [scanningItem, setScanningItem] = useState<{ type: 'materials' | 'leads' | 'others', id: string } | null>(null);
+  const [scanningItem, setScanningItem] = useState<{ type: 'materials' | 'leads' | 'others' | 'device', id: string } | null>(null);
+  const [scannedDeviceId, setScannedDeviceId] = useState<string>('');
 
   const [materials, setMaterials] = useState<MaterialItem[]>([
     { id: '1', name: '', quantity: 1, source: 'car' },
@@ -141,7 +144,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     },
   });
 
-  const deviceProducts = products.filter(p => p.category === 'Device');
+  const deviceProducts = products; // All products can be used as devices
 
   const handleSubmit = (data: ImplantReportData) => {
     const allMaterials = [...materials, ...leads, ...otherMaterials].filter(m => m.name.trim() !== '');
@@ -206,9 +209,24 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     }
   };
 
-  const scanBarcode = async (type: 'materials' | 'leads' | 'others', id: string) => {
+  const scanBarcode = async (type: 'materials' | 'leads' | 'others' | 'device', id: string) => {
     setScanningItem({ type, id });
     setShowBarcodeScanner(true);
+  };
+  
+  const checkDuplicateSerial = (serialNumber: string, excludeType?: 'materials' | 'leads' | 'others', excludeId?: string): boolean => {
+    const allItems = [
+      ...materials.map(m => ({ ...m, itemType: 'materials' as const })),
+      ...leads.map(l => ({ ...l, itemType: 'leads' as const })),
+      ...otherMaterials.map(o => ({ ...o, itemType: 'others' as const }))
+    ];
+    
+    // Check if this exact serial number has already been added
+    return allItems.some(item => 
+      item.serialNumber === serialNumber && 
+      item.serialNumber !== undefined &&
+      !(excludeType && item.itemType === excludeType && item.id === excludeId)
+    );
   };
 
   const handleScanComplete = (barcode: string, productInfo?: Product, gs1Data?: GS1Data) => {
@@ -216,33 +234,74 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     
     const { type, id } = scanningItem;
     
-    if (productInfo) {
-      // Found product in database - set it
-      selectProduct(type, id, productInfo.id);
-      updateMaterialItem(type, id, 'scanned', true);
-      
-      const toastDescription = gs1Data?.serialNumber 
-        ? `${productInfo.name} added (Serial: ${gs1Data.serialNumber})`
-        : `${productInfo.name} added successfully`;
-      
-      toast({
-        title: "Product Scanned",
-        description: toastDescription,
-      });
+    if (type === 'device') {
+      // Handle primary device scanning
+      if (productInfo) {
+        form.setValue('deviceUsed', productInfo.id);
+        setScannedDeviceId(productInfo.id);
+        
+        toast({
+          title: "Device Scanned",
+          description: `${productInfo.name} set as primary device`,
+        });
+      } else {
+        toast({
+          title: "Product Not Found",
+          description: "Scanned product not found in database.",
+          variant: "destructive",
+        });
+      }
     } else {
-      // Product not found - clear productId and set barcode as manual entry
-      updateMaterialItem(type, id, 'productId', undefined);
-      updateMaterialItem(type, id, 'name', barcode);
-      updateMaterialItem(type, id, 'scanned', true);
-      
-      toast({
-        title: "Barcode Scanned",
-        description: "Product not found in database. Barcode added as product name.",
-        variant: "default",
-      });
+      // Handle materials/leads/others scanning
+      if (productInfo) {
+        // Check for duplicate serialized items if serial number is present
+        if (gs1Data?.serialNumber && checkDuplicateSerial(gs1Data.serialNumber, type, id)) {
+          toast({
+            title: "Duplicate Item",
+            description: `${productInfo.name} (Serial: ${gs1Data.serialNumber}) has already been added to this report.`,
+            variant: "destructive",
+          });
+          setScanningItem(null);
+          setShowBarcodeScanner(false);
+          return;
+        }
+        
+        // Found product in database - set it
+        selectProduct(type, id, productInfo.id);
+        updateMaterialItem(type, id, 'scanned', true);
+        
+        // Store GS1 data for duplicate checking and display
+        if (gs1Data?.serialNumber) {
+          updateMaterialItem(type, id, 'serialNumber', gs1Data.serialNumber);
+        }
+        if (gs1Data?.lotNumber) {
+          updateMaterialItem(type, id, 'lotNumber', gs1Data.lotNumber);
+        }
+        
+        const toastDescription = gs1Data?.serialNumber 
+          ? `${productInfo.name} added (Serial: ${gs1Data.serialNumber})`
+          : `${productInfo.name} added successfully`;
+        
+        toast({
+          title: "Product Scanned",
+          description: toastDescription,
+        });
+      } else {
+        // Product not found - clear productId and set barcode as manual entry
+        updateMaterialItem(type, id, 'productId', undefined);
+        updateMaterialItem(type, id, 'name', barcode);
+        updateMaterialItem(type, id, 'scanned', true);
+        
+        toast({
+          title: "Barcode Scanned",
+          description: "Product not found in database. Barcode added as product name.",
+          variant: "default",
+        });
+      }
     }
     
     setScanningItem(null);
+    setShowBarcodeScanner(false);
   };
 
   const getInventoryQuantity = (productId?: string): number => {
@@ -255,18 +314,14 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     title, 
     items, 
     type, 
-    icon,
-    categoryFilter
+    icon
   }: { 
     title: string; 
     items: MaterialItem[]; 
     type: 'materials' | 'leads' | 'others';
     icon: React.ReactNode;
-    categoryFilter?: string;
   }) => {
-    const filteredProducts = categoryFilter 
-      ? products.filter(p => p.category === categoryFilter)
-      : products;
+    const filteredProducts = products;
 
     return (
       <Card>
@@ -376,6 +431,16 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                     )}
                   </div>
                 </div>
+                {item.serialNumber && (
+                  <div className="text-xs text-muted-foreground ml-1">
+                    Serial: {item.serialNumber}
+                  </div>
+                )}
+                {item.lotNumber && !item.serialNumber && (
+                  <div className="text-xs text-muted-foreground ml-1">
+                    Lot: {item.lotNumber}
+                  </div>
+                )}
                 {item.source === 'car' && item.productId && (
                   <div className="flex items-center gap-2 text-xs ml-1">
                     {isLowStock ? (
@@ -513,20 +578,31 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Primary Device</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-device">
-                            <SelectValue placeholder="Select device" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {deviceProducts.map(device => (
-                            <SelectItem key={device.id} value={device.id}>
-                              {device.name} ({device.modelNumber})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-device">
+                              <SelectValue placeholder="Select device" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {deviceProducts.map(device => (
+                              <SelectItem key={device.id} value={device.id}>
+                                {device.name} ({device.modelNumber})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          onClick={() => scanBarcode('device', 'primary-device')}
+                          data-testid="button-scan-device"
+                        >
+                          <Scan className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -539,7 +615,6 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   items={leads} 
                   type="leads"
                   icon={<Heart className="h-4 w-4" />}
-                  categoryFilter="Lead/Electrode"
                 />
                 
                 <MaterialSection 
@@ -547,7 +622,6 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   items={materials} 
                   type="materials"
                   icon={<Building2 className="h-4 w-4" />}
-                  categoryFilter="Material"
                 />
                 
                 <MaterialSection 
