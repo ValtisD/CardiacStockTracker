@@ -217,12 +217,31 @@ The application provides professional PDF reports using jsPDF and jspdf-autotabl
 - Formatted with striped table theme and blue header styling
 - Filename format: `expiring-products-YYYY-MM-DD.pdf`
 
-**Low Stock Reorder Report**:
-- Quick Action button on Dashboard for immediate PDF generation
-- Combines low stock items from both home and car inventory locations
-- Includes: Product name, Model number, GTIN, Location, Current quantity, Minimum stock level, Reorder quantity needed
-- Calculates reorder quantity as the difference between minimum stock and current quantity
+**Car Stock Report**:
+- Quick Action button on Dashboard for car stock transfer planning
+- Reports car stock items below minimum levels
+- Includes: Product name, Model number, GTIN, Current quantity, Minimum stock level, Transfer quantity needed
+- Formatted with striped table theme and blue header styling
+- Filename format: `car-stock-report-YYYY-MM-DD.pdf`
+- Button is disabled when no car stock low items exist
+- Useful for planning inventory transfers from home to car stock
+
+**Home Stock Reorder Report**:
+- Quick Action button on Dashboard for supplier reordering
+- Reports home stock items below minimum levels
+- Includes: Product name, Model number, GTIN, Current quantity, Minimum stock level, Reorder quantity needed
 - Formatted with striped table theme and red header styling (alerts)
-- Filename format: `low-stock-report-YYYY-MM-DD.pdf`
-- Button is disabled when no low stock items exist in either location
-- Useful for creating reorder lists and inventory management workflows
+- Filename format: `home-stock-report-YYYY-MM-DD.pdf`
+- Button is disabled when no home stock low items exist
+- **Automatically copies German email text to clipboard** with format:
+  ```
+  Guten Tag,
+  
+  bitte folgendes Material für mein Konsilager nachbestellen:
+  
+  [Model Number] - [Quantity] Stück
+  
+  Mit freundlichen Grüßen,
+  ```
+- Shows toast notification when email text is successfully copied
+- Useful for creating supplier reorder emails and inventory management workflows
