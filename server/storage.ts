@@ -54,6 +54,11 @@ export interface IStorage {
   // Stock Transfers
   getStockTransfers(): Promise<(StockTransfer & { product: Product })[]>;
   createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer>;
+  
+  // Individual inventory item methods (for serial-tracked items)
+  updateInventoryQuantityById(id: string, quantity: number): Promise<Inventory | undefined>;
+  deleteInventoryItemById(id: string): Promise<boolean>;
+  transferInventoryItem(id: string, toLocation: string): Promise<Inventory | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -175,6 +180,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(inventory.id, id))
       .returning();
     return result.length > 0;
+  }
+
+  async transferInventoryItem(id: string, toLocation: string): Promise<Inventory | undefined> {
+    const item = await db.select().from(inventory).where(eq(inventory.id, id));
+    if (!item || item.length === 0) {
+      return undefined;
+    }
+
+    const fromLocation = item[0].location;
+    const productId = item[0].productId;
+    const quantity = item[0].quantity;
+
+    const result = await db
+      .update(inventory)
+      .set({ location: toLocation, updatedAt: new Date() })
+      .where(eq(inventory.id, id))
+      .returning();
+
+    if (result && result.length > 0) {
+      await db.insert(stockTransfers).values({
+        productId,
+        fromLocation,
+        toLocation,
+        quantity,
+        notes: `Individual item transfer (ID: ${id})`,
+      });
+    }
+
+    return result[0];
   }
 
   async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {

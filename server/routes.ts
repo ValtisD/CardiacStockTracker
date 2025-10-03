@@ -198,6 +198,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/inventory/item/:id/transfer", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { toLocation } = req.body;
+      
+      if (!toLocation || (toLocation !== 'home' && toLocation !== 'car')) {
+        return res.status(400).json({ error: "Invalid location. Must be 'home' or 'car'" });
+      }
+      
+      const inventory = await storage.transferInventoryItem(id, toLocation);
+      if (!inventory) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error transferring inventory item:", error);
+      res.status(400).json({ error: "Failed to transfer inventory item" });
+    }
+  });
+
   // Hospitals
   app.get("/api/hospitals", async (req, res) => {
     try {
