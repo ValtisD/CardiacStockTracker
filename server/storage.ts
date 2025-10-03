@@ -501,9 +501,11 @@ export class DatabaseStorage implements IStorage {
         notes: implantProcedures.notes,
         createdAt: implantProcedures.createdAt,
         hospital: hospitals,
+        deviceProduct: products,
       })
       .from(implantProcedures)
       .leftJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
+      .leftJoin(products, eq(implantProcedures.deviceUsed, products.id))
       .where(eq(implantProcedures.id, id));
     return result[0];
   }

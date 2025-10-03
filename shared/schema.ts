@@ -62,6 +62,8 @@ export const procedureMaterials = pgTable("procedure_materials", {
   materialName: text("material_name").notNull(), // For external materials
   quantity: integer("quantity").notNull().default(1),
   source: text("source").notNull().default('car'), // 'car', 'external', 'hospital'
+  serialNumber: text("serial_number"), // Serial number from GS1 scan
+  lotNumber: text("lot_number"), // Lot number from GS1 scan
 });
 
 // Stock transfers

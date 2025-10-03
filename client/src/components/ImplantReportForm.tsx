@@ -154,6 +154,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       materialName: m.name,
       quantity: m.quantity,
       source: m.source,
+      serialNumber: m.serialNumber || null,
+      lotNumber: m.lotNumber || null,
     }));
 
     const carStockMaterials = procedureMaterials.filter(m => m.source === 'car' && m.productId);

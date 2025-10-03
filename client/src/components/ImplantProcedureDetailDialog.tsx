@@ -21,6 +21,7 @@ import { format } from "date-fns";
 
 interface ImplantProcedureWithHospital extends ImplantProcedure {
   hospital: Hospital;
+  deviceProduct?: Product | null;
 }
 
 interface ProcedureMaterialWithProduct extends ProcedureMaterial {
@@ -140,8 +141,13 @@ export default function ImplantProcedureDetailDialog({
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Device Used</p>
                       <p className="text-base" data-testid="text-procedure-device">
-                        {procedure.deviceUsed}
+                        {procedure.deviceProduct?.name || procedure.deviceUsed}
                       </p>
+                      {procedure.deviceProduct?.modelNumber && (
+                        <p className="text-sm text-muted-foreground">
+                          Model: {procedure.deviceProduct.modelNumber}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -176,6 +182,7 @@ export default function ImplantProcedureDetailDialog({
                       <TableRow>
                         <TableHead>Product</TableHead>
                         <TableHead>Model Number</TableHead>
+                        <TableHead>Serial / Lot</TableHead>
                         <TableHead>Quantity</TableHead>
                         <TableHead>Source</TableHead>
                       </TableRow>
@@ -188,6 +195,21 @@ export default function ImplantProcedureDetailDialog({
                           </TableCell>
                           <TableCell data-testid={`text-material-model-${index}`}>
                             {material.product?.modelNumber || <span className="text-muted-foreground">-</span>}
+                          </TableCell>
+                          <TableCell data-testid={`text-material-serial-${index}`}>
+                            {material.serialNumber ? (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-xs text-muted-foreground">Serial:</span>
+                                <span className="font-mono text-sm">{material.serialNumber}</span>
+                              </div>
+                            ) : material.lotNumber ? (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-xs text-muted-foreground">Lot:</span>
+                                <span className="font-mono text-sm">{material.lotNumber}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell data-testid={`text-material-quantity-${index}`}>
                             {material.quantity}
