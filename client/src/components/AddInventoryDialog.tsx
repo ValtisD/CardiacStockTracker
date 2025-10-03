@@ -65,6 +65,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const { toast } = useToast();
 
+  // No manual scroll lock manipulation - Dialog components handle this automatically
+
   const form = useForm<AddInventoryFormData>({
     resolver: zodResolver(addInventorySchema),
     defaultValues: {
@@ -180,15 +182,23 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   };
 
   const handleScanComplete = async (barcode: string, productInfo?: Product, parsedGs1Data?: GS1Data) => {
-    // Don't close here - BarcodeScanner will close itself via onClose
+    // Reset form fields to prevent stale data from previous scans or manual edits
+    form.setValue("trackingMode", null);
+    form.setValue("serialNumber", "");
+    form.setValue("lotNumber", "");
+    form.setValue("quantity", 1);
+    form.setValue("expirationDate", undefined);
     
     // If GS1 data was parsed, store it for later use
     if (parsedGs1Data) {
       setGs1Data(parsedGs1Data);
     }
 
+    let foundProduct: Product | null = null;
+
     // If product was found by barcode, use it
     if (productInfo) {
+      foundProduct = productInfo;
       setSelectedProduct(productInfo);
       form.setValue("productId", productInfo.id);
       
@@ -205,6 +215,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
             const products: Product[] = await response.json();
             if (products.length > 0) {
               const product = products[0];
+              foundProduct = product;
               setSelectedProduct(product);
               form.setValue("productId", product.id);
               
@@ -244,10 +255,11 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       if (parsedGs1Data.serialNumber) {
         form.setValue("trackingMode", "serial");
         form.setValue("serialNumber", parsedGs1Data.serialNumber);
-        form.setValue("quantity", 1); // Serial numbers are always quantity 1
+        form.setValue("quantity", 1);
       } else if (parsedGs1Data.lotNumber) {
         form.setValue("trackingMode", "lot");
         form.setValue("lotNumber", parsedGs1Data.lotNumber);
+        form.setValue("quantity", 1);
       }
     }
   };
@@ -292,7 +304,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />

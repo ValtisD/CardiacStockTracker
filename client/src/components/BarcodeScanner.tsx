@@ -579,18 +579,9 @@ export default function BarcodeScanner({
             </Card>
           )}
 
-          {productInfo && !showInventoryUpdate && (
-            <Button
-              onClick={() => setShowInventoryUpdate(true)}
-              variant="outline"
-              className="w-full"
-              data-testid="button-update-inventory"
-            >
-              Update Inventory
-            </Button>
-          )}
+          {/* Removed "Update Inventory" UI - inventory should be managed through AddInventoryDialog */}
 
-          {productInfo && showInventoryUpdate && (
+          {false && productInfo && showInventoryUpdate && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Update Inventory</CardTitle>

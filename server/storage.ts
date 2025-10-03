@@ -137,7 +137,51 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInventoryItem(item: InsertInventory): Promise<Inventory> {
-    const result = await db.insert(inventory).values(item).returning();
+    // Normalize expiration date: convert empty string to null
+    const normalizedExpiration = item.expirationDate && item.expirationDate.trim() !== '' 
+      ? item.expirationDate.trim() 
+      : null;
+    
+    // For lot-tracked items, check if an item with same product, location, lot, and expiration exists
+    if (item.trackingMode === 'lot' && item.lotNumber) {
+      // Find existing lot items, handling both null and empty string expirations
+      const existingItems = await db
+        .select()
+        .from(inventory)
+        .where(
+          and(
+            eq(inventory.productId, item.productId),
+            eq(inventory.location, item.location),
+            eq(inventory.trackingMode, 'lot'),
+            eq(inventory.lotNumber, item.lotNumber)
+          )
+        );
+      
+      // Find matching item with same expiration (normalized comparison)
+      const matchingItem = existingItems.find(existing => {
+        const existingExp = existing.expirationDate && existing.expirationDate.trim() !== ''
+          ? existing.expirationDate.trim()
+          : null;
+        return existingExp === normalizedExpiration;
+      });
+      
+      if (matchingItem) {
+        // Item exists - increment quantity
+        const newQuantity = matchingItem.quantity + (item.quantity || 1);
+        const updated = await db
+          .update(inventory)
+          .set({ quantity: newQuantity, updatedAt: new Date() })
+          .where(eq(inventory.id, matchingItem.id))
+          .returning();
+        return updated[0];
+      }
+    }
+    
+    // Serial-tracked or new lot-tracked item - create new entry with normalized expiration
+    const result = await db.insert(inventory).values({
+      ...item,
+      expirationDate: normalizedExpiration,
+    }).returning();
     return result[0];
   }
 
@@ -225,7 +269,9 @@ export class DatabaseStorage implements IStorage {
             eq(inventory.productId, productId),
             eq(inventory.location, toLocation),
             eq(inventory.trackingMode, 'lot'),
-            eq(inventory.lotNumber, sourceItem.lotNumber),
+            sourceItem.lotNumber 
+              ? eq(inventory.lotNumber, sourceItem.lotNumber)
+              : isNull(inventory.lotNumber),
             sourceItem.expirationDate 
               ? eq(inventory.expirationDate, sourceItem.expirationDate)
               : isNull(inventory.expirationDate)
