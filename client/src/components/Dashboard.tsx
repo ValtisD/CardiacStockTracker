@@ -415,6 +415,63 @@ export default function Dashboard() {
               Add New Hospital
             </Button>
           </Link>
+          <Button 
+            variant="outline" 
+            className="justify-start gap-2 w-full" 
+            data-testid="button-low-stock-report"
+            onClick={() => {
+              const allLowStock = [...(homeLowStock || []), ...(carLowStock || [])];
+              
+              if (allLowStock.length === 0) {
+                return;
+              }
+              
+              const doc = new jsPDF();
+              
+              doc.setFontSize(18);
+              doc.text("Low Stock Reorder Report", 14, 20);
+              doc.setFontSize(11);
+              doc.text(`Generated: ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
+              doc.text("Items below minimum stock levels", 14, 34);
+              
+              const tableData = allLowStock.map(item => {
+                const reorderQty = Math.max(0, (item.product?.minimumStock || 0) - item.quantity);
+                return [
+                  item.product?.name || '',
+                  item.product?.modelNumber || '',
+                  item.product?.gtin || '-',
+                  item.location,
+                  item.quantity.toString(),
+                  (item.product?.minimumStock || 0).toString(),
+                  reorderQty.toString()
+                ];
+              });
+              
+              autoTable(doc, {
+                startY: 40,
+                head: [['Product', 'Model', 'GTIN', 'Location', 'Current', 'Min', 'Reorder']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [239, 68, 68] },
+                styles: { fontSize: 9 },
+                columnStyles: {
+                  0: { cellWidth: 45 },
+                  1: { cellWidth: 30 },
+                  2: { cellWidth: 30 },
+                  3: { cellWidth: 20 },
+                  4: { cellWidth: 20 },
+                  5: { cellWidth: 15 },
+                  6: { cellWidth: 20 }
+                }
+              });
+              
+              doc.save(`low-stock-report-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+            }}
+            disabled={!homeLowStock && !carLowStock || (homeLowStock?.length === 0 && carLowStock?.length === 0)}
+          >
+            <FileText className="h-4 w-4" />
+            Low Stock Report
+          </Button>
         </CardContent>
       </Card>
 
