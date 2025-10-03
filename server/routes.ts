@@ -163,6 +163,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New ID-based routes for individual inventory items
+  app.patch("/api/inventory/item/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { quantity } = req.body;
+      
+      if (typeof quantity !== 'number') {
+        return res.status(400).json({ error: "Quantity must be a number" });
+      }
+      
+      const inventory = await storage.updateInventoryQuantityById(id, quantity);
+      if (!inventory) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error updating inventory item:", error);
+      res.status(400).json({ error: "Failed to update inventory item" });
+    }
+  });
+
+  app.delete("/api/inventory/item/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteInventoryItemById(id);
+      if (!success) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting inventory item:", error);
+      res.status(400).json({ error: "Failed to delete inventory item" });
+    }
+  });
+
   // Hospitals
   app.get("/api/hospitals", async (req, res) => {
     try {

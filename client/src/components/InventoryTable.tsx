@@ -35,7 +35,6 @@ interface InventoryTableProps {
 
 export default function InventoryTable({ location }: InventoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
@@ -95,12 +94,11 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   });
 
   const updateQuantityMutation = useMutation({
-    mutationFn: async ({ productId, location, quantity }: { 
-      productId: string; 
-      location: string; 
+    mutationFn: async ({ id, quantity }: { 
+      id: string; 
       quantity: number;
     }) => {
-      return await apiRequest('PATCH', `/api/inventory/${productId}/${location}`, { quantity });
+      return await apiRequest('PATCH', `/api/inventory/item/${id}`, { quantity });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
@@ -120,11 +118,10 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async ({ productId, location }: { 
-      productId: string; 
-      location: string; 
+    mutationFn: async ({ id }: { 
+      id: string; 
     }) => {
-      return await apiRequest('DELETE', `/api/inventory/${productId}/${location}`);
+      return await apiRequest('DELETE', `/api/inventory/item/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
@@ -169,9 +166,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   const filteredItems = items
     .filter(item => 
       item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.product.modelNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      item.product.modelNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.product.gtin.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(item => categoryFilter === 'all' || item.product.category === categoryFilter)
     .sort((a, b) => {
       if (sortBy === 'quantity') return a.quantity - b.quantity;
       if (sortBy === 'expiration') {
@@ -186,6 +183,16 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   const stockLevel = filteredItems.length > 0 ? (filteredItems.reduce((sum, item) => sum + item.quantity, 0) / filteredItems.length) * 10 : 0;
 
   const handleQuantityChange = (item: InventoryWithProduct, direction: 'increase' | 'decrease') => {
+    // Check if this is a serial-tracked item
+    if (item.trackingMode === 'serial') {
+      toast({
+        title: "Cannot modify serial-tracked items",
+        description: "Serial-tracked items have a fixed quantity of 1. Please delete or add individual items instead.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (location === 'home') {
       const newQuantity = direction === 'increase' ? item.quantity + 1 : item.quantity - 1;
       
@@ -199,8 +206,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       }
 
       updateQuantityMutation.mutate({
-        productId: item.productId,
-        location: item.location,
+        id: item.id,
         quantity: newQuantity,
       });
     } else {
@@ -226,10 +232,13 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   };
 
   const handleDelete = (item: InventoryWithProduct) => {
-    if (window.confirm(`Are you sure you want to delete ${item.product.name} from ${location} inventory?`)) {
+    const itemDescription = item.serialNumber 
+      ? `${item.product.name} (Serial: ${item.serialNumber})`
+      : `${item.product.name}`;
+    
+    if (window.confirm(`Are you sure you want to delete ${itemDescription} from ${location} inventory?`)) {
       deleteMutation.mutate({
-        productId: item.productId,
-        location: item.location,
+        id: item.id,
       });
     }
   };
@@ -294,19 +303,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                 data-testid="input-inventory-search"
               />
             </div>
-            
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-48" data-testid="select-category-filter">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="Device">Devices</SelectItem>
-                <SelectItem value="Lead/Electrode">Leads/Electrodes</SelectItem>
-                <SelectItem value="Material">Materials</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
 
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-40" data-testid="select-sort-by">
@@ -338,7 +334,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead>Category</TableHead>
                   <TableHead className="text-center">Quantity</TableHead>
                   <TableHead>Expiration</TableHead>
                   <TableHead>Serial/Lot</TableHead>
@@ -364,9 +359,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                         <div className="font-medium">{item.product.name}</div>
                         <div className="text-sm text-muted-foreground">{item.product.modelNumber}</div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{item.product.category}</Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
@@ -409,9 +401,18 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                           size="icon"
                           variant="ghost"
                           onClick={() => handleQuantityChange(item, 'decrease')}
-                          disabled={transferMutation.isPending || updateQuantityMutation.isPending || item.quantity < 1}
+                          disabled={
+                            transferMutation.isPending || 
+                            updateQuantityMutation.isPending || 
+                            item.quantity < 1 ||
+                            item.trackingMode === 'serial'
+                          }
                           data-testid={`button-decrease-${item.id}`}
-                          title={location === 'home' ? 'Decrease quantity' : 'Transfer to home'}
+                          title={
+                            item.trackingMode === 'serial' 
+                              ? 'Cannot modify serial-tracked items' 
+                              : (location === 'home' ? 'Decrease quantity' : 'Transfer to home')
+                          }
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -419,9 +420,17 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                           size="icon"
                           variant="ghost"
                           onClick={() => handleQuantityChange(item, 'increase')}
-                          disabled={transferMutation.isPending || updateQuantityMutation.isPending}
+                          disabled={
+                            transferMutation.isPending || 
+                            updateQuantityMutation.isPending ||
+                            item.trackingMode === 'serial'
+                          }
                           data-testid={`button-increase-${item.id}`}
-                          title={location === 'home' ? 'Increase quantity' : 'Transfer from home'}
+                          title={
+                            item.trackingMode === 'serial'
+                              ? 'Cannot modify serial-tracked items'
+                              : (location === 'home' ? 'Increase quantity' : 'Transfer from home')
+                          }
                         >
                           <Plus className="h-3 w-3" />
                         </Button>

@@ -149,10 +149,30 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateInventoryQuantityById(
+    id: string,
+    quantity: number
+  ): Promise<Inventory | undefined> {
+    const result = await db
+      .update(inventory)
+      .set({ quantity, updatedAt: new Date() })
+      .where(eq(inventory.id, id))
+      .returning();
+    return result[0];
+  }
+
   async deleteInventoryItem(productId: string, location: string): Promise<boolean> {
     const result = await db
       .delete(inventory)
       .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async deleteInventoryItemById(id: string): Promise<boolean> {
+    const result = await db
+      .delete(inventory)
+      .where(eq(inventory.id, id))
       .returning();
     return result.length > 0;
   }
