@@ -439,7 +439,7 @@ export default function BarcodeScanner({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scan className="h-5 w-5" />
@@ -447,7 +447,7 @@ export default function BarcodeScanner({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 overflow-y-auto flex-1">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
           <Card>
             <CardContent className="p-4">
               <div className="relative bg-muted rounded-lg aspect-square flex items-center justify-center overflow-hidden">
