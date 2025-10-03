@@ -82,8 +82,36 @@ export function parseGS1Barcode(barcode: string): GS1Data {
         const next3 = barcode.substring(dataEnd, dataEnd + 3);
         const next4 = barcode.substring(dataEnd, dataEnd + 4);
         
-        if (FIXED_LENGTH_AIS[next2] || FIXED_LENGTH_AIS[next3] || FIXED_LENGTH_AIS[next4] ||
-            next2 === '01' || next2 === '17' || next2 === '21' || next2 === '10') {
+        // Check if this looks like a valid AI with enough data remaining
+        let foundValidAI = false;
+        
+        // Check 4-digit AI
+        if (FIXED_LENGTH_AIS[next4]) {
+          const requiredLength = 4 + FIXED_LENGTH_AIS[next4];
+          if (dataEnd + requiredLength <= barcode.length) {
+            foundValidAI = true;
+          }
+        }
+        // Check 3-digit AI
+        else if (FIXED_LENGTH_AIS[next3]) {
+          const requiredLength = 3 + FIXED_LENGTH_AIS[next3];
+          if (dataEnd + requiredLength <= barcode.length) {
+            foundValidAI = true;
+          }
+        }
+        // Check 2-digit AI
+        else if (FIXED_LENGTH_AIS[next2]) {
+          const requiredLength = 2 + FIXED_LENGTH_AIS[next2];
+          if (dataEnd + requiredLength <= barcode.length) {
+            foundValidAI = true;
+          }
+        }
+        // Check for variable-length AIs (need at least AI + some data)
+        else if ((next2 === '21' || next2 === '10') && dataEnd + 3 <= barcode.length) {
+          foundValidAI = true;
+        }
+        
+        if (foundValidAI) {
           break;
         }
         dataEnd++;
