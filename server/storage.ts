@@ -419,47 +419,40 @@ export class DatabaseStorage implements IStorage {
 
   async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
     if (location === 'car') {
-      // For car stock: aggregate all inventory rows by productId in car location, then check if total < minCarStock
+      // For car stock: check ALL products and compare car stock to minCarStock
+      const allProducts = await db.select().from(products);
+      
+      // Get car inventory
       const allCarInventory = await db
         .select({
-          id: inventory.id,
           productId: inventory.productId,
-          location: inventory.location,
           quantity: inventory.quantity,
-          trackingMode: inventory.trackingMode,
-          serialNumber: inventory.serialNumber,
-          lotNumber: inventory.lotNumber,
-          expirationDate: inventory.expirationDate,
-          updatedAt: inventory.updatedAt,
-          product: products,
         })
         .from(inventory)
-        .innerJoin(products, eq(inventory.productId, products.id))
         .where(eq(inventory.location, 'car'));
 
       // Group by productId and sum quantities
-      const productTotals = new Map<string, { totalQty: number; product: Product; firstItem: any }>();
-      
+      const carStockMap = new Map<string, number>();
       for (const item of allCarInventory) {
-        if (!productTotals.has(item.productId)) {
-          productTotals.set(item.productId, {
-            totalQty: 0,
-            product: item.product,
-            firstItem: item,
-          });
-        }
-        const totals = productTotals.get(item.productId)!;
-        totals.totalQty += item.quantity;
+        carStockMap.set(item.productId, (carStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Filter products where total car quantity < minCarStock
+      // Check all products against minCarStock
       const lowStockProducts: (Inventory & { product: Product })[] = [];
-      for (const [productId, { totalQty, product, firstItem }] of Array.from(productTotals.entries())) {
-        if (totalQty < product.minCarStock) {
-          // Return the first inventory item with aggregated quantity
+      for (const product of allProducts) {
+        const carStock = carStockMap.get(product.id) || 0;
+        if (carStock < product.minCarStock) {
+          // Create a dummy inventory item for low stock reporting
           lowStockProducts.push({
-            ...firstItem,
-            quantity: totalQty, // Use aggregated total
+            id: product.id,
+            productId: product.id,
+            location: 'car',
+            quantity: carStock,
+            trackingMode: null,
+            serialNumber: null,
+            lotNumber: null,
+            expirationDate: null,
+            updatedAt: null,
             product,
           });
         }
@@ -467,47 +460,39 @@ export class DatabaseStorage implements IStorage {
 
       return lowStockProducts;
     } else if (location === 'home') {
-      // For home stock: aggregate all inventory rows by productId across ALL locations, then check if total < minTotalStock
-      // This shows products that need to be reordered from the supplier
+      // For home stock: check ALL products and compare total stock (home+car) to minTotalStock
+      const allProducts = await db.select().from(products);
+      
+      // Get all inventory across all locations
       const allInventory = await db
         .select({
-          id: inventory.id,
           productId: inventory.productId,
-          location: inventory.location,
           quantity: inventory.quantity,
-          trackingMode: inventory.trackingMode,
-          serialNumber: inventory.serialNumber,
-          lotNumber: inventory.lotNumber,
-          expirationDate: inventory.expirationDate,
-          updatedAt: inventory.updatedAt,
-          product: products,
         })
-        .from(inventory)
-        .innerJoin(products, eq(inventory.productId, products.id));
+        .from(inventory);
 
       // Group by productId and sum quantities across all locations
-      const productTotals = new Map<string, { totalQty: number; product: Product; firstItem: any }>();
-      
+      const totalStockMap = new Map<string, number>();
       for (const item of allInventory) {
-        if (!productTotals.has(item.productId)) {
-          productTotals.set(item.productId, {
-            totalQty: 0,
-            product: item.product,
-            firstItem: item,
-          });
-        }
-        const totals = productTotals.get(item.productId)!;
-        totals.totalQty += item.quantity;
+        totalStockMap.set(item.productId, (totalStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Filter products where total quantity < minTotalStock
+      // Check all products against minTotalStock
       const lowStockProducts: (Inventory & { product: Product })[] = [];
-      for (const [productId, { totalQty, product, firstItem }] of Array.from(productTotals.entries())) {
-        if (totalQty < product.minTotalStock) {
-          // Return the first inventory item with aggregated quantity
+      for (const product of allProducts) {
+        const totalStock = totalStockMap.get(product.id) || 0;
+        if (totalStock < product.minTotalStock) {
+          // Create a dummy inventory item for low stock reporting
           lowStockProducts.push({
-            ...firstItem,
-            quantity: totalQty, // Use aggregated total
+            id: product.id,
+            productId: product.id,
+            location: 'home',
+            quantity: totalStock,
+            trackingMode: null,
+            serialNumber: null,
+            lotNumber: null,
+            expirationDate: null,
+            updatedAt: null,
             product,
           });
         }
@@ -515,46 +500,39 @@ export class DatabaseStorage implements IStorage {
 
       return lowStockProducts;
     } else {
-      // For total stock (no location specified): aggregate all inventory rows by productId across ALL locations, then check if total < minTotalStock
+      // For total stock (no location specified): check ALL products and compare total stock to minTotalStock
+      const allProducts = await db.select().from(products);
+      
+      // Get all inventory across all locations
       const allInventory = await db
         .select({
-          id: inventory.id,
           productId: inventory.productId,
-          location: inventory.location,
           quantity: inventory.quantity,
-          trackingMode: inventory.trackingMode,
-          serialNumber: inventory.serialNumber,
-          lotNumber: inventory.lotNumber,
-          expirationDate: inventory.expirationDate,
-          updatedAt: inventory.updatedAt,
-          product: products,
         })
-        .from(inventory)
-        .innerJoin(products, eq(inventory.productId, products.id));
+        .from(inventory);
 
       // Group by productId and sum quantities across all locations
-      const productTotals = new Map<string, { totalQty: number; product: Product; firstItem: any }>();
-      
+      const totalStockMap = new Map<string, number>();
       for (const item of allInventory) {
-        if (!productTotals.has(item.productId)) {
-          productTotals.set(item.productId, {
-            totalQty: 0,
-            product: item.product,
-            firstItem: item,
-          });
-        }
-        const totals = productTotals.get(item.productId)!;
-        totals.totalQty += item.quantity;
+        totalStockMap.set(item.productId, (totalStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Filter products where total quantity < minTotalStock
+      // Check all products against minTotalStock
       const lowStockProducts: (Inventory & { product: Product })[] = [];
-      for (const [productId, { totalQty, product, firstItem }] of Array.from(productTotals.entries())) {
-        if (totalQty < product.minTotalStock) {
-          // Return the first inventory item with aggregated quantity
+      for (const product of allProducts) {
+        const totalStock = totalStockMap.get(product.id) || 0;
+        if (totalStock < product.minTotalStock) {
+          // Create a dummy inventory item for low stock reporting
           lowStockProducts.push({
-            ...firstItem,
-            quantity: totalQty, // Use aggregated total
+            id: product.id,
+            productId: product.id,
+            location: undefined as any,
+            quantity: totalStock,
+            trackingMode: null,
+            serialNumber: null,
+            lotNumber: null,
+            expirationDate: null,
+            updatedAt: null,
             product,
           });
         }
