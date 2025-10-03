@@ -354,7 +354,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                       <div>
                         <div className="font-medium">{selectedProduct.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          Model: {selectedProduct.modelNumber} | {selectedProduct.manufacturer}
+                          Model: {selectedProduct.modelNumber}
                         </div>
                         {selectedProduct.gtin && (
                           <div className="text-xs text-muted-foreground">GTIN: {selectedProduct.gtin}</div>
@@ -576,19 +576,12 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       </Dialog>
 
       {/* Barcode Scanner Dialog */}
-      {showBarcodeScanner && (
-        <Dialog open={showBarcodeScanner} onOpenChange={setShowBarcodeScanner}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Scan Product Barcode</DialogTitle>
-              <DialogDescription>
-                Position the barcode in front of the camera
-              </DialogDescription>
-            </DialogHeader>
-            <BarcodeScanner onScanComplete={handleScanComplete} />
-          </DialogContent>
-        </Dialog>
-      )}
+      <BarcodeScanner 
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScanComplete={handleScanComplete}
+        title="Scan Product Barcode"
+      />
     </>
   );
 }
