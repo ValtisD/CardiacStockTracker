@@ -3,18 +3,12 @@ import { pgTable, text, varchar, integer, date, boolean, timestamp, unique } fro
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Products table for medical devices
+// Products table - simplified reference database for medical devices
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  gtin: text("gtin").notNull().unique(), // Global Trade Item Number from GS1 barcodes - now required and unique
   modelNumber: text("model_number").notNull(),
   name: text("name").notNull(),
-  category: text("category").notNull(), // Device, Lead/Electrode, Material, Other
-  manufacturer: text("manufacturer").notNull(),
-  description: text("description"),
-  gtin: text("gtin"), // Global Trade Item Number from GS1 barcodes
-  barcode: text("barcode"),
-  minCarStock: integer("min_car_stock").notNull().default(1), // Minimum units to keep in car
-  minTotalStock: integer("min_total_stock").notNull().default(1), // Minimum total units (car + home combined)
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
