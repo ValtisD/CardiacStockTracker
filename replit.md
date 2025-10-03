@@ -19,12 +19,13 @@ The frontend is a React 18 SPA with TypeScript, built using Vite. It utilizes Sh
 - Separate inventory views (home/car)
 - Product and hospital management
 - Implant procedure reporting
-- Stock transfer functionality
+- Stock transfer functionality (both item-level and bulk transfers with audit trail)
 - Global search
 - Low stock alerts
 - PDF exports for expiring products and stock reports
 - Barcode scanning with GS1 parsing for product lookup and auto-filling inventory details (serial, lot, expiration). It supports real-time camera-based scanning and manual GTIN entry, with comprehensive error handling and duplicate serial prevention.
 - PDF Export for Expiring Products Report, Car Stock Report, and Home Stock Reorder Report (with automatic German email text copy to clipboard).
+- Individual item transfer buttons ("Move to Car" / "Move to Home") in inventory tables for quick location changes.
 
 ### Backend
 
