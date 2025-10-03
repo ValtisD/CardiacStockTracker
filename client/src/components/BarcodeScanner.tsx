@@ -165,13 +165,22 @@ export default function BarcodeScanner({
     try {
       console.log('Starting camera for barcode scanning...');
       
-      // Create barcode reader if it doesn't exist
-      if (!codeReaderRef.current) {
-        codeReaderRef.current = new BrowserMultiFormatReader();
-        // Set scan timing for better performance (300ms between scans)
-        // @ts-ignore - timeBetweenScansMillis exists but isn't in types
-        codeReaderRef.current.timeBetweenScansMillis = 300;
+      // ALWAYS create a fresh barcode reader to prevent callback contamination from previous scans
+      // First, clean up any existing reader
+      if (codeReaderRef.current) {
+        try {
+          // @ts-ignore - reset method exists but isn't in types
+          codeReaderRef.current.reset();
+        } catch (e) {
+          // Ignore errors
+        }
       }
+      
+      // Create new reader instance for this scan
+      codeReaderRef.current = new BrowserMultiFormatReader();
+      // Set scan timing for better performance (300ms between scans)
+      // @ts-ignore - timeBetweenScansMillis exists but isn't in types
+      codeReaderRef.current.timeBetweenScansMillis = 300;
       
       // Get available video devices (static method)
       const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices();
@@ -436,8 +445,7 @@ export default function BarcodeScanner({
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
     
-    // Keep currentCameraIndex and availableCameras to remember user's camera choice
-    // but reset the code reader to ensure fresh state
+    // Clean up and null the code reader - a fresh one will be created when camera starts
     if (codeReaderRef.current) {
       try {
         // @ts-ignore - reset method exists but isn't in types
@@ -445,7 +453,10 @@ export default function BarcodeScanner({
       } catch (e) {
         // Ignore errors during reset
       }
+      codeReaderRef.current = null;
     }
+    
+    // Keep currentCameraIndex and availableCameras to remember user's camera choice
   };
 
   const handleClose = () => {
