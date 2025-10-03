@@ -75,7 +75,7 @@ export class DatabaseStorage implements IStorage {
 
   async searchProducts(query: string): Promise<Product[]> {
     const result = await db.select().from(products).where(
-      sql`${products.barcode} = ${query} OR ${products.modelNumber} = ${query} OR ${products.serialNumber} = ${query} OR ${products.gtin} = ${query}`
+      sql`${products.barcode} = ${query} OR ${products.modelNumber} = ${query} OR ${products.gtin} = ${query}`
     );
     return result;
   }
@@ -107,6 +107,10 @@ export class DatabaseStorage implements IStorage {
         productId: inventory.productId,
         location: inventory.location,
         quantity: inventory.quantity,
+        trackingMode: inventory.trackingMode,
+        serialNumber: inventory.serialNumber,
+        lotNumber: inventory.lotNumber,
+        expirationDate: inventory.expirationDate,
         updatedAt: inventory.updatedAt,
         product: products,
       })
@@ -156,78 +160,96 @@ export class DatabaseStorage implements IStorage {
 
   async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
     if (location === 'car') {
-      // For car stock: check if car quantity < minCarStock
-      return await db
+      // For car stock: aggregate all inventory rows by productId in car location, then check if total < minCarStock
+      const allCarInventory = await db
         .select({
           id: inventory.id,
           productId: inventory.productId,
           location: inventory.location,
           quantity: inventory.quantity,
+          trackingMode: inventory.trackingMode,
+          serialNumber: inventory.serialNumber,
+          lotNumber: inventory.lotNumber,
+          expirationDate: inventory.expirationDate,
           updatedAt: inventory.updatedAt,
           product: products,
         })
         .from(inventory)
         .innerJoin(products, eq(inventory.productId, products.id))
-        .where(
-          and(
-            eq(inventory.location, 'car'),
-            sql`${inventory.quantity} < ${products.minCarStock}`
-          )
-        );
+        .where(eq(inventory.location, 'car'));
+
+      // Group by productId and sum quantities
+      const productTotals = new Map<string, { totalQty: number; product: Product; firstItem: any }>();
+      
+      for (const item of allCarInventory) {
+        if (!productTotals.has(item.productId)) {
+          productTotals.set(item.productId, {
+            totalQty: 0,
+            product: item.product,
+            firstItem: item,
+          });
+        }
+        const totals = productTotals.get(item.productId)!;
+        totals.totalQty += item.quantity;
+      }
+
+      // Filter products where total car quantity < minCarStock
+      const lowStockProducts: (Inventory & { product: Product })[] = [];
+      for (const [productId, { totalQty, product, firstItem }] of Array.from(productTotals.entries())) {
+        if (totalQty < product.minCarStock) {
+          // Return the first inventory item with aggregated quantity
+          lowStockProducts.push({
+            ...firstItem,
+            quantity: totalQty, // Use aggregated total
+            product,
+          });
+        }
+      }
+
+      return lowStockProducts;
     } else {
-      // For total stock: check if (car + home) < minTotalStock
-      // Get all products and their total quantities across locations
+      // For total stock: aggregate all inventory rows by productId across ALL locations, then check if total < minTotalStock
       const allInventory = await db
         .select({
+          id: inventory.id,
           productId: inventory.productId,
           location: inventory.location,
           quantity: inventory.quantity,
+          trackingMode: inventory.trackingMode,
+          serialNumber: inventory.serialNumber,
+          lotNumber: inventory.lotNumber,
+          expirationDate: inventory.expirationDate,
+          updatedAt: inventory.updatedAt,
           product: products,
         })
         .from(inventory)
         .innerJoin(products, eq(inventory.productId, products.id));
 
-      // Group by product and calculate totals
-      const productTotals = new Map<string, { carQty: number; homeQty: number; product: Product }>();
+      // Group by productId and sum quantities across all locations
+      const productTotals = new Map<string, { totalQty: number; product: Product; firstItem: any }>();
       
       for (const item of allInventory) {
         if (!productTotals.has(item.productId)) {
           productTotals.set(item.productId, {
-            carQty: 0,
-            homeQty: 0,
+            totalQty: 0,
             product: item.product,
+            firstItem: item,
           });
         }
         const totals = productTotals.get(item.productId)!;
-        if (item.location === 'car') {
-          totals.carQty = item.quantity;
-        } else if (item.location === 'home') {
-          totals.homeQty = item.quantity;
-        }
+        totals.totalQty += item.quantity;
       }
 
-      // Find products where total < minTotalStock
+      // Filter products where total quantity < minTotalStock
       const lowStockProducts: (Inventory & { product: Product })[] = [];
-      for (const [productId, { carQty, homeQty, product }] of productTotals) {
-        const totalQty = carQty + homeQty;
+      for (const [productId, { totalQty, product, firstItem }] of Array.from(productTotals.entries())) {
         if (totalQty < product.minTotalStock) {
-          // Return the home inventory item to represent this low stock condition
-          const homeItem = await db
-            .select()
-            .from(inventory)
-            .where(
-              and(
-                eq(inventory.productId, productId),
-                eq(inventory.location, 'home')
-              )
-            );
-          
-          if (homeItem[0]) {
-            lowStockProducts.push({
-              ...homeItem[0],
-              product,
-            });
-          }
+          // Return the first inventory item with aggregated quantity
+          lowStockProducts.push({
+            ...firstItem,
+            quantity: totalQty, // Use aggregated total
+            product,
+          });
         }
       }
 

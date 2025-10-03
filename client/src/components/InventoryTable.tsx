@@ -49,17 +49,16 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
   });
 
-  // Fetch all inventory data to calculate total quantities for home stock checks
-  const { data: allInventoryData } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory"],
+  // Fetch low stock items to determine which products are low
+  const { data: lowStockData } = useQuery<InventoryWithProduct[]>({
+    queryKey: ["/api/inventory/low-stock", location],
     queryFn: async () => {
-      const response = await fetch(`/api/inventory`);
+      const response = await fetch(`/api/inventory/low-stock?location=${location}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch inventory');
+        throw new Error('Failed to fetch low stock items');
       }
       return response.json();
     },
-    enabled: location === 'home', // Only fetch when showing home inventory
   });
 
   const transferMutation = useMutation({
@@ -144,24 +143,25 @@ export default function InventoryTable({ location }: InventoryTableProps) {
 
   const items = inventoryData || [];
 
-  // Calculate total quantities per product (for home location checks)
-  const productTotalQuantities = new Map<string, number>();
-  if (location === 'home' && allInventoryData) {
-    allInventoryData.forEach(item => {
-      const current = productTotalQuantities.get(item.productId) || 0;
-      productTotalQuantities.set(item.productId, current + item.quantity);
-    });
-  }
+  // Create a set of low stock product IDs for quick lookup
+  const lowStockProductIds = new Set(
+    (lowStockData || []).map(item => item.productId)
+  );
+
+  // Calculate aggregated totals by product for display
+  const productAggregates = new Map<string, { totalQty: number; items: InventoryWithProduct[] }>();
+  items.forEach(item => {
+    if (!productAggregates.has(item.productId)) {
+      productAggregates.set(item.productId, { totalQty: 0, items: [] });
+    }
+    const agg = productAggregates.get(item.productId)!;
+    agg.totalQty += item.quantity;
+    agg.items.push(item);
+  });
 
   // Helper function to check if item is low stock
   const isLowStock = (item: InventoryWithProduct) => {
-    if (location === 'car') {
-      return item.quantity < item.product.minCarStock;
-    } else {
-      // For home, check total quantity (home + car) against minTotalStock
-      const totalQuantity = productTotalQuantities.get(item.productId) || item.quantity;
-      return totalQuantity < item.product.minTotalStock;
-    }
+    return lowStockProductIds.has(item.productId);
   };
 
   const filteredItems = items
@@ -173,8 +173,8 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     .sort((a, b) => {
       if (sortBy === 'quantity') return a.quantity - b.quantity;
       if (sortBy === 'expiration') {
-        const dateA = a.product.expirationDate || '9999';
-        const dateB = b.product.expirationDate || '9999';
+        const dateA = a.expirationDate || '9999';
+        const dateB = b.expirationDate || '9999';
         return dateA < dateB ? -1 : 1;
       }
       return a.product.name.localeCompare(b.product.name);
@@ -232,7 +232,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     }
   };
 
-  const isExpiringSoon = (date?: string | null) => {
+  const isExpiringSoon = (date?: string | Date | null) => {
     if (!date) return false;
     const expDate = new Date(date);
     const threeMonthsFromNow = new Date();
@@ -366,21 +366,30 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Min: {location === 'car' ? item.product.minCarStock : item.product.minTotalStock} {location === 'home' ? '(total)' : ''}
+                        Total: {productAggregates.get(item.productId)?.totalQty || item.quantity} | 
+                        Min: {location === 'car' ? item.product.minCarStock : item.product.minTotalStock}
                       </div>
                     </TableCell>
                     <TableCell>
-                      {item.product.expirationDate && (
-                        <div className={isExpiringSoon(item.product.expirationDate) ? 'text-destructive' : ''}>
-                          {new Date(item.product.expirationDate).toLocaleDateString()}
-                          {isExpiringSoon(item.product.expirationDate) && (
+                      {item.expirationDate && (
+                        <div className={isExpiringSoon(item.expirationDate) ? 'text-destructive' : ''}>
+                          {new Date(item.expirationDate).toLocaleDateString()}
+                          {isExpiringSoon(item.expirationDate) && (
                             <div className="text-xs">Expiring Soon!</div>
                           )}
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {item.product.serialNumber}
+                      {item.trackingMode === 'serial' && item.serialNumber && (
+                        <div>S/N: {item.serialNumber}</div>
+                      )}
+                      {item.trackingMode === 'lot' && item.lotNumber && (
+                        <div>Lot: {item.lotNumber}</div>
+                      )}
+                      {!item.trackingMode && !item.serialNumber && !item.lotNumber && (
+                        <div className="text-muted-foreground/50">-</div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">

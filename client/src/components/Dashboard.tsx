@@ -80,17 +80,19 @@ export default function Dashboard() {
   }).sort((a, b) => new Date(b.implantDate).getTime() - new Date(a.implantDate).getTime()) || [];
 
   // Get expiring products (next 90 days)
+  // NOTE: Now reads from inventory.expirationDate instead of products.expirationDate
+  // This allows per-item tracking of expiration dates for serial/lot tracked items
   const ninetyDaysFromNow = new Date();
   ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
   const allInventory = [...(homeInventory || []), ...(carInventory || [])];
   const expiringItems = allInventory.filter(item => {
-    if (!item.product?.expirationDate) return false;
-    const expDate = new Date(item.product.expirationDate);
+    if (!item.expirationDate) return false;
+    const expDate = new Date(item.expirationDate);
     const today = new Date();
     return expDate >= today && expDate <= ninetyDaysFromNow;
   }).sort((a, b) => {
-    const dateA = new Date(a.product!.expirationDate!);
-    const dateB = new Date(b.product!.expirationDate!);
+    const dateA = new Date(a.expirationDate!);
+    const dateB = new Date(b.expirationDate!);
     return dateA.getTime() - dateB.getTime();
   });
 
@@ -299,14 +301,14 @@ export default function Dashboard() {
                     doc.text("Products expiring in the next 90 days", 14, 34);
                     
                     const tableData = expiringItems.map(item => {
-                      const daysUntil = Math.ceil((new Date(item.product!.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                      const daysUntil = Math.ceil((new Date(item.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                       return [
                         item.product?.name || '',
                         item.product?.modelNumber || '',
                         item.product?.gtin || '-',
                         item.location,
                         item.quantity.toString(),
-                        format(new Date(item.product!.expirationDate!), "MMM dd, yyyy"),
+                        format(new Date(item.expirationDate!), "MMM dd, yyyy"),
                         daysUntil.toString()
                       ];
                     });
@@ -343,7 +345,7 @@ export default function Dashboard() {
                 <p className="text-center text-muted-foreground py-8">No items expiring in the next 90 days</p>
               ) : (
                 expiringItems.map((item) => {
-                  const daysUntil = Math.ceil((new Date(item.product!.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                  const daysUntil = Math.ceil((new Date(item.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                   return (
                     <Card key={`${item.id}-${item.location}`} data-testid={`card-expiring-${item.id}`}>
                       <CardHeader className="pb-3">
@@ -364,11 +366,21 @@ export default function Dashboard() {
                       </CardHeader>
                       <CardContent className="space-y-1 text-sm">
                         <div>
-                          <span className="font-medium">Expires:</span> {format(new Date(item.product!.expirationDate!), "MMM dd, yyyy")}
+                          <span className="font-medium">Expires:</span> {format(new Date(item.expirationDate!), "MMM dd, yyyy")}
                         </div>
                         <div>
                           <span className="font-medium">Quantity:</span> {item.quantity}
                         </div>
+                        {item.serialNumber && (
+                          <div>
+                            <span className="font-medium">Serial:</span> {item.serialNumber}
+                          </div>
+                        )}
+                        {item.lotNumber && (
+                          <div>
+                            <span className="font-medium">Lot:</span> {item.lotNumber}
+                          </div>
+                        )}
                         {item.product?.gtin && (
                           <div>
                             <span className="font-medium">GTIN:</span> {item.product.gtin}
@@ -429,13 +441,13 @@ export default function Dashboard() {
               doc.text("Items to transfer from home stock to car", 14, 34);
               
               const tableData = carLowStock.map(item => {
-                const reorderQty = Math.max(0, (item.product?.minimumStock || 0) - item.quantity);
+                const reorderQty = Math.max(0, (item.product?.minCarStock || 0) - item.quantity);
                 return [
                   item.product?.name || '',
                   item.product?.modelNumber || '',
                   item.product?.gtin || '-',
                   item.quantity.toString(),
-                  (item.product?.minimumStock || 0).toString(),
+                  (item.product?.minCarStock || 0).toString(),
                   reorderQty.toString()
                 ];
               });
@@ -483,13 +495,13 @@ export default function Dashboard() {
               doc.text("Items to reorder from suppliers", 14, 34);
               
               const tableData = homeLowStock.map(item => {
-                const reorderQty = Math.max(0, (item.product?.minimumStock || 0) - item.quantity);
+                const reorderQty = Math.max(0, (item.product?.minTotalStock || 0) - item.quantity);
                 return [
                   item.product?.name || '',
                   item.product?.modelNumber || '',
                   item.product?.gtin || '-',
                   item.quantity.toString(),
-                  (item.product?.minimumStock || 0).toString(),
+                  (item.product?.minTotalStock || 0).toString(),
                   reorderQty.toString()
                 ];
               });
@@ -515,7 +527,7 @@ export default function Dashboard() {
               
               // Generate email text in German
               const itemsList = homeLowStock.map(item => {
-                const reorderQty = Math.max(0, (item.product?.minimumStock || 0) - item.quantity);
+                const reorderQty = Math.max(0, (item.product?.minTotalStock || 0) - item.quantity);
                 return `${item.product?.modelNumber || 'N/A'} - ${reorderQty} Stück`;
               }).join('\n');
               
