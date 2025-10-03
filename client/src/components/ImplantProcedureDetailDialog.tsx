@@ -139,14 +139,15 @@ export default function ImplantProcedureDetailDialog({
       const tableData = materials.map(material => [
         material.product?.name || material.materialName || "External Material",
         material.product?.modelNumber || "-",
-        material.serialNumber || material.lotNumber || "-",
+        material.serialNumber || "-",
+        material.lotNumber || "-",
         material.quantity.toString(),
         material.source,
       ]);
       
       autoTable(doc, {
         startY: yPos,
-        head: [["Product", "Model Number", "Serial/Lot", "Qty", "Source"]],
+        head: [["Product", "Model Number", "Serial Number", "Lot Number", "Qty", "Source"]],
         body: tableData,
         theme: "striped",
         headStyles: { fillColor: [66, 66, 66] },
