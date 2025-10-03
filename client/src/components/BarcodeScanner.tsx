@@ -140,9 +140,11 @@ export default function BarcodeScanner({
   }, []);
 
   useEffect(() => {
-    // Reset scanner state when dialog opens
+    // Reset scanner state and start camera when dialog opens
     if (isOpen) {
       resetScanner();
+      // Auto-start camera when scanner opens
+      startCamera();
     }
   }, [isOpen]);
 
