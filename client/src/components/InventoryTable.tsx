@@ -24,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import AddInventoryDialog from "@/components/AddInventoryDialog";
 import type { Inventory, Product } from "@shared/schema";
 
 type InventoryWithProduct = Inventory & { product: Product };
@@ -36,6 +37,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
 
   const { data: inventoryData, isLoading, error } = useQuery<InventoryWithProduct[]>({
@@ -257,13 +259,23 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            {location === 'home' ? 'Home' : 'Car'} Inventory
-            <Badge variant={lowStockItems.length > 0 ? 'destructive' : 'secondary'}>
-              {filteredItems.length} items
-            </Badge>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {location === 'home' ? 'Home' : 'Car'} Inventory
+              <Badge variant={lowStockItems.length > 0 ? 'destructive' : 'secondary'}>
+                {filteredItems.length} items
+              </Badge>
+            </CardTitle>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              size="sm"
+              data-testid="button-add-to-stock"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add to Stock
+            </Button>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Stock Level:</span>
             <Progress value={stockLevel} className="flex-1 max-w-32" />
@@ -438,6 +450,13 @@ export default function InventoryTable({ location }: InventoryTableProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Add Inventory Dialog */}
+      <AddInventoryDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        location={location}
+      />
     </div>
   );
 }
