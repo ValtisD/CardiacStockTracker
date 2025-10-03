@@ -33,12 +33,15 @@ The backend is an Express.js server providing a RESTful API. It uses a middlewar
 ### Database
 
 PostgreSQL (Neon serverless) is the primary database, using Drizzle ORM for schema management and migrations. The schema includes:
-- **Products**: Stores device catalog information (model, name, GTIN, manufacturer, barcode).
-- **Inventory**: Tracks location-based stock levels, quantities, and minimum thresholds.
+- **Products**: Simplified reference database storing GTIN (unique), Model Number, Product Name, and minimum stock thresholds (minCarStock, minTotalStock). Acts as a lookup catalog for barcode scanning workflows.
+- **Inventory**: Tracks individual inventory items by location (home/car) with per-item serial number, lot number, and expiration date tracking. Each row represents a unique item.
 - **Hospitals**: Manages customer details.
 - **Implant Procedures**: Records surgical procedure details.
 - **Procedure Materials**: Tracks material usage for procedures.
 - **Stock Transfers**: Logs inventory movements.
+
+**Low Stock Alerts**: The system tracks low stock by product type (GTIN), not by individual serial numbers. It aggregates all inventory items for each product across serial/lot numbers, sums their quantities, and compares against minimum thresholds to generate alerts.
+
 Data validation is performed using Zod schemas on both client and server.
 
 ## External Dependencies
