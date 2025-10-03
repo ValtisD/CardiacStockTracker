@@ -35,6 +35,7 @@ const implantReportSchema = z.object({
   implantDate: z.string().min(1, "Implant date is required"),
   procedureType: z.string().min(1, "Procedure type is required"),
   deviceUsed: z.string().optional(),
+  deviceSerialNumber: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -260,9 +261,18 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         form.setValue('deviceUsed', productInfo.id);
         setScannedDeviceId(productInfo.id);
         
+        // Set device serial number if present in GS1 data
+        if (gs1Data?.serialNumber) {
+          form.setValue('deviceSerialNumber', gs1Data.serialNumber);
+        }
+        
+        const toastDescription = gs1Data?.serialNumber 
+          ? `${productInfo.name} set as primary device (Serial: ${gs1Data.serialNumber})`
+          : `${productInfo.name} set as primary device`;
+        
         toast({
           title: "Device Scanned",
-          description: `${productInfo.name} set as primary device`,
+          description: toastDescription,
         });
       } else {
         toast({
@@ -328,6 +338,17 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     if (!productId) return 0;
     const inventoryItem = carInventory.find(inv => inv.productId === productId);
     return inventoryItem?.quantity || 0;
+  };
+
+  const getInventorySerialLot = (productId?: string): { serialNumber?: string; lotNumber?: string } => {
+    if (!productId) return {};
+    const inventoryItem = carInventory.find(inv => inv.productId === productId);
+    if (!inventoryItem) return {};
+    
+    return {
+      serialNumber: inventoryItem.serialNumber || undefined,
+      lotNumber: inventoryItem.lotNumber || undefined,
+    };
   };
 
   const MaterialSection = ({ 
@@ -609,7 +630,19 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                     <FormItem>
                       <FormLabel>Primary Device</FormLabel>
                       <div className="flex gap-2">
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Auto-fetch and set serial number from inventory
+                            const { serialNumber, lotNumber } = getInventorySerialLot(value);
+                            if (serialNumber) {
+                              form.setValue('deviceSerialNumber', serialNumber);
+                            } else if (lotNumber) {
+                              form.setValue('deviceSerialNumber', `Lot: ${lotNumber}`);
+                            }
+                          }} 
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="select-device">
                               <SelectValue placeholder="Select device" />
@@ -633,6 +666,11 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                           <Scan className="h-4 w-4" />
                         </Button>
                       </div>
+                      {form.watch('deviceSerialNumber') && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Serial: {form.watch('deviceSerialNumber')}
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
