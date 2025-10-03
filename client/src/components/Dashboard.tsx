@@ -460,12 +460,12 @@ export default function Dashboard() {
                 headStyles: { fillColor: [59, 130, 246] },
                 styles: { fontSize: 9 },
                 columnStyles: {
-                  0: { cellWidth: 50 },
-                  1: { cellWidth: 35 },
-                  2: { cellWidth: 35 },
+                  0: { cellWidth: 45 },
+                  1: { cellWidth: 32 },
+                  2: { cellWidth: 32 },
                   3: { cellWidth: 20 },
-                  4: { cellWidth: 20 },
-                  5: { cellWidth: 25 }
+                  4: { cellWidth: 18 },
+                  5: { cellWidth: 23 }
                 }
               });
               
@@ -514,12 +514,12 @@ export default function Dashboard() {
                 headStyles: { fillColor: [239, 68, 68] },
                 styles: { fontSize: 9 },
                 columnStyles: {
-                  0: { cellWidth: 50 },
-                  1: { cellWidth: 35 },
-                  2: { cellWidth: 35 },
+                  0: { cellWidth: 45 },
+                  1: { cellWidth: 32 },
+                  2: { cellWidth: 32 },
                   3: { cellWidth: 20 },
-                  4: { cellWidth: 20 },
-                  5: { cellWidth: 25 }
+                  4: { cellWidth: 18 },
+                  5: { cellWidth: 23 }
                 }
               });
               
