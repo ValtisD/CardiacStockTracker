@@ -180,8 +180,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   };
 
   const handleScanComplete = async (barcode: string, productInfo?: Product, parsedGs1Data?: GS1Data) => {
-    setShowBarcodeScanner(false);
-
+    // Don't close here - BarcodeScanner will close itself via onClose
+    
     // If GS1 data was parsed, store it for later use
     if (parsedGs1Data) {
       setGs1Data(parsedGs1Data);
@@ -575,13 +575,15 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
         </DialogContent>
       </Dialog>
 
-      {/* Barcode Scanner Dialog */}
-      <BarcodeScanner 
-        isOpen={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        onScanComplete={handleScanComplete}
-        title="Scan Product Barcode"
-      />
+      {/* Barcode Scanner Dialog - Only render when open */}
+      {showBarcodeScanner && (
+        <BarcodeScanner 
+          isOpen={showBarcodeScanner}
+          onClose={() => setShowBarcodeScanner(false)}
+          onScanComplete={handleScanComplete}
+          title="Scan Product Barcode"
+        />
+      )}
     </>
   );
 }
