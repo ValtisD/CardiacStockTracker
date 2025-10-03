@@ -206,8 +206,17 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       const setter = type === 'materials' ? setMaterials : 
                     type === 'leads' ? setLeads : setOtherMaterials;
       
+      // Auto-fetch serial/lot numbers from car inventory
+      const { serialNumber, lotNumber } = getInventorySerialLot(productId);
+      
       setter(prev => prev.map(item => 
-        item.id === id ? { ...item, productId, name: product.name } : item
+        item.id === id ? { 
+          ...item, 
+          productId, 
+          name: product.name,
+          serialNumber,
+          lotNumber
+        } : item
       ));
     }
   };

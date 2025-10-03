@@ -148,6 +148,11 @@ export default function ImplantProcedureDetailDialog({
                           Model: {procedure.deviceProduct.modelNumber}
                         </p>
                       )}
+                      {procedure.deviceSerialNumber && (
+                        <p className="text-sm text-muted-foreground">
+                          Serial: {procedure.deviceSerialNumber}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
