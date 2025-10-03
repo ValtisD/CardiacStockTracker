@@ -25,7 +25,7 @@ export interface IStorage {
   // Products
   getProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
-  getProductByBarcode(barcode: string): Promise<Product | undefined>;
+  getProductByGtin(gtin: string): Promise<Product | undefined>;
   searchProducts(query: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
@@ -37,7 +37,6 @@ export interface IStorage {
   createInventoryItem(item: InsertInventory): Promise<Inventory>;
   updateInventoryQuantity(productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
   deleteInventoryItem(productId: string, location: string): Promise<boolean>;
-  getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]>;
 
   // Hospitals
   getHospitals(): Promise<Hospital[]>;
@@ -68,14 +67,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getProductByBarcode(barcode: string): Promise<Product | undefined> {
-    const result = await db.select().from(products).where(eq(products.barcode, barcode));
+  async getProductByGtin(gtin: string): Promise<Product | undefined> {
+    const result = await db.select().from(products).where(eq(products.gtin, gtin));
     return result[0];
   }
 
   async searchProducts(query: string): Promise<Product[]> {
     const result = await db.select().from(products).where(
-      sql`${products.barcode} = ${query} OR ${products.modelNumber} = ${query} OR ${products.gtin} = ${query}`
+      sql`${products.modelNumber} = ${query} OR ${products.gtin} = ${query}`
     );
     return result;
   }
@@ -156,105 +155,6 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
       .returning();
     return result.length > 0;
-  }
-
-  async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
-    if (location === 'car') {
-      // For car stock: aggregate all inventory rows by productId in car location, then check if total < minCarStock
-      const allCarInventory = await db
-        .select({
-          id: inventory.id,
-          productId: inventory.productId,
-          location: inventory.location,
-          quantity: inventory.quantity,
-          trackingMode: inventory.trackingMode,
-          serialNumber: inventory.serialNumber,
-          lotNumber: inventory.lotNumber,
-          expirationDate: inventory.expirationDate,
-          updatedAt: inventory.updatedAt,
-          product: products,
-        })
-        .from(inventory)
-        .innerJoin(products, eq(inventory.productId, products.id))
-        .where(eq(inventory.location, 'car'));
-
-      // Group by productId and sum quantities
-      const productTotals = new Map<string, { totalQty: number; product: Product; firstItem: any }>();
-      
-      for (const item of allCarInventory) {
-        if (!productTotals.has(item.productId)) {
-          productTotals.set(item.productId, {
-            totalQty: 0,
-            product: item.product,
-            firstItem: item,
-          });
-        }
-        const totals = productTotals.get(item.productId)!;
-        totals.totalQty += item.quantity;
-      }
-
-      // Filter products where total car quantity < minCarStock
-      const lowStockProducts: (Inventory & { product: Product })[] = [];
-      for (const [productId, { totalQty, product, firstItem }] of Array.from(productTotals.entries())) {
-        if (totalQty < product.minCarStock) {
-          // Return the first inventory item with aggregated quantity
-          lowStockProducts.push({
-            ...firstItem,
-            quantity: totalQty, // Use aggregated total
-            product,
-          });
-        }
-      }
-
-      return lowStockProducts;
-    } else {
-      // For total stock: aggregate all inventory rows by productId across ALL locations, then check if total < minTotalStock
-      const allInventory = await db
-        .select({
-          id: inventory.id,
-          productId: inventory.productId,
-          location: inventory.location,
-          quantity: inventory.quantity,
-          trackingMode: inventory.trackingMode,
-          serialNumber: inventory.serialNumber,
-          lotNumber: inventory.lotNumber,
-          expirationDate: inventory.expirationDate,
-          updatedAt: inventory.updatedAt,
-          product: products,
-        })
-        .from(inventory)
-        .innerJoin(products, eq(inventory.productId, products.id));
-
-      // Group by productId and sum quantities across all locations
-      const productTotals = new Map<string, { totalQty: number; product: Product; firstItem: any }>();
-      
-      for (const item of allInventory) {
-        if (!productTotals.has(item.productId)) {
-          productTotals.set(item.productId, {
-            totalQty: 0,
-            product: item.product,
-            firstItem: item,
-          });
-        }
-        const totals = productTotals.get(item.productId)!;
-        totals.totalQty += item.quantity;
-      }
-
-      // Filter products where total quantity < minTotalStock
-      const lowStockProducts: (Inventory & { product: Product })[] = [];
-      for (const [productId, { totalQty, product, firstItem }] of Array.from(productTotals.entries())) {
-        if (totalQty < product.minTotalStock) {
-          // Return the first inventory item with aggregated quantity
-          lowStockProducts.push({
-            ...firstItem,
-            quantity: totalQty, // Use aggregated total
-            product,
-          });
-        }
-      }
-
-      return lowStockProducts;
-    }
   }
 
   // Hospitals

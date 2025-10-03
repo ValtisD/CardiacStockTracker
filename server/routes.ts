@@ -35,18 +35,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/barcode/:barcode", async (req, res) => {
-    try {
-      const product = await storage.getProductByBarcode(req.params.barcode);
-      if (!product) {
-        return res.status(404).json({ error: "Product not found" });
-      }
-      res.json(product);
-    } catch (error) {
-      console.error("Error fetching product by barcode:", error);
-      res.status(500).json({ error: "Failed to fetch product" });
-    }
-  });
 
   app.get("/api/products/search/:query", async (req, res) => {
     try {
@@ -110,16 +98,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/inventory/low-stock", async (req, res) => {
-    try {
-      const location = req.query.location as string | undefined;
-      const lowStockItems = await storage.getLowStockItems(location);
-      res.json(lowStockItems);
-    } catch (error) {
-      console.error("Error fetching low stock items:", error);
-      res.status(500).json({ error: "Failed to fetch low stock items" });
-    }
-  });
 
   app.post("/api/inventory", async (req, res) => {
     try {
