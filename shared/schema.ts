@@ -26,7 +26,7 @@ export const inventory = pgTable("inventory", {
   location: text("location").notNull(), // 'home' or 'car'
   quantity: integer("quantity").notNull().default(1), // Always 1 for serial-tracked, can be >1 for lot-tracked
   trackingMode: text("tracking_mode"), // 'serial' or 'lot' - determines if this item is tracked by serial number or lot number
-  serialNumber: text("serial_number"), // Unique identifier for serial-tracked items
+  serialNumber: text("serial_number").unique(), // Unique identifier for serial-tracked items (must be unique across all inventory)
   lotNumber: text("lot_number"), // Batch identifier for lot-tracked items
   expirationDate: date("expiration_date"), // Expiration date for this specific inventory item
   updatedAt: timestamp("updated_at").default(sql`now()`),
