@@ -1,4 +1,4 @@
-import { Package, Car, Hospital, AlertTriangle, TrendingUp, Calendar, Plus, Building2, Download } from "lucide-react";
+import { Package, Car, Hospital, AlertTriangle, TrendingUp, Calendar, Plus, Building2, Download, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { useState } from "react";
 import type { Inventory, ImplantProcedure, Product, Hospital as HospitalType } from "@shared/schema";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface InventoryWithProduct extends Inventory {
   product?: Product;
@@ -286,35 +288,51 @@ export default function Dashboard() {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    const csvContent = [
-                      ['Product', 'Model Number', 'GTIN', 'Location', 'Quantity', 'Expiration Date', 'Days Until Expiration'].join(','),
-                      ...expiringItems.map(item => {
-                        const daysUntil = Math.ceil((new Date(item.product!.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                        return [
-                          `"${item.product?.name || ''}"`,
-                          `"${item.product?.modelNumber || ''}"`,
-                          `"${item.product?.gtin || ''}"`,
-                          item.location,
-                          item.quantity,
-                          format(new Date(item.product!.expirationDate!), "yyyy-MM-dd"),
-                          daysUntil
-                        ].join(',');
-                      })
-                    ].join('\n');
-                    const blob = new Blob([csvContent], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `expiring-products-${format(new Date(), "yyyy-MM-dd")}.csv`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    const doc = new jsPDF();
+                    
+                    doc.setFontSize(18);
+                    doc.text("Expiring Products Report", 14, 20);
+                    doc.setFontSize(11);
+                    doc.text(`Generated: ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
+                    doc.text("Products expiring in the next 90 days", 14, 34);
+                    
+                    const tableData = expiringItems.map(item => {
+                      const daysUntil = Math.ceil((new Date(item.product!.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                      return [
+                        item.product?.name || '',
+                        item.product?.modelNumber || '',
+                        item.product?.gtin || '-',
+                        item.location,
+                        item.quantity.toString(),
+                        format(new Date(item.product!.expirationDate!), "MMM dd, yyyy"),
+                        daysUntil.toString()
+                      ];
+                    });
+                    
+                    autoTable(doc, {
+                      startY: 40,
+                      head: [['Product', 'Model', 'GTIN', 'Location', 'Qty', 'Expiration', 'Days']],
+                      body: tableData,
+                      theme: 'striped',
+                      headStyles: { fillColor: [59, 130, 246] },
+                      styles: { fontSize: 9 },
+                      columnStyles: {
+                        0: { cellWidth: 45 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 30 },
+                        3: { cellWidth: 20 },
+                        4: { cellWidth: 15 },
+                        5: { cellWidth: 30 },
+                        6: { cellWidth: 15 }
+                      }
+                    });
+                    
+                    doc.save(`expiring-products-${format(new Date(), "yyyy-MM-dd")}.pdf`);
                   }}
                   data-testid="button-export-expiring"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Export CSV
+                  Export PDF
                 </Button>
               </DialogTitle>
             </DialogHeader>
