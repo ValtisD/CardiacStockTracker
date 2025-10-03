@@ -197,63 +197,66 @@ export default function BarcodeScanner({
         return;
       }
       
+      // Set available cameras immediately so UI can render switch button
       setAvailableCameras(videoInputDevices);
       
-      let selectedDeviceId: string;
-      
+      let constraints: any;
       let cameraIndexToUse: number;
       
       if (cameraIndex !== undefined && videoInputDevices[cameraIndex]) {
-        // Use specified camera (from switch button)
+        // User explicitly switched cameras - use specific deviceId
         cameraIndexToUse = cameraIndex;
+        const selectedDeviceId = videoInputDevices[cameraIndex].deviceId;
         console.log('Using selected camera:', videoInputDevices[cameraIndex].label);
-      } else if (currentCameraIndex >= 0 && currentCameraIndex < videoInputDevices.length) {
-        // Reuse previously selected camera
-        cameraIndexToUse = currentCameraIndex;
-        console.log('Reusing previous camera:', videoInputDevices[currentCameraIndex].label);
-      } else {
-        // First time: prefer back/rear/environment camera
-        // Try multiple detection methods for better reliability
-        const backCameraIndex = videoInputDevices.findIndex((device: MediaDeviceInfo) => {
-          const label = device.label.toLowerCase();
-          return label.includes('back') || 
-                 label.includes('rear') ||
-                 label.includes('rück') || // German
-                 label.includes('trasera') || // Spanish
-                 label.includes('arrière') || // French
-                 label.includes('environment');
-        });
         
-        if (backCameraIndex !== -1) {
-          cameraIndexToUse = backCameraIndex;
-          console.log('Found back camera:', videoInputDevices[backCameraIndex].label);
-        } else if (videoInputDevices.length > 1) {
-          // On mobile, back camera is usually the last one
-          cameraIndexToUse = videoInputDevices.length - 1;
-          console.log('Using last camera (likely back):', videoInputDevices[cameraIndexToUse].label);
+        constraints = {
+          video: {
+            deviceId: { exact: selectedDeviceId },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            focusMode: 'continuous',
+            aspectRatio: { ideal: 16/9 }
+          }
+        };
+      } else {
+        // First time or no specific camera selected - use facingMode to request rear camera
+        // This is more reliable on mobile than trying to guess from device list
+        console.log('First camera start - requesting rear camera via facingMode');
+        
+        constraints = {
+          video: {
+            facingMode: { ideal: 'environment' }, // Request rear camera on mobile
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            focusMode: 'continuous',
+            aspectRatio: { ideal: 16/9 }
+          }
+        };
+        
+        // After getting the stream, we'll determine which camera was actually selected
+        cameraIndexToUse = -1; // Will be set after stream is acquired
+      }
+      
+      // Get media stream
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // If we used facingMode, determine which camera was actually selected
+      if (cameraIndexToUse === -1 && stream.getVideoTracks().length > 0) {
+        const videoTrack = stream.getVideoTracks()[0];
+        const settings = videoTrack.getSettings();
+        const actualDeviceId = settings.deviceId;
+        
+        // Find the index of the camera that was actually used
+        const actualIndex = videoInputDevices.findIndex(d => d.deviceId === actualDeviceId);
+        if (actualIndex !== -1) {
+          cameraIndexToUse = actualIndex;
+          console.log('Camera selected:', videoInputDevices[actualIndex].label);
         } else {
-          // Only one camera available
           cameraIndexToUse = 0;
-          console.log('Using only available camera:', videoInputDevices[0].label);
         }
       }
       
       setCurrentCameraIndex(cameraIndexToUse);
-      selectedDeviceId = videoInputDevices[cameraIndexToUse].deviceId;
-      
-      // Set high resolution video constraints for better barcode detection
-      const constraints = {
-        video: {
-          deviceId: { exact: selectedDeviceId },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          focusMode: 'continuous' as any,
-          aspectRatio: { ideal: 16/9 }
-        }
-      };
-      
-      // Get media stream with high resolution
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -768,7 +771,7 @@ export default function BarcodeScanner({
             )}
             
             {isScanning && (
-              <>
+              <div className="flex gap-2 w-full">
                 {availableCameras.length > 1 && (
                   <Button 
                     onClick={switchCamera} 
@@ -789,7 +792,7 @@ export default function BarcodeScanner({
                   <X className="h-4 w-4 mr-2" />
                   Stop Scanning
                 </Button>
-              </>
+              </div>
             )}
             
             {scannedCode && (
