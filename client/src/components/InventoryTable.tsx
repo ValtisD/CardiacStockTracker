@@ -49,6 +49,19 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
   });
 
+  // Fetch all inventory data to calculate total quantities for home stock checks
+  const { data: allInventoryData } = useQuery<InventoryWithProduct[]>({
+    queryKey: ["/api/inventory"],
+    queryFn: async () => {
+      const response = await fetch(`/api/inventory`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch inventory');
+      }
+      return response.json();
+    },
+    enabled: location === 'home', // Only fetch when showing home inventory
+  });
+
   const transferMutation = useMutation({
     mutationFn: async ({ productId, fromLocation, toLocation, quantity }: { 
       productId: string; 
@@ -131,6 +144,26 @@ export default function InventoryTable({ location }: InventoryTableProps) {
 
   const items = inventoryData || [];
 
+  // Calculate total quantities per product (for home location checks)
+  const productTotalQuantities = new Map<string, number>();
+  if (location === 'home' && allInventoryData) {
+    allInventoryData.forEach(item => {
+      const current = productTotalQuantities.get(item.productId) || 0;
+      productTotalQuantities.set(item.productId, current + item.quantity);
+    });
+  }
+
+  // Helper function to check if item is low stock
+  const isLowStock = (item: InventoryWithProduct) => {
+    if (location === 'car') {
+      return item.quantity < item.product.minCarStock;
+    } else {
+      // For home, check total quantity (home + car) against minTotalStock
+      const totalQuantity = productTotalQuantities.get(item.productId) || item.quantity;
+      return totalQuantity < item.product.minTotalStock;
+    }
+  };
+
   const filteredItems = items
     .filter(item => 
       item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -147,14 +180,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       return a.product.name.localeCompare(b.product.name);
     });
 
-  const lowStockItems = filteredItems.filter(item => {
-    if (location === 'car') {
-      return item.quantity < item.product.minCarStock;
-    } else {
-      // For home, we check against total minimum (approximation - ideally would check total across both locations)
-      return item.quantity < item.product.minTotalStock;
-    }
-  });
+  const lowStockItems = filteredItems.filter(item => isLowStock(item));
   const stockLevel = filteredItems.length > 0 ? (filteredItems.reduce((sum, item) => sum + item.quantity, 0) / filteredItems.length) * 10 : 0;
 
   const handleQuantityChange = (item: InventoryWithProduct, direction: 'increase' | 'decrease') => {
@@ -332,14 +358,10 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <span className={
-                          location === 'car' 
-                            ? (item.quantity < item.product.minCarStock ? 'text-destructive font-medium' : '')
-                            : (item.quantity < item.product.minTotalStock ? 'text-destructive font-medium' : '')
-                        }>
+                        <span className={isLowStock(item) ? 'text-destructive font-medium' : ''}>
                           {item.quantity}
                         </span>
-                        {(location === 'car' ? item.quantity < item.product.minCarStock : item.quantity < item.product.minTotalStock) && (
+                        {isLowStock(item) && (
                           <AlertTriangle className="h-3 w-3 text-destructive" />
                         )}
                       </div>
