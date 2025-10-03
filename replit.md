@@ -181,6 +181,29 @@ Currently not implemented - the application appears to be designed for single-us
 ### Fonts
 - **Google Fonts** - Inter, Architects Daughter, DM Sans, Fira Code, Geist Mono loaded via CDN
 
+### Add Inventory Dialog Implementation
+The application provides a comprehensive Add to Stock dialog (`AddInventoryDialog.tsx`) for adding new inventory items with dual input methods:
+
+**Product Lookup Methods**:
+- **Barcode Scanner**: Real-time camera-based scanning with GS1 parsing for quick product identification
+- **Manual GTIN Entry**: Fallback input field for manual GTIN lookup when camera is unavailable or preferred
+- **Product Search**: Both methods query the same `/api/products?gtin={gtin}` endpoint for consistent product lookup
+- **Error Handling**: Clear toast notifications for empty input, fetch failures, and not-found scenarios
+
+**Per-Item Tracking**:
+- **Tracking Mode Selection**: Serial-tracked (quantity fixed to 1) or lot-tracked (configurable quantity)
+- **Serial Number Tracking**: Required field for serial-tracked items with unique device identification
+- **Lot Number Tracking**: Required field for lot-tracked items with batch identification
+- **Expiration Date**: Optional date field with timezone-safe parsing to prevent date shifts across locales
+- **Auto-Population**: GS1 barcode data automatically fills serial/lot/expiration fields when available
+- **Form Validation**: React Hook Form with Zod validation ensures data integrity before submission
+
+**Date Handling**:
+- **Timezone-Safe Parsing**: Custom `parseDateString` function converts YYYY-MM-DD strings to Date objects without timezone shifts
+- **Local Date Preservation**: Uses `new Date(year, month-1, day)` instead of `new Date(string)` to prevent UTC conversion issues
+- **Display Formatting**: Calendar component correctly displays selected dates regardless of user timezone
+- **String Storage**: Form stores dates as YYYY-MM-DD strings for database consistency while displaying as formatted dates to users
+
 ### Barcode Scanning Implementation
 The application includes real-time camera-based barcode scanning using @zxing/library with GS1 barcode parsing:
 
@@ -203,7 +226,7 @@ The application includes real-time camera-based barcode scanning using @zxing/li
 - **Separate GTIN Storage**: GTIN is saved to dedicated `gtin` field, NOT in `modelNumber` field
 - **Date Conversion**: Converts GS1 YYMMDD format to YYYY-MM-DD (handles century with YY < 50 = 20xx, else 19xx)
 - **Variable-Length Support**: Correctly handles both fixed-length (GTIN, exp date) and variable-length (serial, lot) fields
-- **Auto-Population**: Automatically fills product form fields (GTIN, expiration date, serial number, lot number) from scanned GS1 data
+- **Auto-Population**: Automatically fills inventory form fields (serial number, lot number, expiration date) from scanned GS1 data
 - **State Management**: Clears GS1 data when non-GS1 barcodes are scanned to prevent stale data issues
 - **User Feedback**: Displays extracted GS1 data in dedicated card with formatted Application Identifier labels
 
