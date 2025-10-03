@@ -12,9 +12,6 @@ export const products = pgTable("products", {
   manufacturer: text("manufacturer").notNull(),
   description: text("description"),
   gtin: text("gtin"), // Global Trade Item Number from GS1 barcodes
-  expirationDate: date("expiration_date"),
-  serialNumber: text("serial_number"),
-  lotNumber: text("lot_number"),
   barcode: text("barcode"),
   minCarStock: integer("min_car_stock").notNull().default(1), // Minimum units to keep in car
   minTotalStock: integer("min_total_stock").notNull().default(1), // Minimum total units (car + home combined)
@@ -22,15 +19,18 @@ export const products = pgTable("products", {
 });
 
 // Inventory locations (Home, Car)
+// Each row represents a unique inventory item (individual serial or lot batch)
 export const inventory = pgTable("inventory", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   productId: varchar("product_id").notNull().references(() => products.id),
   location: text("location").notNull(), // 'home' or 'car'
-  quantity: integer("quantity").notNull().default(0),
+  quantity: integer("quantity").notNull().default(1), // Always 1 for serial-tracked, can be >1 for lot-tracked
+  trackingMode: text("tracking_mode"), // 'serial' or 'lot' - determines if this item is tracked by serial number or lot number
+  serialNumber: text("serial_number"), // Unique identifier for serial-tracked items
+  lotNumber: text("lot_number"), // Batch identifier for lot-tracked items
+  expirationDate: date("expiration_date"), // Expiration date for this specific inventory item
   updatedAt: timestamp("updated_at").default(sql`now()`),
-}, (table) => ({
-  uniqueProductLocation: unique("unique_product_location").on(table.productId, table.location),
-}));
+});
 
 // Hospitals/Customers
 export const hospitals = pgTable("hospitals", {
