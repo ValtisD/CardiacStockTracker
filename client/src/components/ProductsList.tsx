@@ -93,6 +93,8 @@ export default function ProductsList() {
               <TableHead>GTIN</TableHead>
               <TableHead>Model Number</TableHead>
               <TableHead>Product Name</TableHead>
+              <TableHead className="text-center">Min Car Stock</TableHead>
+              <TableHead className="text-center">Min Total Stock</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -107,6 +109,12 @@ export default function ProductsList() {
                 </TableCell>
                 <TableCell data-testid={`text-product-name-${product.id}`}>
                   {product.name}
+                </TableCell>
+                <TableCell className="text-center" data-testid={`text-min-car-${product.id}`}>
+                  {product.minCarStock}
+                </TableCell>
+                <TableCell className="text-center" data-testid={`text-min-total-${product.id}`}>
+                  {product.minTotalStock}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">

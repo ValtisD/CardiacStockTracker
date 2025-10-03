@@ -9,6 +9,8 @@ export const products = pgTable("products", {
   gtin: text("gtin").notNull().unique(), // Global Trade Item Number from GS1 barcodes - now required and unique
   modelNumber: text("model_number").notNull(),
   name: text("name").notNull(),
+  minCarStock: integer("min_car_stock").notNull().default(0), // Minimum quantity to keep in car
+  minTotalStock: integer("min_total_stock").notNull().default(0), // Minimum total quantity across all locations
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 

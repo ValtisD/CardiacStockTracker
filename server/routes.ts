@@ -98,6 +98,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/inventory/low-stock", async (req, res) => {
+    try {
+      const location = req.query.location as string | undefined;
+      const lowStockItems = await storage.getLowStockItems(location);
+      res.json(lowStockItems);
+    } catch (error) {
+      console.error("Error fetching low stock items:", error);
+      res.status(500).json({ error: "Failed to fetch low stock items" });
+    }
+  });
 
   app.post("/api/inventory", async (req, res) => {
     try {
