@@ -15,8 +15,10 @@ import AppSidebar from "@/components/AppSidebar";
 import Dashboard from "@/components/Dashboard";
 import InventoryTable from "@/components/InventoryTable";
 import ProductForm from "@/components/ProductForm";
+import ProductsList from "@/components/ProductsList";
 import HospitalManager from "@/components/HospitalManager";
 import ImplantReportForm from "@/components/ImplantReportForm";
+import ImplantProceduresList from "@/components/ImplantProceduresList";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import StockTransfer from "@/components/StockTransfer";
 import NotFound from "@/pages/not-found";
@@ -63,15 +65,14 @@ function HospitalsPage() {
 function ImplantReportsPage() {
   const [showNewReport, setShowNewReport] = useState(false);
 
-  const handleSubmitReport = (data: any) => {
-    console.log('Implant report submitted:', data);
+  const handleSubmitSuccess = () => {
     setShowNewReport(false);
   };
 
   if (showNewReport) {
     return (
       <ImplantReportForm 
-        onSubmit={handleSubmitReport}
+        onSubmit={handleSubmitSuccess}
         onCancel={() => setShowNewReport(false)}
       />
     );
@@ -85,10 +86,7 @@ function ImplantReportsPage() {
           New Report
         </Button>
       </div>
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Implant reports will be displayed here.</p>
-        <p className="text-sm mt-2">Click "New Report" to create your first implant procedure report.</p>
-      </div>
+      <ImplantProceduresList />
     </div>
   );
 }
@@ -96,8 +94,7 @@ function ImplantReportsPage() {
 function ProductsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const handleSubmitProduct = (data: any) => {
-    console.log('Product submitted:', data);
+  const handleSubmitSuccess = () => {
     setShowAddForm(false);
   };
 
@@ -105,7 +102,7 @@ function ProductsPage() {
     return (
       <div className="p-6">
         <ProductForm 
-          onSubmit={handleSubmitProduct}
+          onSuccess={handleSubmitSuccess}
           onCancel={() => setShowAddForm(false)}
         />
       </div>
@@ -120,10 +117,7 @@ function ProductsPage() {
           Add Product
         </Button>
       </div>
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Product catalog will be displayed here.</p>
-        <p className="text-sm mt-2">Click "Add Product" to add medical devices to your inventory.</p>
-      </div>
+      <ProductsList />
     </div>
   );
 }
