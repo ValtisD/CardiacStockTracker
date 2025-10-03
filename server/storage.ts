@@ -156,28 +156,84 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
-    let whereClause = sql`${inventory.quantity} < ${inventory.minStockLevel}`;
-    
-    if (location) {
-      whereClause = and(
-        whereClause,
-        eq(inventory.location, location)
-      ) as any;
-    }
+    if (location === 'car') {
+      // For car stock: check if car quantity < minCarStock
+      return await db
+        .select({
+          id: inventory.id,
+          productId: inventory.productId,
+          location: inventory.location,
+          quantity: inventory.quantity,
+          updatedAt: inventory.updatedAt,
+          product: products,
+        })
+        .from(inventory)
+        .innerJoin(products, eq(inventory.productId, products.id))
+        .where(
+          and(
+            eq(inventory.location, 'car'),
+            sql`${inventory.quantity} < ${products.minCarStock}`
+          )
+        );
+    } else {
+      // For total stock: check if (car + home) < minTotalStock
+      // Get all products and their total quantities across locations
+      const allInventory = await db
+        .select({
+          productId: inventory.productId,
+          location: inventory.location,
+          quantity: inventory.quantity,
+          product: products,
+        })
+        .from(inventory)
+        .innerJoin(products, eq(inventory.productId, products.id));
 
-    return await db
-      .select({
-        id: inventory.id,
-        productId: inventory.productId,
-        location: inventory.location,
-        quantity: inventory.quantity,
-        minStockLevel: inventory.minStockLevel,
-        updatedAt: inventory.updatedAt,
-        product: products,
-      })
-      .from(inventory)
-      .innerJoin(products, eq(inventory.productId, products.id))
-      .where(whereClause);
+      // Group by product and calculate totals
+      const productTotals = new Map<string, { carQty: number; homeQty: number; product: Product }>();
+      
+      for (const item of allInventory) {
+        if (!productTotals.has(item.productId)) {
+          productTotals.set(item.productId, {
+            carQty: 0,
+            homeQty: 0,
+            product: item.product,
+          });
+        }
+        const totals = productTotals.get(item.productId)!;
+        if (item.location === 'car') {
+          totals.carQty = item.quantity;
+        } else if (item.location === 'home') {
+          totals.homeQty = item.quantity;
+        }
+      }
+
+      // Find products where total < minTotalStock
+      const lowStockProducts: (Inventory & { product: Product })[] = [];
+      for (const [productId, { carQty, homeQty, product }] of productTotals) {
+        const totalQty = carQty + homeQty;
+        if (totalQty < product.minTotalStock) {
+          // Return the home inventory item to represent this low stock condition
+          const homeItem = await db
+            .select()
+            .from(inventory)
+            .where(
+              and(
+                eq(inventory.productId, productId),
+                eq(inventory.location, 'home')
+              )
+            );
+          
+          if (homeItem[0]) {
+            lowStockProducts.push({
+              ...homeItem[0],
+              product,
+            });
+          }
+        }
+      }
+
+      return lowStockProducts;
+    }
   }
 
   // Hospitals
