@@ -6,6 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
   Table,
   TableBody,
   TableCell,
@@ -37,6 +46,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [transferItem, setTransferItem] = useState<InventoryWithProduct | null>(null);
+  const [transferQuantity, setTransferQuantity] = useState<string>('');
   const { toast } = useToast();
 
   const { data: inventoryData, isLoading, error } = useQuery<InventoryWithProduct[]>({
@@ -141,15 +153,22 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   });
 
   const transferItemMutation = useMutation({
-    mutationFn: async ({ id, toLocation }: { 
+    mutationFn: async ({ id, toLocation, quantity }: { 
       id: string; 
       toLocation: string;
+      quantity?: number;
     }) => {
-      return await apiRequest('POST', `/api/inventory/item/${id}/transfer`, { toLocation });
+      return await apiRequest('POST', `/api/inventory/item/${id}/transfer`, { 
+        toLocation,
+        ...(quantity !== undefined && { quantity })
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      setShowTransferDialog(false);
+      setTransferItem(null);
+      setTransferQuantity('');
       toast({
         title: "Item transferred",
         description: "Item has been transferred successfully.",
@@ -269,18 +288,48 @@ export default function InventoryTable({ location }: InventoryTableProps) {
 
   const handleTransfer = (item: InventoryWithProduct) => {
     const toLocation = location === 'home' ? 'car' : 'home';
-    const itemDescription = item.serialNumber 
-      ? `${item.product.name} (Serial: ${item.serialNumber})`
-      : item.lotNumber
-      ? `${item.product.name} (Lot: ${item.lotNumber})`
-      : `${item.product.name}`;
     
-    if (window.confirm(`Move ${itemDescription} to ${toLocation}?`)) {
-      transferItemMutation.mutate({
-        id: item.id,
-        toLocation,
-      });
+    // For lot-tracked items with quantity > 1, show dialog to ask for quantity
+    if (item.trackingMode === 'lot' && item.quantity > 1) {
+      setTransferItem(item);
+      setTransferQuantity(String(item.quantity));
+      setShowTransferDialog(true);
+    } else {
+      // For serial-tracked items or lot items with quantity = 1, transfer directly
+      const itemDescription = item.serialNumber 
+        ? `${item.product.name} (Serial: ${item.serialNumber})`
+        : item.lotNumber
+        ? `${item.product.name} (Lot: ${item.lotNumber})`
+        : `${item.product.name}`;
+      
+      if (window.confirm(`Move ${itemDescription} to ${toLocation}?`)) {
+        transferItemMutation.mutate({
+          id: item.id,
+          toLocation,
+        });
+      }
     }
+  };
+
+  const handleConfirmTransfer = () => {
+    if (!transferItem) return;
+    
+    const quantity = parseInt(transferQuantity);
+    if (isNaN(quantity) || quantity <= 0 || quantity > transferItem.quantity) {
+      toast({
+        title: "Invalid quantity",
+        description: `Please enter a quantity between 1 and ${transferItem.quantity}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const toLocation = location === 'home' ? 'car' : 'home';
+    transferItemMutation.mutate({
+      id: transferItem.id,
+      toLocation,
+      quantity,
+    });
   };
 
   const isExpiringSoon = (date?: string | Date | null) => {
@@ -516,6 +565,59 @@ export default function InventoryTable({ location }: InventoryTableProps) {
         onOpenChange={setShowAddDialog}
         location={location}
       />
+
+      {/* Transfer Quantity Dialog */}
+      <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+        <DialogContent data-testid="dialog-transfer-quantity">
+          <DialogHeader>
+            <DialogTitle>Transfer Item</DialogTitle>
+            <DialogDescription>
+              {transferItem && (
+                <>
+                  How many units of <strong>{transferItem.product.name}</strong> (Lot: {transferItem.lotNumber}) 
+                  would you like to move to {location === 'home' ? 'car' : 'home'}?
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="transfer-quantity">
+                Quantity (Available: {transferItem?.quantity})
+              </Label>
+              <Input
+                id="transfer-quantity"
+                type="number"
+                min="1"
+                max={transferItem?.quantity}
+                value={transferQuantity}
+                onChange={(e) => setTransferQuantity(e.target.value)}
+                data-testid="input-transfer-quantity"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTransferDialog(false);
+                setTransferItem(null);
+                setTransferQuantity('');
+              }}
+              data-testid="button-cancel-transfer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmTransfer}
+              disabled={transferItemMutation.isPending}
+              data-testid="button-confirm-transfer"
+            >
+              {transferItemMutation.isPending ? 'Transferring...' : 'Transfer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

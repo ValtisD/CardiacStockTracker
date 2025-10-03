@@ -167,20 +167,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/inventory/item/:id/transfer", async (req, res) => {
     try {
       const { id } = req.params;
-      const { toLocation } = req.body;
+      const { toLocation, quantity } = req.body;
       
       if (!toLocation || (toLocation !== 'home' && toLocation !== 'car')) {
         return res.status(400).json({ error: "Invalid location. Must be 'home' or 'car'" });
       }
       
-      const inventory = await storage.transferInventoryItem(id, toLocation);
+      if (quantity !== undefined && (typeof quantity !== 'number' || quantity <= 0)) {
+        return res.status(400).json({ error: "Quantity must be a positive number" });
+      }
+      
+      const inventory = await storage.transferInventoryItem(id, toLocation, quantity);
       if (!inventory) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
       res.json(inventory);
     } catch (error) {
       console.error("Error transferring inventory item:", error);
-      res.status(400).json({ error: "Failed to transfer inventory item" });
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Failed to transfer inventory item" 
+      });
     }
   });
 

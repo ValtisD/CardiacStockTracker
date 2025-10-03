@@ -1,4 +1,4 @@
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, isNull } from "drizzle-orm";
 import { db } from "./db";
 import {
   products,
@@ -182,33 +182,118 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async transferInventoryItem(id: string, toLocation: string): Promise<Inventory | undefined> {
+  async transferInventoryItem(
+    id: string, 
+    toLocation: string, 
+    transferQuantity?: number
+  ): Promise<Inventory | undefined> {
     const item = await db.select().from(inventory).where(eq(inventory.id, id));
     if (!item || item.length === 0) {
       return undefined;
     }
 
-    const fromLocation = item[0].location;
-    const productId = item[0].productId;
-    const quantity = item[0].quantity;
+    const sourceItem = item[0];
+    const fromLocation = sourceItem.location;
+    const productId = sourceItem.productId;
+    const sourceQuantity = sourceItem.quantity;
 
-    const result = await db
-      .update(inventory)
-      .set({ location: toLocation, updatedAt: new Date() })
-      .where(eq(inventory.id, id))
-      .returning();
+    // Validate transfer quantity
+    if (transferQuantity !== undefined) {
+      if (transferQuantity <= 0 || transferQuantity > sourceQuantity) {
+        throw new Error('Invalid transfer quantity');
+      }
+      
+      // Only lot-tracked items can have partial transfers
+      if (sourceItem.trackingMode !== 'lot') {
+        throw new Error('Partial transfers are only allowed for lot-tracked items');
+      }
+    }
 
-    if (result && result.length > 0) {
+    // Determine if this is a partial or full transfer
+    const isPartialTransfer = transferQuantity !== undefined && transferQuantity < sourceQuantity;
+    const quantityToTransfer = transferQuantity ?? sourceQuantity;
+
+    if (isPartialTransfer) {
+      // Partial transfer: reduce source quantity and find/create destination item
+      
+      // For lot-tracked items, find existing item at destination with same lot/expiration
+      const existingDestItem = await db
+        .select()
+        .from(inventory)
+        .where(
+          and(
+            eq(inventory.productId, productId),
+            eq(inventory.location, toLocation),
+            eq(inventory.trackingMode, 'lot'),
+            eq(inventory.lotNumber, sourceItem.lotNumber),
+            sourceItem.expirationDate 
+              ? eq(inventory.expirationDate, sourceItem.expirationDate)
+              : isNull(inventory.expirationDate)
+          )
+        );
+
+      if (existingDestItem.length > 0) {
+        // Add to existing destination item
+        await db
+          .update(inventory)
+          .set({ 
+            quantity: existingDestItem[0].quantity + quantityToTransfer,
+            updatedAt: new Date() 
+          })
+          .where(eq(inventory.id, existingDestItem[0].id));
+      } else {
+        // Create new destination item
+        await db.insert(inventory).values({
+          productId,
+          location: toLocation,
+          quantity: quantityToTransfer,
+          trackingMode: 'lot',
+          serialNumber: '',
+          lotNumber: sourceItem.lotNumber,
+          expirationDate: sourceItem.expirationDate,
+        });
+      }
+
+      // Reduce source quantity
+      const updatedSource = await db
+        .update(inventory)
+        .set({ 
+          quantity: sourceQuantity - quantityToTransfer,
+          updatedAt: new Date() 
+        })
+        .where(eq(inventory.id, id))
+        .returning();
+
+      // Create audit trail
       await db.insert(stockTransfers).values({
         productId,
         fromLocation,
         toLocation,
-        quantity,
-        notes: `Individual item transfer (ID: ${id})`,
+        quantity: quantityToTransfer,
+        notes: `Partial transfer from item ${id} (${quantityToTransfer} of ${sourceQuantity})`,
       });
-    }
 
-    return result[0];
+      return updatedSource[0];
+    } else {
+      // Full transfer: move the entire item
+      const result = await db
+        .update(inventory)
+        .set({ location: toLocation, updatedAt: new Date() })
+        .where(eq(inventory.id, id))
+        .returning();
+
+      if (result && result.length > 0) {
+        await db.insert(stockTransfers).values({
+          productId,
+          fromLocation,
+          toLocation,
+          quantity: quantityToTransfer,
+          notes: `Full item transfer (ID: ${id})`,
+        });
+      }
+
+      return result[0];
+    }
   }
 
   async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
