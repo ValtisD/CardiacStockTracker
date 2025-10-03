@@ -14,6 +14,7 @@ import AppHeader from "@/components/AppHeader";
 import AppSidebar from "@/components/AppSidebar";
 import Dashboard from "@/components/Dashboard";
 import InventoryTable from "@/components/InventoryTable";
+import InventorySummary from "@/components/InventorySummary";
 import ProductForm from "@/components/ProductForm";
 import ProductsList from "@/components/ProductsList";
 import HospitalManager from "@/components/HospitalManager";
@@ -49,11 +50,33 @@ function HomePage() {
 }
 
 function HomeInventoryPage() {
-  return <InventoryTable location="home" />;
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <InventoryTable location="home" />
+        </div>
+        <div>
+          <InventorySummary location="home" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function CarInventoryPage() {
-  return <InventoryTable location="car" />;
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <InventoryTable location="car" />
+        </div>
+        <div>
+          <InventorySummary location="car" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function HospitalsPage() {

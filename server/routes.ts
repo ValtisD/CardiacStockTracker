@@ -98,6 +98,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/inventory/summary", async (req, res) => {
+    try {
+      const location = req.query.location as string | undefined;
+      const summary = await storage.getInventorySummary(location);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching inventory summary:", error);
+      res.status(500).json({ error: "Failed to fetch inventory summary" });
+    }
+  });
+
   app.get("/api/inventory/low-stock", async (req, res) => {
     try {
       const location = req.query.location as string | undefined;

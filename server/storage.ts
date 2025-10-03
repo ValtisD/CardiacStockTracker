@@ -1,4 +1,4 @@
-import { eq, and, sql, desc, isNull } from "drizzle-orm";
+import { eq, and, sql, desc, isNull, gt } from "drizzle-orm";
 import { db } from "./db";
 import {
   products,
@@ -34,6 +34,7 @@ export interface IStorage {
   // Inventory
   getInventory(location?: string): Promise<(Inventory & { product: Product })[]>;
   getInventoryItem(productId: string, location: string): Promise<Inventory | undefined>;
+  getInventorySummary(location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]>;
   createInventoryItem(item: InsertInventory): Promise<Inventory>;
   updateInventoryQuantity(productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
   deleteInventoryItem(productId: string, location: string): Promise<boolean>;
@@ -122,10 +123,13 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(products, eq(inventory.productId, products.id));
 
     if (location) {
-      return await query.where(eq(inventory.location, location));
+      return await query.where(and(
+        eq(inventory.location, location),
+        gt(inventory.quantity, 0)
+      ));
     }
 
-    return await query;
+    return await query.where(gt(inventory.quantity, 0));
   }
 
   async getInventoryItem(productId: string, location: string): Promise<Inventory | undefined> {
@@ -134,6 +138,47 @@ export class DatabaseStorage implements IStorage {
       .from(inventory)
       .where(and(eq(inventory.productId, productId), eq(inventory.location, location)));
     return result[0];
+  }
+
+  async getInventorySummary(location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]> {
+    // Get all inventory items with quantities > 0
+    const inventoryQuery = db
+      .select({
+        productId: inventory.productId,
+        location: inventory.location,
+        quantity: inventory.quantity,
+        product: products,
+      })
+      .from(inventory)
+      .innerJoin(products, eq(inventory.productId, products.id))
+      .where(gt(inventory.quantity, 0));
+
+    const inventoryItems = location 
+      ? await inventoryQuery.where(and(
+          eq(inventory.location, location),
+          gt(inventory.quantity, 0)
+        ))
+      : await inventoryQuery;
+
+    // Group by productId (and location if specified) and sum quantities
+    const summaryMap = new Map<string, { product: Product; totalQuantity: number; location?: string }>();
+    
+    for (const item of inventoryItems) {
+      const key = location ? item.productId : `${item.productId}-${item.location}`;
+      
+      if (!summaryMap.has(key)) {
+        summaryMap.set(key, {
+          product: item.product,
+          totalQuantity: 0,
+          location: location || item.location,
+        });
+      }
+      
+      const summary = summaryMap.get(key)!;
+      summary.totalQuantity += item.quantity;
+    }
+
+    return Array.from(summaryMap.values());
   }
 
   async createInventoryItem(item: InsertInventory): Promise<Inventory> {
@@ -190,6 +235,15 @@ export class DatabaseStorage implements IStorage {
     location: string,
     quantity: number
   ): Promise<Inventory | undefined> {
+    // If quantity is 0 or less, delete the inventory row to prevent data bloat
+    if (quantity <= 0) {
+      const result = await db
+        .delete(inventory)
+        .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
+        .returning();
+      return result[0];
+    }
+    
     const result = await db
       .update(inventory)
       .set({ quantity, updatedAt: new Date() })
@@ -202,6 +256,15 @@ export class DatabaseStorage implements IStorage {
     id: string,
     quantity: number
   ): Promise<Inventory | undefined> {
+    // If quantity is 0 or less, delete the inventory row to prevent data bloat
+    if (quantity <= 0) {
+      const result = await db
+        .delete(inventory)
+        .where(eq(inventory.id, id))
+        .returning();
+      return result[0];
+    }
+    
     const result = await db
       .update(inventory)
       .set({ quantity, updatedAt: new Date() })
