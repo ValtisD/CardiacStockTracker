@@ -16,7 +16,8 @@ export const products = pgTable("products", {
   serialNumber: text("serial_number"),
   lotNumber: text("lot_number"),
   barcode: text("barcode"),
-  minStockLevel: integer("min_stock_level").default(1), // Default minimum stock level for low stock alerts
+  minCarStock: integer("min_car_stock").notNull().default(1), // Minimum units to keep in car
+  minTotalStock: integer("min_total_stock").notNull().default(1), // Minimum total units (car + home combined)
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -26,7 +27,6 @@ export const inventory = pgTable("inventory", {
   productId: varchar("product_id").notNull().references(() => products.id),
   location: text("location").notNull(), // 'home' or 'car'
   quantity: integer("quantity").notNull().default(0),
-  minStockLevel: integer("min_stock_level").notNull().default(1),
   updatedAt: timestamp("updated_at").default(sql`now()`),
 }, (table) => ({
   uniqueProductLocation: unique("unique_product_location").on(table.productId, table.location),
