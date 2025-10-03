@@ -129,41 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/inventory/:productId/:location", async (req, res) => {
-    try {
-      const { productId, location } = req.params;
-      const { quantity } = req.body;
-      
-      if (typeof quantity !== 'number') {
-        return res.status(400).json({ error: "Quantity must be a number" });
-      }
-      
-      const inventory = await storage.updateInventoryQuantity(productId, location, quantity);
-      if (!inventory) {
-        return res.status(404).json({ error: "Inventory item not found" });
-      }
-      res.json(inventory);
-    } catch (error) {
-      console.error("Error updating inventory:", error);
-      res.status(400).json({ error: "Failed to update inventory" });
-    }
-  });
-
-  app.delete("/api/inventory/:productId/:location", async (req, res) => {
-    try {
-      const { productId, location } = req.params;
-      const success = await storage.deleteInventoryItem(productId, location);
-      if (!success) {
-        return res.status(404).json({ error: "Inventory item not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting inventory item:", error);
-      res.status(400).json({ error: "Failed to delete inventory item" });
-    }
-  });
-
-  // New ID-based routes for individual inventory items
+  // ID-based routes for individual inventory items (MUST be before the generic productId/location routes)
   app.patch("/api/inventory/item/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -215,6 +181,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error transferring inventory item:", error);
       res.status(400).json({ error: "Failed to transfer inventory item" });
+    }
+  });
+
+  // Legacy routes using productId and location (kept for backwards compatibility)
+  app.patch("/api/inventory/:productId/:location", async (req, res) => {
+    try {
+      const { productId, location } = req.params;
+      const { quantity } = req.body;
+      
+      if (typeof quantity !== 'number') {
+        return res.status(400).json({ error: "Quantity must be a number" });
+      }
+      
+      const inventory = await storage.updateInventoryQuantity(productId, location, quantity);
+      if (!inventory) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+      res.status(400).json({ error: "Failed to update inventory" });
+    }
+  });
+
+  app.delete("/api/inventory/:productId/:location", async (req, res) => {
+    try {
+      const { productId, location } = req.params;
+      const success = await storage.deleteInventoryItem(productId, location);
+      if (!success) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting inventory item:", error);
+      res.status(400).json({ error: "Failed to delete inventory item" });
     }
   });
 
