@@ -54,9 +54,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       manufacturer: product?.manufacturer || "",
       description: product?.description ?? undefined,
       gtin: product?.gtin ?? undefined,
-      expirationDate: product?.expirationDate || undefined,
-      serialNumber: product?.serialNumber ?? undefined,
-      lotNumber: product?.lotNumber ?? undefined,
       barcode: product?.barcode ?? undefined,
       minCarStock: product?.minCarStock ?? 1,
       minTotalStock: product?.minTotalStock ?? 1,
@@ -128,9 +125,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       form.setValue("manufacturer", productInfo.manufacturer);
       if (productInfo.description) form.setValue("description", productInfo.description);
       if (productInfo.gtin) form.setValue("gtin", productInfo.gtin);
-      if (productInfo.serialNumber) form.setValue("serialNumber", productInfo.serialNumber);
-      if (productInfo.lotNumber) form.setValue("lotNumber", productInfo.lotNumber);
-      if (productInfo.expirationDate) form.setValue("expirationDate", productInfo.expirationDate);
       
       toast({
         title: "Product Found",
@@ -143,24 +137,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       });
     }
     
-    // Override with GS1 data if available (more specific to this exact item)
-    if (gs1Data) {
-      if (gs1Data.gtin) {
-        form.setValue("gtin", gs1Data.gtin);
-      }
-      if (gs1Data.expirationDate) {
-        form.setValue("expirationDate", gs1Data.expirationDate);
-        toast({
-          title: "GS1 Data Extracted",
-          description: `GTIN: ${gs1Data.gtin || 'N/A'}, Expiration: ${gs1Data.expirationDate}${gs1Data.serialNumber ? `, Serial: ${gs1Data.serialNumber}` : ''}`,
-        });
-      }
-      if (gs1Data.serialNumber) {
-        form.setValue("serialNumber", gs1Data.serialNumber);
-      }
-      if (gs1Data.lotNumber) {
-        form.setValue("lotNumber", gs1Data.lotNumber);
-      }
+    // Override with GS1 data if available (extract GTIN from GS1 barcode)
+    if (gs1Data && gs1Data.gtin) {
+      form.setValue("gtin", gs1Data.gtin);
+      toast({
+        title: "GS1 Data Extracted",
+        description: `GTIN: ${gs1Data.gtin}`,
+      });
     }
   };
 
@@ -305,81 +288,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="serialNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Serial Number (Optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g., MD001234" 
-                        {...field} 
-                        data-testid="input-serial-number"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="lotNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lot Number (Optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g., LOT123" 
-                        {...field} 
-                        data-testid="input-lot-number"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="expirationDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expiration Date (Optional)</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                            data-testid="button-expiration-date"
-                            disabled={isSubmitting}
-                          >
-                            <CalendarDays className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : "Pick a date"}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="barcode"
