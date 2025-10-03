@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Search, Package, AlertTriangle, ArrowUpDown, Plus, Minus, Eye, Trash2 } from "lucide-react";
+import { Search, Package, AlertTriangle, ArrowUpDown, Plus, Minus, Eye, Trash2, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -140,6 +140,30 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
   });
 
+  const transferItemMutation = useMutation({
+    mutationFn: async ({ id, toLocation }: { 
+      id: string; 
+      toLocation: string;
+    }) => {
+      return await apiRequest('POST', `/api/inventory/item/${id}/transfer`, { toLocation });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      toast({
+        title: "Item transferred",
+        description: "Item has been transferred successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Transfer failed",
+        description: error.message || "Failed to transfer item. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const items = inventoryData || [];
 
   // Create a set of low stock product IDs for quick lookup
@@ -239,6 +263,22 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     if (window.confirm(`Are you sure you want to delete ${itemDescription} from ${location} inventory?`)) {
       deleteMutation.mutate({
         id: item.id,
+      });
+    }
+  };
+
+  const handleTransfer = (item: InventoryWithProduct) => {
+    const toLocation = location === 'home' ? 'car' : 'home';
+    const itemDescription = item.serialNumber 
+      ? `${item.product.name} (Serial: ${item.serialNumber})`
+      : item.lotNumber
+      ? `${item.product.name} (Lot: ${item.lotNumber})`
+      : `${item.product.name}`;
+    
+    if (window.confirm(`Move ${itemDescription} to ${toLocation}?`)) {
+      transferItemMutation.mutate({
+        id: item.id,
+        toLocation,
       });
     }
   };
@@ -433,6 +473,16 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                           }
                         >
                           <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleTransfer(item)}
+                          disabled={transferItemMutation.isPending}
+                          data-testid={`button-transfer-${item.id}`}
+                          title={`Move to ${location === 'home' ? 'car' : 'home'}`}
+                        >
+                          <ArrowLeftRight className="h-3 w-3" />
                         </Button>
                         <Button
                           size="icon"
