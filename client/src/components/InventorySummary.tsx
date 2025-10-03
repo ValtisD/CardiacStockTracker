@@ -33,6 +33,8 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
       }
       return response.json();
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch low stock data to mark items
@@ -45,6 +47,8 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
       }
       return response.json();
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const isLowStock = (productId: string): boolean => {

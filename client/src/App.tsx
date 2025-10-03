@@ -195,6 +195,8 @@ function AppContent() {
       if (!response.ok) return [];
       return response.json();
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: carLowStock } = useQuery<Inventory[]>({
@@ -204,6 +206,8 @@ function AppContent() {
       if (!response.ok) return [];
       return response.json();
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const lowStockAlerts = {

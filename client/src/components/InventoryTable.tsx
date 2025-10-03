@@ -60,6 +60,8 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       }
       return response.json();
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch low stock items to determine which products are low
@@ -72,6 +74,8 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       }
       return response.json();
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const transferMutation = useMutation({
