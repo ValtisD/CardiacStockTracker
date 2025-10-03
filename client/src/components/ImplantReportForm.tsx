@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Heart, Calendar, Building2, Plus, Minus, Scan, AlertCircle } from "lucide-react";
+import { Heart, Calendar, Building2, Plus, Minus, Scan, AlertCircle, X } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -211,6 +211,24 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     }
   };
 
+  const clearItem = (type: 'materials' | 'leads' | 'others', id: string) => {
+    const setter = type === 'materials' ? setMaterials : 
+                  type === 'leads' ? setLeads : setOtherMaterials;
+    
+    setter(prev => prev.map(item => 
+      item.id === id ? { 
+        id: item.id, 
+        name: '', 
+        quantity: 1, 
+        source: 'car' as const,
+        scanned: false,
+        productId: undefined,
+        serialNumber: undefined,
+        lotNumber: undefined
+      } : item
+    ));
+  };
+
   const scanBarcode = async (type: 'materials' | 'leads' | 'others' | 'device', id: string) => {
     setScanningItem({ type, id });
     setShowBarcodeScanner(true);
@@ -341,7 +359,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
             return (
               <div key={item.id} className="space-y-2">
                 <div className="grid grid-cols-12 gap-2 items-center">
-                  <div className="col-span-6">
+                  <div className="col-span-5">
                     <Select
                       value={item.productId || ''}
                       onValueChange={(value) => {
@@ -417,7 +435,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-2 flex gap-1">
+                  <div className="col-span-3 flex gap-1">
                     <Button
                       type="button"
                       size="icon"
@@ -427,6 +445,16 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                       data-testid={`button-scan-${type}-${item.id}`}
                     >
                       <Scan className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => clearItem(type, item.id)}
+                      className="h-8 w-8"
+                      data-testid={`button-clear-${type}-${item.id}`}
+                    >
+                      <X className="h-3 w-3" />
                     </Button>
                     {item.scanned && (
                       <Badge variant="secondary" className="text-xs">Scanned</Badge>
