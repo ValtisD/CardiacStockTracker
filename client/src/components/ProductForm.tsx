@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Package } from "lucide-react";
+import { Package, Scan } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertProductSchema, type Product, type InsertProduct } from "@shared/schema";
+import BarcodeScanner from "@/components/BarcodeScanner";
+import type { GS1Data } from "@/lib/gs1Parser";
 
 interface ProductFormProps {
   product?: Product;
@@ -25,6 +28,7 @@ interface ProductFormProps {
 
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
   const { toast } = useToast();
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
@@ -36,6 +40,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       minTotalStock: product?.minTotalStock || 0,
     },
   });
+
+  const handleScanComplete = (barcode: string, productInfo?: Product, gs1Data?: GS1Data) => {
+    // Extract GTIN from GS1 data if available, otherwise use the barcode directly
+    const gtin = gs1Data?.gtin || barcode;
+    form.setValue("gtin", gtin);
+    setShowBarcodeScanner(false);
+    
+    toast({
+      title: "Barcode scanned",
+      description: `GTIN: ${gtin}`,
+    });
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
@@ -109,14 +125,26 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>GTIN</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="e.g., 05414734218320" 
-                      {...field} 
-                      data-testid="input-gtin"
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., 05414734218320" 
+                        {...field} 
+                        data-testid="input-gtin"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowBarcodeScanner(true)}
                       disabled={isSubmitting}
-                    />
-                  </FormControl>
+                      data-testid="button-scan-gtin"
+                    >
+                      <Scan className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -225,6 +253,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           </form>
         </Form>
       </CardContent>
+
+      <BarcodeScanner
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScanComplete={handleScanComplete}
+        title="Scan Product Barcode (GTIN)"
+      />
     </Card>
   );
 }
