@@ -142,6 +142,7 @@ export default function BarcodeScanner({
   useEffect(() => {
     // Reset scanner state when dialog opens
     if (isOpen) {
+      // resetScanner now handles stopping the camera and clearing all state
       resetScanner();
     }
   }, [isOpen]);
@@ -409,6 +410,14 @@ export default function BarcodeScanner({
   };
 
   const resetScanner = () => {
+    // Stop camera first to ensure clean state
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    
+    // Clear all state
     setScannedCode('');
     setProductInfo(null);
     setGs1Data(null);
@@ -420,11 +429,23 @@ export default function BarcodeScanner({
     setShowManualEntry(false);
     setSelectedLocation('');
     setQuantityAdjustment('');
+    
+    // Clear all refs
     isProcessingRef.current = false;
     isScanningActiveRef.current = false;
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
+    
     // Keep currentCameraIndex and availableCameras to remember user's camera choice
+    // but reset the code reader to ensure fresh state
+    if (codeReaderRef.current) {
+      try {
+        // @ts-ignore - reset method exists but isn't in types
+        codeReaderRef.current.reset();
+      } catch (e) {
+        // Ignore errors during reset
+      }
+    }
   };
 
   const handleClose = () => {
