@@ -549,27 +549,9 @@ export default function BarcodeScanner({
                   <span className="ml-2 text-sm" data-testid="text-product-model">{productInfo.modelNumber}</span>
                 </div>
                 <div>
-                  <span className="text-sm font-medium">Category:</span>
-                  <Badge variant="outline" className="ml-2" data-testid="badge-product-category">
-                    {productInfo.category}
-                  </Badge>
+                  <span className="text-sm font-medium">GTIN:</span>
+                  <span className="ml-2 text-sm font-mono" data-testid="text-product-gtin">{productInfo.gtin}</span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium">Manufacturer:</span>
-                  <span className="ml-2 text-sm" data-testid="text-product-manufacturer">{productInfo.manufacturer}</span>
-                </div>
-                {productInfo.serialNumber && (
-                  <div>
-                    <span className="text-sm font-medium">Serial Number:</span>
-                    <span className="ml-2 text-sm" data-testid="text-product-serial">{productInfo.serialNumber}</span>
-                  </div>
-                )}
-                {productInfo.lotNumber && (
-                  <div>
-                    <span className="text-sm font-medium">Lot Number:</span>
-                    <span className="ml-2 text-sm">{productInfo.lotNumber}</span>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
