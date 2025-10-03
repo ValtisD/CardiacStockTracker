@@ -94,6 +94,26 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       handleClose();
     },
     onError: (error: Error) => {
+      // Parse error message to check for duplicate serial number
+      const errorMessage = error.message || "";
+      
+      // Check if it's a 409 conflict (duplicate serial number)
+      if (errorMessage.startsWith("409:")) {
+        try {
+          const errorBody = JSON.parse(errorMessage.substring(4).trim());
+          if (errorBody.field === "serialNumber") {
+            toast({
+              title: "Duplicate Serial Number",
+              description: "This serial number already exists in your inventory. Each serial number must be unique.",
+              variant: "destructive",
+            });
+            return;
+          }
+        } catch (e) {
+          // If parsing fails, fall through to generic error
+        }
+      }
+      
       toast({
         title: "Failed to add item",
         description: error.message || "An error occurred while adding the item.",
