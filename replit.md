@@ -42,6 +42,8 @@ Preferred communication style: Simple, everyday language.
 - Stock transfer functionality between locations
 - Global search capability
 - Low stock alerts and notifications
+- PDF export for expiring products report
+- PDF export for low stock reorder report
 
 ### Backend Architecture
 
@@ -204,3 +206,23 @@ The application includes real-time camera-based barcode scanning using @zxing/li
 - **Auto-Population**: Automatically fills product form fields (GTIN, expiration date, serial number, lot number) from scanned GS1 data
 - **State Management**: Clears GS1 data when non-GS1 barcodes are scanned to prevent stale data issues
 - **User Feedback**: Displays extracted GS1 data in dedicated card with formatted Application Identifier labels
+
+### PDF Export Implementation
+The application provides professional PDF reports using jsPDF and jspdf-autotable libraries:
+
+**Expiring Products Report**:
+- Accessible from Dashboard's "Expiring Soon" dialog via "Export PDF" button
+- Reports products expiring within the next 90 days from both home and car inventory
+- Includes: Product name, Model number, GTIN, Location, Quantity, Expiration date, Days until expiration
+- Formatted with striped table theme and blue header styling
+- Filename format: `expiring-products-YYYY-MM-DD.pdf`
+
+**Low Stock Reorder Report**:
+- Quick Action button on Dashboard for immediate PDF generation
+- Combines low stock items from both home and car inventory locations
+- Includes: Product name, Model number, GTIN, Location, Current quantity, Minimum stock level, Reorder quantity needed
+- Calculates reorder quantity as the difference between minimum stock and current quantity
+- Formatted with striped table theme and red header styling (alerts)
+- Filename format: `low-stock-report-YYYY-MM-DD.pdf`
+- Button is disabled when no low stock items exist in either location
+- Useful for creating reorder lists and inventory management workflows
