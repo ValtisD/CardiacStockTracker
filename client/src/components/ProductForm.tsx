@@ -58,7 +58,8 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       serialNumber: product?.serialNumber ?? undefined,
       lotNumber: product?.lotNumber ?? undefined,
       barcode: product?.barcode ?? undefined,
-      minStockLevel: product?.minStockLevel ?? 1,
+      minCarStock: product?.minCarStock ?? 1,
+      minTotalStock: product?.minTotalStock ?? 1,
     },
   });
 
@@ -411,27 +412,51 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="minStockLevel"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Minimum Stock Level</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      min="0"
-                      placeholder="e.g., 5" 
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      data-testid="input-min-stock-level"
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="minCarStock"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Minimum Car Stock</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        min="0"
+                        placeholder="e.g., 3" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        data-testid="input-min-car-stock"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="minTotalStock"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Minimum Total Stock (Car + Home)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        min="0"
+                        placeholder="e.g., 8" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        data-testid="input-min-total-stock"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="flex justify-end gap-4 pt-4">
               {onCancel && (
