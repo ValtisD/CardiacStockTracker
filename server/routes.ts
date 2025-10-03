@@ -290,13 +290,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/implant-procedures/:id", async (req, res) => {
     try {
-      const procedure = await storage.updateImplantProcedure(req.params.id, req.body);
+      console.log("PATCH /api/implant-procedures/:id - ID:", req.params.id);
+      console.log("PATCH /api/implant-procedures/:id - Body:", JSON.stringify(req.body));
+      
+      const updateData = insertImplantProcedureSchema.partial().parse(req.body);
+      console.log("PATCH /api/implant-procedures/:id - Validated data:", JSON.stringify(updateData));
+      
+      const procedure = await storage.updateImplantProcedure(req.params.id, updateData);
+      console.log("PATCH /api/implant-procedures/:id - Result:", procedure ? "Found" : "Not found");
+      
       if (!procedure) {
         return res.status(404).json({ error: "Procedure not found" });
       }
       res.json(procedure);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating implant procedure:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format", details: error.errors });
+      }
       res.status(400).json({ error: "Failed to update implant procedure" });
     }
   });

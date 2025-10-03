@@ -176,7 +176,6 @@ export default function ImplantProcedureDetailDialog({
                       <TableRow>
                         <TableHead>Product</TableHead>
                         <TableHead>Model Number</TableHead>
-                        <TableHead>Category</TableHead>
                         <TableHead>Quantity</TableHead>
                         <TableHead>Source</TableHead>
                       </TableRow>
@@ -189,15 +188,6 @@ export default function ImplantProcedureDetailDialog({
                           </TableCell>
                           <TableCell data-testid={`text-material-model-${index}`}>
                             {material.product?.modelNumber || <span className="text-muted-foreground">-</span>}
-                          </TableCell>
-                          <TableCell>
-                            {material.product?.category ? (
-                              <Badge variant="outline" data-testid={`badge-material-category-${index}`}>
-                                {material.product.category}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground" data-testid={`badge-material-category-${index}`}>-</span>
-                            )}
                           </TableCell>
                           <TableCell data-testid={`text-material-quantity-${index}`}>
                             {material.quantity}
