@@ -56,6 +56,8 @@ export default function BarcodeScanner({
   const lastDetectedRef = useRef<string>('');
   const lastDetectionTimeRef = useRef<number>(0);
   const isScanningActiveRef = useRef<boolean>(false);
+  const detectionEnabledRef = useRef<boolean>(false);
+  const detectionDelayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; product: Product }>>({
     queryKey: ['/api/inventory'],
@@ -255,6 +257,9 @@ export default function BarcodeScanner({
         // Mark scanning as active
         isScanningActiveRef.current = true;
         
+        // Disable detection initially to prevent detecting old barcodes
+        detectionEnabledRef.current = false;
+        
         // Start continuous decoding
         // Reader is configured with 300ms between scans for better performance
         await codeReaderRef.current.decodeFromVideoElement(
@@ -265,6 +270,11 @@ export default function BarcodeScanner({
               return; // Camera was stopped, ignore this callback
             }
             
+            // Check if detection is enabled (after delay)
+            if (!detectionEnabledRef.current) {
+              return; // Detection not yet enabled, ignore
+            }
+            
             if (result) {
               const barcode = result.getText();
               handleBarcodeDetected(barcode);
@@ -272,7 +282,13 @@ export default function BarcodeScanner({
           }
         );
         
-        console.log('Camera started and scanning for barcodes...');
+        console.log('Camera started, waiting 1.2s before enabling barcode detection...');
+        
+        // Enable detection after a delay to give user time to move camera from previous barcode
+        detectionDelayTimeoutRef.current = setTimeout(() => {
+          detectionEnabledRef.current = true;
+          console.log('Barcode detection enabled');
+        }, 1200);
       } else {
         // Component unmounted before stream could be attached - clean up
         stream.getTracks().forEach(track => track.stop());
@@ -319,6 +335,13 @@ export default function BarcodeScanner({
   const stopCamera = () => {
     // Immediately mark scanning as inactive to stop all callbacks
     isScanningActiveRef.current = false;
+    detectionEnabledRef.current = false;
+    
+    // Clear detection delay timeout if it exists
+    if (detectionDelayTimeoutRef.current) {
+      clearTimeout(detectionDelayTimeoutRef.current);
+      detectionDelayTimeoutRef.current = null;
+    }
     
     // Stop the code reader
     if (codeReaderRef.current) {
@@ -442,8 +465,15 @@ export default function BarcodeScanner({
     // Clear all refs
     isProcessingRef.current = false;
     isScanningActiveRef.current = false;
+    detectionEnabledRef.current = false;
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
+    
+    // Clear detection delay timeout
+    if (detectionDelayTimeoutRef.current) {
+      clearTimeout(detectionDelayTimeoutRef.current);
+      detectionDelayTimeoutRef.current = null;
+    }
     
     // Clean up and null the code reader - a fresh one will be created when camera starts
     if (codeReaderRef.current) {
