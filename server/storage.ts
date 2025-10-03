@@ -141,44 +141,56 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInventorySummary(location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]> {
-    // Get all inventory items with quantities > 0
-    const inventoryQuery = db
-      .select({
-        productId: inventory.productId,
-        location: inventory.location,
-        quantity: inventory.quantity,
-        product: products,
-      })
-      .from(inventory)
-      .innerJoin(products, eq(inventory.productId, products.id))
-      .where(gt(inventory.quantity, 0));
-
-    const inventoryItems = location 
-      ? await inventoryQuery.where(and(
-          eq(inventory.location, location),
-          gt(inventory.quantity, 0)
-        ))
-      : await inventoryQuery;
-
-    // Group by productId (and location if specified) and sum quantities
-    const summaryMap = new Map<string, { product: Product; totalQuantity: number; location?: string }>();
+    // Get ALL products
+    const allProducts = await db.select().from(products);
     
-    for (const item of inventoryItems) {
-      const key = location ? item.productId : `${item.productId}-${item.location}`;
-      
-      if (!summaryMap.has(key)) {
-        summaryMap.set(key, {
-          product: item.product,
-          totalQuantity: 0,
-          location: location || item.location,
-        });
-      }
-      
-      const summary = summaryMap.get(key)!;
-      summary.totalQuantity += item.quantity;
+    // Determine which inventory to fetch based on location parameter
+    let inventoryItems;
+    if (location === 'car') {
+      // For car summary: show only car stock
+      inventoryItems = await db
+        .select({
+          productId: inventory.productId,
+          quantity: inventory.quantity,
+        })
+        .from(inventory)
+        .where(and(
+          eq(inventory.location, 'car'),
+          gt(inventory.quantity, 0)
+        ));
+    } else if (location === 'home') {
+      // For home summary: show total stock (home + car)
+      inventoryItems = await db
+        .select({
+          productId: inventory.productId,
+          quantity: inventory.quantity,
+        })
+        .from(inventory)
+        .where(gt(inventory.quantity, 0));
+    } else {
+      // No location specified: show total stock
+      inventoryItems = await db
+        .select({
+          productId: inventory.productId,
+          quantity: inventory.quantity,
+        })
+        .from(inventory)
+        .where(gt(inventory.quantity, 0));
     }
 
-    return Array.from(summaryMap.values());
+    // Group inventory by productId and sum quantities
+    const inventoryMap = new Map<string, number>();
+    
+    for (const item of inventoryItems) {
+      inventoryMap.set(item.productId, (inventoryMap.get(item.productId) || 0) + item.quantity);
+    }
+
+    // Create summary with ALL products (showing 0 for products with no inventory)
+    return allProducts.map(product => ({
+      product,
+      totalQuantity: inventoryMap.get(product.id) || 0,
+      location,
+    }));
   }
 
   async createInventoryItem(item: InsertInventory): Promise<Inventory> {
