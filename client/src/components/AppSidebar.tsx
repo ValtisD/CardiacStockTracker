@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 
@@ -22,9 +23,15 @@ export default function AppSidebar({
   onNavigate,
   lowStockAlerts = { home: 0, car: 0 }
 }: AppSidebarProps) {
+  const { isMobile, setOpenMobile } = useSidebar();
+
   const handleNavigation = (path: string) => {
     console.log('Navigating to:', path);
     onNavigate?.(path);
+    
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   const mainItems = [
