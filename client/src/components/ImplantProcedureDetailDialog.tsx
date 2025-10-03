@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Calendar, Building2, User, Package, MapPin } from "lucide-react";
+import { FileText, Calendar, Building2, User, Package, MapPin, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/table";
 import type { ImplantProcedure, Hospital, ProcedureMaterial, Product } from "@shared/schema";
 import { format } from "date-fns";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface ImplantProcedureWithHospital extends ImplantProcedure {
   hospital: Hospital;
@@ -61,6 +64,100 @@ export default function ImplantProcedureDetailDialog({
 
   const isLoading = isProcedureLoading || isMaterialsLoading;
 
+  const handleExportPDF = () => {
+    if (!procedure) return;
+
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(18);
+    doc.text("Implant Procedure Report", 14, 20);
+    
+    // Procedure Information
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Procedure Information", 14, 35);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    
+    let yPos = 45;
+    doc.text(`Date: ${format(new Date(procedure.implantDate), "MMMM dd, yyyy")}`, 14, yPos);
+    yPos += 7;
+    doc.text(`Hospital: ${procedure.hospital.name}`, 14, yPos);
+    yPos += 7;
+    if (procedure.hospital.address) {
+      doc.text(`Address: ${procedure.hospital.address}, ${procedure.hospital.city}, ${procedure.hospital.state}`, 14, yPos);
+      yPos += 7;
+    }
+    doc.text(`Procedure Type: ${procedure.procedureType}`, 14, yPos);
+    yPos += 7;
+    if (procedure.patientId) {
+      doc.text(`Patient ID: ${procedure.patientId}`, 14, yPos);
+      yPos += 7;
+    }
+    
+    // Device Information
+    if (procedure.deviceUsed) {
+      yPos += 3;
+      doc.setFont("helvetica", "bold");
+      doc.text("Device Information", 14, yPos);
+      yPos += 7;
+      doc.setFont("helvetica", "normal");
+      
+      if (procedure.deviceProduct?.name) {
+        doc.text(`Device: ${procedure.deviceProduct.name}`, 14, yPos);
+        yPos += 7;
+      }
+      if (procedure.deviceProduct?.modelNumber) {
+        doc.text(`Model Number: ${procedure.deviceProduct.modelNumber}`, 14, yPos);
+        yPos += 7;
+      }
+      if (procedure.deviceSerialNumber) {
+        doc.text(`Serial Number: ${procedure.deviceSerialNumber}`, 14, yPos);
+        yPos += 7;
+      }
+    }
+    
+    // Notes
+    if (procedure.notes) {
+      yPos += 3;
+      doc.setFont("helvetica", "bold");
+      doc.text("Notes", 14, yPos);
+      yPos += 7;
+      doc.setFont("helvetica", "normal");
+      
+      const splitNotes = doc.splitTextToSize(procedure.notes, 180);
+      doc.text(splitNotes, 14, yPos);
+      yPos += (splitNotes.length * 7);
+    }
+    
+    // Materials Table
+    if (materials && materials.length > 0) {
+      yPos += 10;
+      
+      const tableData = materials.map(material => [
+        material.product?.name || material.materialName || "External Material",
+        material.product?.modelNumber || "-",
+        material.serialNumber || material.lotNumber || "-",
+        material.quantity.toString(),
+        material.source,
+      ]);
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [["Product", "Model Number", "Serial/Lot", "Qty", "Source"]],
+        body: tableData,
+        theme: "striped",
+        headStyles: { fillColor: [66, 66, 66] },
+      });
+    }
+    
+    // Save the PDF
+    const filename = `Implant_Report_${format(new Date(procedure.implantDate), "yyyy-MM-dd")}_${procedure.hospital.name.replace(/\s+/g, "_")}.pdf`;
+    doc.save(filename);
+  };
+
   if (!isOpen || !procedureId) {
     return null;
   }
@@ -69,10 +166,24 @@ export default function ImplantProcedureDetailDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="dialog-procedure-detail">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Implant Procedure Details
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Implant Procedure Details
+            </DialogTitle>
+            {procedure && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportPDF}
+                className="gap-2"
+                data-testid="button-export-pdf"
+              >
+                <Download className="h-4 w-4" />
+                Export PDF
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {isLoading ? (
