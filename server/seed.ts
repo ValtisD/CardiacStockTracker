@@ -57,7 +57,6 @@ async function seed() {
       productId: insertedProduct.id,
       location: "home",
       quantity: Math.floor(Math.random() * 15) + 5,
-      minStockLevel: 3,
     });
 
     // Add inventory for car location (lower quantities)
@@ -65,7 +64,6 @@ async function seed() {
       productId: insertedProduct.id,
       location: "car",
       quantity: Math.floor(Math.random() * 5) + 1,
-      minStockLevel: 2,
     });
   }
 

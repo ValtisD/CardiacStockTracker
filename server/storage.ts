@@ -107,7 +107,6 @@ export class DatabaseStorage implements IStorage {
         productId: inventory.productId,
         location: inventory.location,
         quantity: inventory.quantity,
-        minStockLevel: inventory.minStockLevel,
         updatedAt: inventory.updatedAt,
         product: products,
       })
@@ -428,7 +427,6 @@ export class DatabaseStorage implements IStorage {
           productId: transfer.productId,
           location: transfer.toLocation,
           quantity: transfer.quantity,
-          minStockLevel: 1,
         });
       }
 

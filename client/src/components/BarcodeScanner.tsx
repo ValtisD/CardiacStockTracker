@@ -57,7 +57,7 @@ export default function BarcodeScanner({
   const lastDetectionTimeRef = useRef<number>(0);
   const isScanningActiveRef = useRef<boolean>(false);
 
-  const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; minStockLevel: number; product: Product }>>({
+  const { data: inventoryData } = useQuery<Array<{ id: string; productId: string; location: string; quantity: number; product: Product }>>({
     queryKey: ['/api/inventory'],
     enabled: !!productInfo && showInventoryUpdate,
   });
@@ -580,14 +580,19 @@ export default function BarcodeScanner({
                 <CardTitle className="text-base">Current Inventory</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {currentInventory.map(inv => (
-                  <div key={inv.id} className="flex justify-between items-center">
-                    <span className="text-sm font-medium capitalize">{inv.location}:</span>
-                    <Badge variant={inv.quantity <= inv.minStockLevel ? "destructive" : "secondary"}>
-                      {inv.quantity} units
-                    </Badge>
-                  </div>
-                ))}
+                {currentInventory.map(inv => {
+                  const isLowStock = inv.location === 'car' 
+                    ? inv.quantity < inv.product.minCarStock
+                    : inv.quantity < inv.product.minTotalStock;
+                  return (
+                    <div key={inv.id} className="flex justify-between items-center">
+                      <span className="text-sm font-medium capitalize">{inv.location}:</span>
+                      <Badge variant={isLowStock ? "destructive" : "secondary"}>
+                        {inv.quantity} units
+                      </Badge>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           )}
