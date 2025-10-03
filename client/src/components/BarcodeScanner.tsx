@@ -55,6 +55,7 @@ export default function BarcodeScanner({
   const isProcessingRef = useRef<boolean>(false);
   const lastDetectedRef = useRef<string>('');
   const lastDetectionTimeRef = useRef<number>(0);
+  const lastConfirmedBarcodeRef = useRef<string>(''); // Track the last barcode that was confirmed/used
   const isScanningActiveRef = useRef<boolean>(false);
   const detectionEnabledRef = useRef<boolean>(false);
   const detectionDelayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -142,8 +143,10 @@ export default function BarcodeScanner({
   }, []);
 
   useEffect(() => {
-    // Reset scanner state when dialog opens
+    // Reset scanner state when dialog opens for a new scan session
     if (isOpen) {
+      // DO NOT clear lastConfirmedBarcodeRef here!
+      // It needs to persist across scans to prevent re-detection of previous barcodes
       // resetScanner now handles stopping the camera and clearing all state
       resetScanner();
     }
@@ -381,6 +384,13 @@ export default function BarcodeScanner({
       return;
     }
     
+    // CRITICAL: Ignore if this is the same barcode that was just confirmed in the previous scan
+    // This prevents the reader from re-detecting cached/lingering results from previous sessions
+    if (lastConfirmedBarcodeRef.current === barcode) {
+      console.log('Ignoring previously confirmed barcode:', barcode);
+      return;
+    }
+    
     // Ignore if same barcode detected within last 2 seconds
     if (lastDetectedRef.current === barcode && now - lastDetectionTimeRef.current < 2000) {
       console.log('Duplicate barcode within 2s, ignoring');
@@ -412,8 +422,14 @@ export default function BarcodeScanner({
 
   const handleConfirm = () => {
     if (scannedCode) {
+      // Store the confirmed barcode to prevent re-detection in the immediate next scan
+      // This will be cleared when the dialog opens for a completely new session
+      lastConfirmedBarcodeRef.current = scannedCode;
+      
       onScanComplete(scannedCode, productInfo || undefined, gs1Data || undefined);
-      resetScanner();
+      
+      // Don't call resetScanner() here - it will be called by useEffect when dialog opens next time
+      // Just close the dialog
       onClose();
     }
   };
