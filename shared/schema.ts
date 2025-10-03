@@ -16,6 +16,7 @@ export const products = pgTable("products", {
   serialNumber: text("serial_number"),
   lotNumber: text("lot_number"),
   barcode: text("barcode"),
+  minStockLevel: integer("min_stock_level").default(1), // Default minimum stock level for low stock alerts
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 

@@ -58,6 +58,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       serialNumber: product?.serialNumber ?? undefined,
       lotNumber: product?.lotNumber ?? undefined,
       barcode: product?.barcode ?? undefined,
+      minStockLevel: product?.minStockLevel ?? 1,
     },
   });
 
@@ -409,6 +410,28 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="minStockLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Minimum Stock Level</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number"
+                      min="0"
+                      placeholder="e.g., 5" 
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      data-testid="input-min-stock-level"
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex justify-end gap-4 pt-4">
               {onCancel && (

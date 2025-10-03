@@ -19,8 +19,6 @@ import ProductsList from "@/components/ProductsList";
 import HospitalManager from "@/components/HospitalManager";
 import ImplantReportForm from "@/components/ImplantReportForm";
 import ImplantProceduresList from "@/components/ImplantProceduresList";
-import BarcodeScanner from "@/components/BarcodeScanner";
-import StockTransfer from "@/components/StockTransfer";
 import NotFound from "@/pages/not-found";
 
 // Theme toggle component
@@ -165,8 +163,6 @@ function Router() {
 function AppContent() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [showStockTransfer, setShowStockTransfer] = useState(false);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   // Fetch real low stock data from backend
   const { data: homeLowStock } = useQuery<Inventory[]>({
@@ -203,16 +199,6 @@ function AppContent() {
     console.log('Sidebar toggled');
   };
 
-  const handleStockTransfer = (transfer: any) => {
-    console.log('Stock transfer completed:', transfer);
-    setShowStockTransfer(false);
-  };
-
-  const handleScanComplete = (barcode: string, productInfo?: any) => {
-    console.log('Barcode scan completed:', barcode, productInfo);
-    setShowBarcodeScanner(false);
-  };
-
   const sidebarStyle = {
     "--sidebar-width": "20rem",
     "--sidebar-width-icon": "4rem",
@@ -237,22 +223,6 @@ function AppContent() {
               </div>
               
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowStockTransfer(true)}
-                  data-testid="button-quick-transfer"
-                >
-                  Quick Transfer
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowBarcodeScanner(true)}
-                  data-testid="button-quick-scan"
-                >
-                  Quick Scan
-                </Button>
                 <ThemeToggle />
               </div>
             </header>
@@ -262,19 +232,6 @@ function AppContent() {
             </main>
           </div>
         </div>
-
-        {/* Global Modals */}
-        <StockTransfer 
-          onTransfer={handleStockTransfer}
-          onCancel={() => setShowStockTransfer(false)}
-        />
-        
-        <BarcodeScanner
-          isOpen={showBarcodeScanner}
-          onClose={() => setShowBarcodeScanner(false)}
-          onScanComplete={handleScanComplete}
-          title="Quick Barcode Scan"
-        />
       </SidebarProvider>
       <Toaster />
     </TooltipProvider>

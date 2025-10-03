@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Search, Package, AlertTriangle, ArrowUpDown, Plus, Minus, Eye } from "lucide-react";
+import { Search, Package, AlertTriangle, ArrowUpDown, Plus, Minus, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +80,55 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
   });
 
+  const updateQuantityMutation = useMutation({
+    mutationFn: async ({ productId, location, quantity }: { 
+      productId: string; 
+      location: string; 
+      quantity: number;
+    }) => {
+      return await apiRequest('PATCH', `/api/inventory/${productId}/${location}`, { quantity });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      toast({
+        title: "Quantity updated",
+        description: "Inventory quantity has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update quantity. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async ({ productId, location }: { 
+      productId: string; 
+      location: string; 
+    }) => {
+      return await apiRequest('DELETE', `/api/inventory/${productId}/${location}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      toast({
+        title: "Item deleted",
+        description: "Inventory item has been deleted successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete failed",
+        description: error.message || "Failed to delete item. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const items = inventoryData || [];
 
   const filteredItems = items
@@ -101,12 +150,29 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   const lowStockItems = filteredItems.filter(item => item.quantity <= item.minStockLevel);
   const stockLevel = filteredItems.length > 0 ? (filteredItems.reduce((sum, item) => sum + item.quantity, 0) / filteredItems.length) * 10 : 0;
 
-  const handleTransfer = (item: InventoryWithProduct, direction: 'in' | 'out') => {
-    const toLocation = location === 'home' ? 'car' : 'home';
-    const fromLocation = location;
+  const handleQuantityChange = (item: InventoryWithProduct, direction: 'increase' | 'decrease') => {
+    if (location === 'home') {
+      const newQuantity = direction === 'increase' ? item.quantity + 1 : item.quantity - 1;
+      
+      if (newQuantity < 0) {
+        toast({
+          title: "Invalid quantity",
+          description: "Quantity cannot be negative.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (direction === 'out') {
-      if (item.quantity < 1) {
+      updateQuantityMutation.mutate({
+        productId: item.productId,
+        location: item.location,
+        quantity: newQuantity,
+      });
+    } else {
+      const toLocation = direction === 'increase' ? 'car' : 'home';
+      const fromLocation = direction === 'increase' ? 'home' : 'car';
+
+      if (direction === 'decrease' && item.quantity < 1) {
         toast({
           title: "Insufficient stock",
           description: "Not enough stock to transfer.",
@@ -114,18 +180,21 @@ export default function InventoryTable({ location }: InventoryTableProps) {
         });
         return;
       }
+
       transferMutation.mutate({
         productId: item.productId,
         fromLocation,
         toLocation,
         quantity: 1,
       });
-    } else {
-      transferMutation.mutate({
+    }
+  };
+
+  const handleDelete = (item: InventoryWithProduct) => {
+    if (window.confirm(`Are you sure you want to delete ${item.product.name} from ${location} inventory?`)) {
+      deleteMutation.mutate({
         productId: item.productId,
-        fromLocation: toLocation,
-        toLocation: fromLocation,
-        quantity: 1,
+        location: item.location,
       });
     }
   };
@@ -285,27 +354,32 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => handleTransfer(item, 'out')}
-                          disabled={transferMutation.isPending || item.quantity < 1}
-                          data-testid={`button-transfer-out-${item.id}`}
+                          onClick={() => handleQuantityChange(item, 'decrease')}
+                          disabled={transferMutation.isPending || updateQuantityMutation.isPending || item.quantity < 1}
+                          data-testid={`button-decrease-${item.id}`}
+                          title={location === 'home' ? 'Decrease quantity' : 'Transfer to home'}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => handleTransfer(item, 'in')}
-                          disabled={transferMutation.isPending}
-                          data-testid={`button-transfer-in-${item.id}`}
+                          onClick={() => handleQuantityChange(item, 'increase')}
+                          disabled={transferMutation.isPending || updateQuantityMutation.isPending}
+                          data-testid={`button-increase-${item.id}`}
+                          title={location === 'home' ? 'Increase quantity' : 'Transfer from home'}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          data-testid={`button-view-details-${item.id}`}
+                          onClick={() => handleDelete(item)}
+                          disabled={deleteMutation.isPending}
+                          data-testid={`button-delete-${item.id}`}
+                          title="Delete item"
                         >
-                          <Eye className="h-3 w-3" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>

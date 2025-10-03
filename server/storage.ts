@@ -36,6 +36,7 @@ export interface IStorage {
   getInventoryItem(productId: string, location: string): Promise<Inventory | undefined>;
   createInventoryItem(item: InsertInventory): Promise<Inventory>;
   updateInventoryQuantity(productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
+  deleteInventoryItem(productId: string, location: string): Promise<boolean>;
   getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]>;
 
   // Hospitals
@@ -146,6 +147,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async deleteInventoryItem(productId: string, location: string): Promise<boolean> {
+    const result = await db
+      .delete(inventory)
+      .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
+      .returning();
+    return result.length > 0;
+  }
+
   async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
     let whereClause = sql`${inventory.quantity} <= ${inventory.minStockLevel}`;
     
@@ -219,10 +228,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(implantProcedures.implantDate));
   }
 
-  async getImplantProcedure(id: string): Promise<ImplantProcedure | undefined> {
+  async getImplantProcedure(id: string): Promise<any> {
     const result = await db
-      .select()
+      .select({
+        id: implantProcedures.id,
+        hospitalId: implantProcedures.hospitalId,
+        patientId: implantProcedures.patientId,
+        implantDate: implantProcedures.implantDate,
+        procedureType: implantProcedures.procedureType,
+        deviceUsed: implantProcedures.deviceUsed,
+        notes: implantProcedures.notes,
+        createdAt: implantProcedures.createdAt,
+        hospital: hospitals,
+      })
       .from(implantProcedures)
+      .leftJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
       .where(eq(implantProcedures.id, id));
     return result[0];
   }
@@ -280,10 +300,19 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getProcedureMaterials(procedureId: string): Promise<ProcedureMaterial[]> {
+  async getProcedureMaterials(procedureId: string): Promise<any[]> {
     return await db
-      .select()
+      .select({
+        id: procedureMaterials.id,
+        procedureId: procedureMaterials.procedureId,
+        productId: procedureMaterials.productId,
+        materialName: procedureMaterials.materialName,
+        quantity: procedureMaterials.quantity,
+        source: procedureMaterials.source,
+        product: products,
+      })
       .from(procedureMaterials)
+      .leftJoin(products, eq(procedureMaterials.productId, products.id))
       .where(eq(procedureMaterials.procedureId, procedureId));
   }
 

@@ -152,6 +152,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/inventory/:productId/:location", async (req, res) => {
+    try {
+      const { productId, location } = req.params;
+      const success = await storage.deleteInventoryItem(productId, location);
+      if (!success) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting inventory item:", error);
+      res.status(400).json({ error: "Failed to delete inventory item" });
+    }
+  });
+
   // Hospitals
   app.get("/api/hospitals", async (req, res) => {
     try {

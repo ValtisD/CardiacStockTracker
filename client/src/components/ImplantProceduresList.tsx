@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,12 +13,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { ImplantProcedure, Hospital } from "@shared/schema";
 import { format } from "date-fns";
+import ImplantProcedureDetailDialog from "@/components/ImplantProcedureDetailDialog";
 
 interface ImplantProcedureWithHospital extends ImplantProcedure {
   hospital: Hospital;
 }
 
 export default function ImplantProceduresList() {
+  const [selectedProcedureId, setSelectedProcedureId] = useState<string | null>(null);
+  
   const { data: procedures, isLoading } = useQuery<ImplantProcedureWithHospital[]>({
     queryKey: ["/api/implant-procedures"],
   });
@@ -55,7 +59,12 @@ export default function ImplantProceduresList() {
           </TableHeader>
           <TableBody>
             {procedures.map((procedure) => (
-              <TableRow key={procedure.id} data-testid={`row-procedure-${procedure.id}`}>
+              <TableRow 
+                key={procedure.id} 
+                data-testid={`row-procedure-${procedure.id}`}
+                className="cursor-pointer hover-elevate"
+                onClick={() => setSelectedProcedureId(procedure.id)}
+              >
                 <TableCell className="font-medium" data-testid={`text-date-${procedure.id}`}>
                   {format(new Date(procedure.implantDate), "MMM dd, yyyy")}
                 </TableCell>
@@ -84,6 +93,12 @@ export default function ImplantProceduresList() {
           </TableBody>
         </Table>
       </CardContent>
+      
+      <ImplantProcedureDetailDialog
+        procedureId={selectedProcedureId}
+        isOpen={!!selectedProcedureId}
+        onClose={() => setSelectedProcedureId(null)}
+      />
     </Card>
   );
 }

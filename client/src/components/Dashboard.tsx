@@ -1,16 +1,32 @@
-import { Package, Car, Hospital, AlertTriangle, TrendingUp, Calendar } from "lucide-react";
+import { Package, Car, Hospital, AlertTriangle, TrendingUp, Calendar, Plus, Building2, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import type { Inventory, ImplantProcedure, Product } from "@shared/schema";
+import { Link, useLocation } from "wouter";
+import { format } from "date-fns";
+import { useState } from "react";
+import type { Inventory, ImplantProcedure, Product, Hospital as HospitalType } from "@shared/schema";
 
 interface InventoryWithProduct extends Inventory {
   product?: Product;
 }
 
+interface ImplantProcedureWithHospital extends ImplantProcedure {
+  hospital: HospitalType;
+}
+
 export default function Dashboard() {
+  const [, setLocation] = useLocation();
+  const [showProceduresDialog, setShowProceduresDialog] = useState(false);
+  const [showExpiringReport, setShowExpiringReport] = useState(false);
   const { data: homeInventory, isLoading: homeLoading, error: homeError } = useQuery<InventoryWithProduct[]>({
     queryKey: ["/api/inventory", "home"],
     queryFn: async () => {
@@ -47,8 +63,31 @@ export default function Dashboard() {
     },
   });
 
-  const { data: procedures, isLoading: proceduresLoading, error: proceduresError } = useQuery<ImplantProcedure[]>({
+  const { data: procedures, isLoading: proceduresLoading, error: proceduresError } = useQuery<ImplantProcedureWithHospital[]>({
     queryKey: ["/api/implant-procedures"],
+  });
+
+  // Get recent procedures (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentProcedures = procedures?.filter(proc => {
+    const procDate = new Date(proc.implantDate);
+    return procDate >= thirtyDaysAgo;
+  }).sort((a, b) => new Date(b.implantDate).getTime() - new Date(a.implantDate).getTime()) || [];
+
+  // Get expiring products (next 90 days)
+  const ninetyDaysFromNow = new Date();
+  ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
+  const allInventory = [...(homeInventory || []), ...(carInventory || [])];
+  const expiringItems = allInventory.filter(item => {
+    if (!item.product?.expirationDate) return false;
+    const expDate = new Date(item.product.expirationDate);
+    const today = new Date();
+    return expDate >= today && expDate <= ninetyDaysFromNow;
+  }).sort((a, b) => {
+    const dateA = new Date(a.product!.expirationDate!);
+    const dateB = new Date(b.product!.expirationDate!);
+    return dateA.getTime() - dateB.getTime();
   });
 
   const isLoading = homeLoading || carLoading || homeLowStockLoading || carLowStockLoading || proceduresLoading;
@@ -58,15 +97,8 @@ export default function Dashboard() {
   const carStockTotal = carInventory?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   const homeLowStockCount = homeLowStock?.length || 0;
   const carLowStockCount = carLowStock?.length || 0;
-
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const recentProceduresCount = procedures?.filter(proc => {
-    const procDate = new Date(proc.implantDate);
-    return procDate >= thirtyDaysAgo;
-  }).length || 0;
-
-  const expiringItemsCount = 0;
+  const recentProceduresCount = recentProcedures.length;
+  const expiringItemsCount = expiringItems.length;
 
   if (hasError) {
     return (
@@ -102,8 +134,8 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover-elevate">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="hover-elevate cursor-pointer" onClick={() => setLocation("/inventory/home")} data-testid="card-home-stock">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Home Stock</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -131,8 +163,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover-elevate">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="hover-elevate cursor-pointer" onClick={() => setLocation("/inventory/car")} data-testid="card-car-stock">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Car Stock</CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -160,47 +192,176 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover-elevate">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Procedures</CardTitle>
-            <Hospital className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-2xl font-bold text-muted-foreground" data-testid="text-recent-procedures">
-                ...
-              </div>
-            ) : (
-              <div className="text-2xl font-bold" data-testid="text-recent-procedures">
-                {recentProceduresCount}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Last 30 days
-            </p>
-          </CardContent>
-        </Card>
+        <Dialog open={showProceduresDialog} onOpenChange={setShowProceduresDialog}>
+          <DialogTrigger asChild>
+            <Card className="hover-elevate cursor-pointer" data-testid="card-recent-procedures">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Recent Procedures</CardTitle>
+                <Hospital className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-2xl font-bold text-muted-foreground" data-testid="text-recent-procedures">
+                    ...
+                  </div>
+                ) : (
+                  <div className="text-2xl font-bold" data-testid="text-recent-procedures">
+                    {recentProceduresCount}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Last 30 days
+                </p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Recent Procedures (Last 30 Days)</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {recentProcedures.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No procedures in the last 30 days</p>
+              ) : (
+                recentProcedures.map((procedure) => (
+                  <Card key={procedure.id} data-testid={`card-procedure-${procedure.id}`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <CardTitle className="text-base">{procedure.hospital.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(procedure.implantDate), "MMM dd, yyyy")}
+                          </p>
+                        </div>
+                        <Badge variant="outline">{procedure.procedureType}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {procedure.patientId && (
+                        <div className="text-sm">
+                          <span className="font-medium">Patient ID:</span> {procedure.patientId}
+                        </div>
+                      )}
+                      {procedure.notes && (
+                        <div className="text-sm">
+                          <span className="font-medium">Notes:</span> {procedure.notes}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
-        <Card className="hover-elevate">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-2xl font-bold text-muted-foreground" data-testid="text-expiring-items">
-                ...
-              </div>
-            ) : (
-              <div className="text-2xl font-bold" data-testid="text-expiring-items">
-                {expiringItemsCount}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Next 90 days
-            </p>
-          </CardContent>
-        </Card>
+        <Dialog open={showExpiringReport} onOpenChange={setShowExpiringReport}>
+          <DialogTrigger asChild>
+            <Card className="hover-elevate cursor-pointer" data-testid="card-expiring-soon">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-2xl font-bold text-muted-foreground" data-testid="text-expiring-items">
+                    ...
+                  </div>
+                ) : (
+                  <div className="text-2xl font-bold" data-testid="text-expiring-items">
+                    {expiringItemsCount}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Next 90 days
+                </p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                Expiring Products Report (Next 90 Days)
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const csvContent = [
+                      ['Product', 'Model Number', 'GTIN', 'Location', 'Quantity', 'Expiration Date', 'Days Until Expiration'].join(','),
+                      ...expiringItems.map(item => {
+                        const daysUntil = Math.ceil((new Date(item.product!.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                        return [
+                          `"${item.product?.name || ''}"`,
+                          `"${item.product?.modelNumber || ''}"`,
+                          `"${item.product?.gtin || ''}"`,
+                          item.location,
+                          item.quantity,
+                          format(new Date(item.product!.expirationDate!), "yyyy-MM-dd"),
+                          daysUntil
+                        ].join(',');
+                      })
+                    ].join('\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `expiring-products-${format(new Date(), "yyyy-MM-dd")}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }}
+                  data-testid="button-export-expiring"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {expiringItems.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No items expiring in the next 90 days</p>
+              ) : (
+                expiringItems.map((item) => {
+                  const daysUntil = Math.ceil((new Date(item.product!.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <Card key={`${item.id}-${item.location}`} data-testid={`card-expiring-${item.id}`}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <CardTitle className="text-base">{item.product?.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              Model: {item.product?.modelNumber}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={daysUntil < 30 ? "destructive" : "secondary"}>
+                              {daysUntil} days
+                            </Badge>
+                            <p className="text-xs text-muted-foreground mt-1">{item.location}</p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-1 text-sm">
+                        <div>
+                          <span className="font-medium">Expires:</span> {format(new Date(item.product!.expirationDate!), "MMM dd, yyyy")}
+                        </div>
+                        <div>
+                          <span className="font-medium">Quantity:</span> {item.quantity}
+                        </div>
+                        {item.product?.gtin && (
+                          <div>
+                            <span className="font-medium">GTIN:</span> {item.product.gtin}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Quick Actions */}
@@ -211,23 +372,29 @@ export default function Dashboard() {
             Quick Actions
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/reports">
-            <Button className="justify-start gap-2 w-full" data-testid="button-new-procedure">
+            <Button className="justify-start gap-2 w-full" data-testid="button-new-implant-report">
               <Calendar className="h-4 w-4" />
               New Implant Report
             </Button>
           </Link>
-          <Link href="/inventory/home">
-            <Button variant="secondary" className="justify-start gap-2 w-full" data-testid="button-stock-transfer">
+          <Link href="/transfer">
+            <Button variant="secondary" className="justify-start gap-2 w-full" data-testid="button-transfer-stock">
               <Package className="h-4 w-4" />
               Transfer Stock
             </Button>
           </Link>
           <Link href="/products">
-            <Button variant="outline" className="justify-start gap-2 w-full" data-testid="button-scan-barcode">
-              <Package className="h-4 w-4" />
-              Scan Barcode
+            <Button variant="outline" className="justify-start gap-2 w-full" data-testid="button-add-product">
+              <Plus className="h-4 w-4" />
+              Add New Product
+            </Button>
+          </Link>
+          <Link href="/hospitals">
+            <Button variant="outline" className="justify-start gap-2 w-full" data-testid="button-add-hospital">
+              <Building2 className="h-4 w-4" />
+              Add New Hospital
             </Button>
           </Link>
         </CardContent>
