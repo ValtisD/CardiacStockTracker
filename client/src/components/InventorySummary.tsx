@@ -33,7 +33,6 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
       }
       return response.json();
     },
-    refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
 
@@ -47,7 +46,6 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
       }
       return response.json();
     },
-    refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
 

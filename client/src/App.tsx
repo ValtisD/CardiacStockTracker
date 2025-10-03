@@ -195,7 +195,6 @@ function AppContent() {
       if (!response.ok) return [];
       return response.json();
     },
-    refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
 
@@ -206,7 +205,6 @@ function AppContent() {
       if (!response.ok) return [];
       return response.json();
     },
-    refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
 

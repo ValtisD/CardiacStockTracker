@@ -71,6 +71,7 @@ export default function BarcodeScanner({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory/summary'] });
       queryClient.invalidateQueries({ queryKey: ['/api/inventory/low-stock'] });
       setShowInventoryUpdate(false);
       setQuantityAdjustment('');

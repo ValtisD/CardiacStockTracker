@@ -60,7 +60,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       }
       return response.json();
     },
-    refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
 
@@ -74,7 +73,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       }
       return response.json();
     },
-    refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
 
@@ -94,6 +92,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
       toast({
         title: "Transfer successful",
@@ -118,6 +117,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
       toast({
         title: "Quantity updated",
@@ -141,6 +141,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
       toast({
         title: "Item deleted",
@@ -169,6 +170,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
       setShowTransferDialog(false);
       setTransferItem(null);
