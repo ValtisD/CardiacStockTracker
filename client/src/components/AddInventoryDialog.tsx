@@ -62,6 +62,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const { t } = useTranslation();
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [gs1Data, setGs1Data] = useState<GS1Data | null>(null);
   const [manualGtin, setManualGtin] = useState("");
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
@@ -135,6 +136,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const handleClose = () => {
     form.reset();
     setSelectedProduct(null);
+    setSearchResults([]);
     setGs1Data(null);
     setManualGtin("");
     setShowBarcodeScanner(false);
@@ -162,18 +164,31 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
           description: t('inventory.noProductMatching', { search: manualGtin }),
           variant: "destructive",
         });
+        setSearchResults([]);
         setIsLoadingProduct(false);
         return;
       }
 
-      const product = products[0];
-      setSelectedProduct(product);
-      form.setValue("productId", product.id);
+      // Store all search results
+      setSearchResults(products);
       
-      toast({
-        title: t('inventory.productFound'),
-        description: `${product.name} (${product.modelNumber})`,
-      });
+      // If only one result, auto-select it
+      if (products.length === 1) {
+        const product = products[0];
+        setSelectedProduct(product);
+        form.setValue("productId", product.id);
+        
+        toast({
+          title: t('inventory.productFound'),
+          description: `${product.name} (${product.modelNumber})`,
+        });
+      } else {
+        // Multiple results - user will select from dropdown
+        toast({
+          title: t('inventory.multipleProductsFound'),
+          description: t('inventory.selectFromResults', { count: products.length }),
+        });
+      }
     } catch (error) {
       toast({
         title: t('inventory.lookupFailed'),
@@ -359,6 +374,35 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                   {isLoadingProduct ? t('inventory.searching') : t('common.search')}
                 </Button>
               </div>
+
+              {/* Multiple Search Results Dropdown */}
+              {searchResults.length > 1 && !selectedProduct && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('inventory.selectProduct')}</label>
+                  <Select
+                    value=""
+                    onValueChange={(productId) => {
+                      const product = searchResults.find(p => p.id === productId);
+                      if (product) {
+                        setSelectedProduct(product);
+                        form.setValue("productId", product.id);
+                        setSearchResults([]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger data-testid="select-search-result">
+                      <SelectValue placeholder={t('inventory.selectFromResults', { count: searchResults.length })} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {searchResults.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name} - {product.modelNumber} {product.gtin ? `(${product.gtin})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Selected Product Display */}
               {selectedProduct && (

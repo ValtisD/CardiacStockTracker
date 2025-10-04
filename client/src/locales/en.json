@@ -214,6 +214,8 @@
     "addFailed": "Add Failed",
     "couldNotAddItem": "Could not add item to inventory",
     "productFound": "Product Found",
+    "multipleProductsFound": "Multiple Products Found",
+    "selectFromResults": "{{count}} results found - please select",
     "autoFilled": "Information auto-filled",
     "gtinNotInDatabase": "GTIN not in database",
     "scanFailed": "Scan Failed",

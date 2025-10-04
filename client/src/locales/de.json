@@ -214,6 +214,8 @@
     "addFailed": "Hinzufügen fehlgeschlagen",
     "couldNotAddItem": "Artikel konnte nicht zum Inventar hinzugefügt werden",
     "productFound": "Produkt gefunden",
+    "multipleProductsFound": "Mehrere Produkte gefunden",
+    "selectFromResults": "{{count}} Ergebnisse gefunden - bitte auswählen",
     "autoFilled": "Informationen automatisch ausgefüllt",
     "gtinNotInDatabase": "GTIN nicht in der Datenbank",
     "scanFailed": "Scannen fehlgeschlagen",
