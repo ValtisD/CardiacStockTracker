@@ -549,6 +549,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current user info (including admin status)
+  app.get("/api/user/me", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      res.json({
+        userId: req.userId,
+        email: req.userEmail,
+        isAdmin: req.isAdmin || false,
+        isPrimeAdmin: req.isPrimeAdmin || false,
+      });
+    } catch (error) {
+      console.error("Error fetching current user info:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to fetch user info" });
+    }
+  });
+
   // User preferences
   app.get("/api/user/language", requireAuth, async (req: AuthRequest, res: Response) => {
     try {

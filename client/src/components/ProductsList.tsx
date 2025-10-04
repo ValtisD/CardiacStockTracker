@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Edit, Trash2, Package, Search } from "lucide-react";
-import { useAuth0 } from "@auth0/auth0-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,10 +23,12 @@ export default function ProductsList() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
-  const { user } = useAuth0();
-  
-  const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;
-  const isAdmin = user?.email === adminEmail;
+
+  const { data: currentUser } = useQuery<{ userId: string; email: string; isAdmin: boolean; isPrimeAdmin: boolean }>({
+    queryKey: ["/api/user/me"],
+  });
+
+  const isAdmin = currentUser?.isAdmin || false;
 
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],

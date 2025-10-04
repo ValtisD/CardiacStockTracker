@@ -307,14 +307,16 @@ function AppContent() {
 function AuthenticatedApp() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { user } = useAuth0();
   
   // Sync user's language preference from backend
   useLanguageSync();
 
-  // Check if user is admin
-  const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;
-  const isAdmin = user?.email === adminEmail;
+  // Check if user is admin via API
+  const { data: currentUser } = useQuery<{ userId: string; email: string; isAdmin: boolean; isPrimeAdmin: boolean }>({
+    queryKey: ["/api/user/me"],
+  });
+
+  const isAdmin = currentUser?.isAdmin || false;
 
   // Fetch real low stock data from backend
   const { data: homeLowStock } = useQuery<Inventory[]>({
