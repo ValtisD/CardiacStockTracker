@@ -90,6 +90,7 @@ Data validation is performed using Zod schemas on both client and server.
 
 ### Data Fetching & Caching
 - **TanStack Query**: Server state management.
+  - **Cache Invalidation Pattern**: All inventory-affecting mutations use predicate-based invalidation to ensure instant UI updates across all inventory-related queries. The predicate `(query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false` matches all inventory queries including those with embedded parameters like `/api/inventory?location=car`, `/api/inventory/summary`, and `/api/inventory/low-stock`. This approach ensures consistent cache invalidation without needing to manually list every query key variant.
 
 ### Styling
 - **Tailwind CSS**: Utility-first CSS framework.
