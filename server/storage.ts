@@ -7,6 +7,7 @@ import {
   implantProcedures,
   procedureMaterials,
   stockTransfers,
+  userProductSettings,
   type Product,
   type InsertProduct,
   type Inventory,
@@ -19,10 +20,12 @@ import {
   type InsertProcedureMaterial,
   type StockTransfer,
   type InsertStockTransfer,
+  type UserProductSettings,
+  type InsertUserProductSettings,
 } from "@shared/schema";
 
 export interface IStorage {
-  // Products
+  // Products (shared - no userId)
   getProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
   getProductByGtin(gtin: string): Promise<Product | undefined>;
@@ -31,35 +34,40 @@ export interface IStorage {
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
 
-  // Inventory
-  getInventory(location?: string): Promise<(Inventory & { product: Product })[]>;
-  getInventoryItem(productId: string, location: string): Promise<Inventory | undefined>;
-  getInventorySummary(location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]>;
+  // User Product Settings
+  getUserProductSettings(userId: string, productId?: string): Promise<UserProductSettings[]>;
+  upsertUserProductSettings(userId: string, productId: string, settings: { minCarStock: number, minTotalStock: number }): Promise<UserProductSettings>;
+
+  // Inventory (user-specific)
+  getInventory(userId: string, location?: string): Promise<(Inventory & { product: Product })[]>;
+  getInventoryItem(userId: string, productId: string, location: string): Promise<Inventory | undefined>;
+  getInventorySummary(userId: string, location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]>;
+  getLowStockItems(userId: string, location?: string): Promise<(Inventory & { product: Product })[]>;
   createInventoryItem(item: InsertInventory): Promise<Inventory>;
-  updateInventoryQuantity(productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
-  deleteInventoryItem(productId: string, location: string): Promise<boolean>;
+  updateInventoryQuantity(userId: string, productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
+  deleteInventoryItem(userId: string, productId: string, location: string): Promise<boolean>;
 
-  // Hospitals
-  getHospitals(): Promise<Hospital[]>;
-  getHospital(id: string): Promise<Hospital | undefined>;
+  // Hospitals (user-specific)
+  getHospitals(userId: string): Promise<Hospital[]>;
+  getHospital(userId: string, id: string): Promise<Hospital | undefined>;
   createHospital(hospital: InsertHospital): Promise<Hospital>;
-  updateHospital(id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined>;
-  deleteHospital(id: string): Promise<boolean>;
+  updateHospital(userId: string, id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined>;
+  deleteHospital(userId: string, id: string): Promise<boolean>;
 
-  // Implant Procedures
-  getImplantProcedures(): Promise<(ImplantProcedure & { hospital: Hospital })[]>;
-  getImplantProcedure(id: string): Promise<ImplantProcedure | undefined>;
+  // Implant Procedures (user-specific)
+  getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital })[]>;
+  getImplantProcedure(userId: string, id: string): Promise<ImplantProcedure | undefined>;
   createImplantProcedure(procedure: InsertImplantProcedure, materials: InsertProcedureMaterial[]): Promise<ImplantProcedure>;
   getProcedureMaterials(procedureId: string): Promise<ProcedureMaterial[]>;
 
-  // Stock Transfers
-  getStockTransfers(): Promise<(StockTransfer & { product: Product })[]>;
+  // Stock Transfers (user-specific)
+  getStockTransfers(userId: string): Promise<(StockTransfer & { product: Product })[]>;
   createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer>;
   
   // Individual inventory item methods (for serial-tracked items)
   updateInventoryQuantityById(id: string, quantity: number): Promise<Inventory | undefined>;
   deleteInventoryItemById(id: string): Promise<boolean>;
-  transferInventoryItem(id: string, toLocation: string): Promise<Inventory | undefined>;
+  transferInventoryItem(userId: string, id: string, toLocation: string, transferQuantity?: number): Promise<Inventory | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -105,10 +113,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Inventory
-  async getInventory(location?: string): Promise<(Inventory & { product: Product })[]> {
+  async getInventory(userId: string, location?: string): Promise<(Inventory & { product: Product })[]> {
     const query = db
       .select({
         id: inventory.id,
+        userId: inventory.userId,
         productId: inventory.productId,
         location: inventory.location,
         quantity: inventory.quantity,
@@ -124,23 +133,31 @@ export class DatabaseStorage implements IStorage {
 
     if (location) {
       return await query.where(and(
+        eq(inventory.userId, userId),
         eq(inventory.location, location),
         gt(inventory.quantity, 0)
       ));
     }
 
-    return await query.where(gt(inventory.quantity, 0));
+    return await query.where(and(
+      eq(inventory.userId, userId),
+      gt(inventory.quantity, 0)
+    ));
   }
 
-  async getInventoryItem(productId: string, location: string): Promise<Inventory | undefined> {
+  async getInventoryItem(userId: string, productId: string, location: string): Promise<Inventory | undefined> {
     const result = await db
       .select()
       .from(inventory)
-      .where(and(eq(inventory.productId, productId), eq(inventory.location, location)));
+      .where(and(
+        eq(inventory.userId, userId),
+        eq(inventory.productId, productId),
+        eq(inventory.location, location)
+      ));
     return result[0];
   }
 
-  async getInventorySummary(location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]> {
+  async getInventorySummary(userId: string, location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]> {
     // Get ALL products
     const allProducts = await db.select().from(products);
     
@@ -155,6 +172,7 @@ export class DatabaseStorage implements IStorage {
         })
         .from(inventory)
         .where(and(
+          eq(inventory.userId, userId),
           eq(inventory.location, 'car'),
           gt(inventory.quantity, 0)
         ));
@@ -166,7 +184,10 @@ export class DatabaseStorage implements IStorage {
           quantity: inventory.quantity,
         })
         .from(inventory)
-        .where(gt(inventory.quantity, 0));
+        .where(and(
+          eq(inventory.userId, userId),
+          gt(inventory.quantity, 0)
+        ));
     } else {
       // No location specified: show total stock
       inventoryItems = await db
@@ -175,7 +196,10 @@ export class DatabaseStorage implements IStorage {
           quantity: inventory.quantity,
         })
         .from(inventory)
-        .where(gt(inventory.quantity, 0));
+        .where(and(
+          eq(inventory.userId, userId),
+          gt(inventory.quantity, 0)
+        ));
     }
 
     // Group inventory by productId and sum quantities
@@ -207,6 +231,7 @@ export class DatabaseStorage implements IStorage {
         .from(inventory)
         .where(
           and(
+            eq(inventory.userId, item.userId),
             eq(inventory.productId, item.productId),
             eq(inventory.location, item.location),
             eq(inventory.trackingMode, 'lot'),
@@ -243,6 +268,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInventoryQuantity(
+    userId: string,
     productId: string,
     location: string,
     quantity: number
@@ -251,7 +277,11 @@ export class DatabaseStorage implements IStorage {
     if (quantity <= 0) {
       const result = await db
         .delete(inventory)
-        .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
+        .where(and(
+          eq(inventory.userId, userId),
+          eq(inventory.productId, productId),
+          eq(inventory.location, location)
+        ))
         .returning();
       return result[0];
     }
@@ -259,7 +289,11 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .update(inventory)
       .set({ quantity, updatedAt: new Date() })
-      .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
+      .where(and(
+        eq(inventory.userId, userId),
+        eq(inventory.productId, productId),
+        eq(inventory.location, location)
+      ))
       .returning();
     return result[0];
   }
@@ -285,10 +319,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async deleteInventoryItem(productId: string, location: string): Promise<boolean> {
+  async deleteInventoryItem(userId: string, productId: string, location: string): Promise<boolean> {
     const result = await db
       .delete(inventory)
-      .where(and(eq(inventory.productId, productId), eq(inventory.location, location)))
+      .where(and(
+        eq(inventory.userId, userId),
+        eq(inventory.productId, productId),
+        eq(inventory.location, location)
+      ))
       .returning();
     return result.length > 0;
   }
@@ -302,11 +340,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async transferInventoryItem(
+    userId: string,
     id: string, 
     toLocation: string, 
     transferQuantity?: number
   ): Promise<Inventory | undefined> {
-    const item = await db.select().from(inventory).where(eq(inventory.id, id));
+    const item = await db.select().from(inventory).where(and(
+      eq(inventory.id, id),
+      eq(inventory.userId, userId)
+    ));
     if (!item || item.length === 0) {
       return undefined;
     }
@@ -365,11 +407,12 @@ export class DatabaseStorage implements IStorage {
       } else {
         // Create new destination item
         await db.insert(inventory).values({
+          userId,
           productId,
           location: toLocation,
           quantity: quantityToTransfer,
           trackingMode: 'lot',
-          serialNumber: '',
+          serialNumber: null,
           lotNumber: sourceItem.lotNumber,
           expirationDate: sourceItem.expirationDate,
         });
@@ -387,6 +430,7 @@ export class DatabaseStorage implements IStorage {
 
       // Create audit trail
       await db.insert(stockTransfers).values({
+        userId,
         productId,
         fromLocation,
         toLocation,
@@ -405,6 +449,7 @@ export class DatabaseStorage implements IStorage {
 
       if (result && result.length > 0) {
         await db.insert(stockTransfers).values({
+          userId,
           productId,
           fromLocation,
           toLocation,
@@ -417,19 +462,29 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getLowStockItems(location?: string): Promise<(Inventory & { product: Product })[]> {
+  async getLowStockItems(userId: string, location?: string): Promise<(Inventory & { product: Product })[]> {
     if (location === 'car') {
-      // For car stock: check ALL products and compare car stock to minCarStock
+      // For car stock: check user's product settings and compare car stock to minCarStock
       const allProducts = await db.select().from(products);
+      const userSettings = await this.getUserProductSettings(userId);
       
-      // Get car inventory
+      // Create a map of product settings
+      const settingsMap = new Map<string, UserProductSettings>();
+      for (const setting of userSettings) {
+        settingsMap.set(setting.productId, setting);
+      }
+      
+      // Get user's car inventory
       const allCarInventory = await db
         .select({
           productId: inventory.productId,
           quantity: inventory.quantity,
         })
         .from(inventory)
-        .where(eq(inventory.location, 'car'));
+        .where(and(
+          eq(inventory.userId, userId),
+          eq(inventory.location, 'car')
+        ));
 
       // Group by productId and sum quantities
       const carStockMap = new Map<string, number>();
@@ -437,39 +492,51 @@ export class DatabaseStorage implements IStorage {
         carStockMap.set(item.productId, (carStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Check all products against minCarStock
+      // Check products with settings against minCarStock
       const lowStockProducts: (Inventory & { product: Product })[] = [];
       for (const product of allProducts) {
-        const carStock = carStockMap.get(product.id) || 0;
-        if (carStock < product.minCarStock) {
-          // Create a dummy inventory item for low stock reporting
-          lowStockProducts.push({
-            id: product.id,
-            productId: product.id,
-            location: 'car',
-            quantity: carStock,
-            trackingMode: null,
-            serialNumber: null,
-            lotNumber: null,
-            expirationDate: null,
-            updatedAt: null,
-            product,
-          });
+        const settings = settingsMap.get(product.id);
+        if (settings) {
+          const carStock = carStockMap.get(product.id) || 0;
+          if (carStock < settings.minCarStock) {
+            // Create a dummy inventory item for low stock reporting
+            lowStockProducts.push({
+              id: product.id,
+              userId,
+              productId: product.id,
+              location: 'car',
+              quantity: carStock,
+              trackingMode: null,
+              serialNumber: null,
+              lotNumber: null,
+              expirationDate: null,
+              updatedAt: null,
+              product,
+            });
+          }
         }
       }
 
       return lowStockProducts;
     } else if (location === 'home') {
-      // For home stock: check ALL products and compare total stock (home+car) to minTotalStock
+      // For home stock: check user's product settings and compare total stock to minTotalStock
       const allProducts = await db.select().from(products);
+      const userSettings = await this.getUserProductSettings(userId);
       
-      // Get all inventory across all locations
+      // Create a map of product settings
+      const settingsMap = new Map<string, UserProductSettings>();
+      for (const setting of userSettings) {
+        settingsMap.set(setting.productId, setting);
+      }
+      
+      // Get user's inventory across all locations
       const allInventory = await db
         .select({
           productId: inventory.productId,
           quantity: inventory.quantity,
         })
-        .from(inventory);
+        .from(inventory)
+        .where(eq(inventory.userId, userId));
 
       // Group by productId and sum quantities across all locations
       const totalStockMap = new Map<string, number>();
@@ -477,39 +544,51 @@ export class DatabaseStorage implements IStorage {
         totalStockMap.set(item.productId, (totalStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Check all products against minTotalStock
+      // Check products with settings against minTotalStock
       const lowStockProducts: (Inventory & { product: Product })[] = [];
       for (const product of allProducts) {
-        const totalStock = totalStockMap.get(product.id) || 0;
-        if (totalStock < product.minTotalStock) {
-          // Create a dummy inventory item for low stock reporting
-          lowStockProducts.push({
-            id: product.id,
-            productId: product.id,
-            location: 'home',
-            quantity: totalStock,
-            trackingMode: null,
-            serialNumber: null,
-            lotNumber: null,
-            expirationDate: null,
-            updatedAt: null,
-            product,
-          });
+        const settings = settingsMap.get(product.id);
+        if (settings) {
+          const totalStock = totalStockMap.get(product.id) || 0;
+          if (totalStock < settings.minTotalStock) {
+            // Create a dummy inventory item for low stock reporting
+            lowStockProducts.push({
+              id: product.id,
+              userId,
+              productId: product.id,
+              location: 'home',
+              quantity: totalStock,
+              trackingMode: null,
+              serialNumber: null,
+              lotNumber: null,
+              expirationDate: null,
+              updatedAt: null,
+              product,
+            });
+          }
         }
       }
 
       return lowStockProducts;
     } else {
-      // For total stock (no location specified): check ALL products and compare total stock to minTotalStock
+      // For total stock (no location specified): check user's product settings and compare total stock to minTotalStock
       const allProducts = await db.select().from(products);
+      const userSettings = await this.getUserProductSettings(userId);
       
-      // Get all inventory across all locations
+      // Create a map of product settings
+      const settingsMap = new Map<string, UserProductSettings>();
+      for (const setting of userSettings) {
+        settingsMap.set(setting.productId, setting);
+      }
+      
+      // Get user's inventory across all locations
       const allInventory = await db
         .select({
           productId: inventory.productId,
           quantity: inventory.quantity,
         })
-        .from(inventory);
+        .from(inventory)
+        .where(eq(inventory.userId, userId));
 
       // Group by productId and sum quantities across all locations
       const totalStockMap = new Map<string, number>();
@@ -517,24 +596,28 @@ export class DatabaseStorage implements IStorage {
         totalStockMap.set(item.productId, (totalStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Check all products against minTotalStock
+      // Check products with settings against minTotalStock
       const lowStockProducts: (Inventory & { product: Product })[] = [];
       for (const product of allProducts) {
-        const totalStock = totalStockMap.get(product.id) || 0;
-        if (totalStock < product.minTotalStock) {
-          // Create a dummy inventory item for low stock reporting
-          lowStockProducts.push({
-            id: product.id,
-            productId: product.id,
-            location: undefined as any,
-            quantity: totalStock,
-            trackingMode: null,
-            serialNumber: null,
-            lotNumber: null,
-            expirationDate: null,
-            updatedAt: null,
-            product,
-          });
+        const settings = settingsMap.get(product.id);
+        if (settings) {
+          const totalStock = totalStockMap.get(product.id) || 0;
+          if (totalStock < settings.minTotalStock) {
+            // Create a dummy inventory item for low stock reporting
+            lowStockProducts.push({
+              id: product.id,
+              userId,
+              productId: product.id,
+              location: undefined as any,
+              quantity: totalStock,
+              trackingMode: null,
+              serialNumber: null,
+              lotNumber: null,
+              expirationDate: null,
+              updatedAt: null,
+              product,
+            });
+          }
         }
       }
 
@@ -543,12 +626,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Hospitals
-  async getHospitals(): Promise<Hospital[]> {
-    return await db.select().from(hospitals);
+  async getHospitals(userId: string): Promise<Hospital[]> {
+    return await db.select().from(hospitals).where(eq(hospitals.userId, userId));
   }
 
-  async getHospital(id: string): Promise<Hospital | undefined> {
-    const result = await db.select().from(hospitals).where(eq(hospitals.id, id));
+  async getHospital(userId: string, id: string): Promise<Hospital | undefined> {
+    const result = await db.select().from(hospitals).where(and(
+      eq(hospitals.userId, userId),
+      eq(hospitals.id, id)
+    ));
     return result[0];
   }
 
@@ -557,25 +643,32 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async updateHospital(id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined> {
+  async updateHospital(userId: string, id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined> {
     const result = await db
       .update(hospitals)
       .set(hospital)
-      .where(eq(hospitals.id, id))
+      .where(and(
+        eq(hospitals.userId, userId),
+        eq(hospitals.id, id)
+      ))
       .returning();
     return result[0];
   }
 
-  async deleteHospital(id: string): Promise<boolean> {
-    const result = await db.delete(hospitals).where(eq(hospitals.id, id)).returning();
+  async deleteHospital(userId: string, id: string): Promise<boolean> {
+    const result = await db.delete(hospitals).where(and(
+      eq(hospitals.userId, userId),
+      eq(hospitals.id, id)
+    )).returning();
     return result.length > 0;
   }
 
   // Implant Procedures
-  async getImplantProcedures(): Promise<(ImplantProcedure & { hospital: Hospital })[]> {
+  async getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital })[]> {
     return await db
       .select({
         id: implantProcedures.id,
+        userId: implantProcedures.userId,
         hospitalId: implantProcedures.hospitalId,
         patientId: implantProcedures.patientId,
         implantDate: implantProcedures.implantDate,
@@ -588,13 +681,15 @@ export class DatabaseStorage implements IStorage {
       })
       .from(implantProcedures)
       .innerJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
+      .where(eq(implantProcedures.userId, userId))
       .orderBy(desc(implantProcedures.implantDate));
   }
 
-  async getImplantProcedure(id: string): Promise<any> {
+  async getImplantProcedure(userId: string, id: string): Promise<any> {
     const result = await db
       .select({
         id: implantProcedures.id,
+        userId: implantProcedures.userId,
         hospitalId: implantProcedures.hospitalId,
         patientId: implantProcedures.patientId,
         implantDate: implantProcedures.implantDate,
@@ -609,7 +704,10 @@ export class DatabaseStorage implements IStorage {
       .from(implantProcedures)
       .leftJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
       .leftJoin(products, eq(implantProcedures.deviceUsed, products.id))
-      .where(eq(implantProcedures.id, id));
+      .where(and(
+        eq(implantProcedures.userId, userId),
+        eq(implantProcedures.id, id)
+      ));
     return result[0];
   }
 
@@ -620,7 +718,7 @@ export class DatabaseStorage implements IStorage {
     // Validate stock availability before proceeding
     for (const material of materials) {
       if (material.source === 'car' && material.productId && material.quantity) {
-        const inventoryItem = await this.getInventoryItem(material.productId, 'car');
+        const inventoryItem = await this.getInventoryItem(procedure.userId, material.productId, 'car');
         if (!inventoryItem) {
           throw new Error(`Product ${material.productId} not found in car inventory`);
         }
@@ -649,10 +747,10 @@ export class DatabaseStorage implements IStorage {
 
         // Deduct from car inventory if source is 'car'
         if (material.source === 'car' && material.productId && material.quantity) {
-          const inventoryItem = await this.getInventoryItem(material.productId, 'car');
+          const inventoryItem = await this.getInventoryItem(procedure.userId, material.productId, 'car');
           if (inventoryItem) {
             const newQuantity = inventoryItem.quantity - material.quantity;
-            await this.updateInventoryQuantity(material.productId, 'car', newQuantity);
+            await this.updateInventoryQuantity(procedure.userId, material.productId, 'car', newQuantity);
           }
         }
       }
@@ -709,10 +807,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Stock Transfers
-  async getStockTransfers(): Promise<(StockTransfer & { product: Product })[]> {
+  async getStockTransfers(userId: string): Promise<(StockTransfer & { product: Product })[]> {
     return await db
       .select({
         id: stockTransfers.id,
+        userId: stockTransfers.userId,
         productId: stockTransfers.productId,
         fromLocation: stockTransfers.fromLocation,
         toLocation: stockTransfers.toLocation,
@@ -723,12 +822,13 @@ export class DatabaseStorage implements IStorage {
       })
       .from(stockTransfers)
       .innerJoin(products, eq(stockTransfers.productId, products.id))
+      .where(eq(stockTransfers.userId, userId))
       .orderBy(desc(stockTransfers.transferDate));
   }
 
   async createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer> {
     // Validate stock availability before proceeding
-    const fromInventory = await this.getInventoryItem(transfer.productId, transfer.fromLocation);
+    const fromInventory = await this.getInventoryItem(transfer.userId, transfer.productId, transfer.fromLocation);
     
     if (!fromInventory) {
       throw new Error(
@@ -748,19 +848,20 @@ export class DatabaseStorage implements IStorage {
       const createdTransfer = result[0];
 
       // Update inventory quantities
-      const toInventory = await this.getInventoryItem(transfer.productId, transfer.toLocation);
+      const toInventory = await this.getInventoryItem(transfer.userId, transfer.productId, transfer.toLocation);
 
       // Deduct from source
       const newFromQuantity = fromInventory.quantity - transfer.quantity;
-      await this.updateInventoryQuantity(transfer.productId, transfer.fromLocation, newFromQuantity);
+      await this.updateInventoryQuantity(transfer.userId, transfer.productId, transfer.fromLocation, newFromQuantity);
 
       // Add to destination
       if (toInventory) {
         const newToQuantity = toInventory.quantity + transfer.quantity;
-        await this.updateInventoryQuantity(transfer.productId, transfer.toLocation, newToQuantity);
+        await this.updateInventoryQuantity(transfer.userId, transfer.productId, transfer.toLocation, newToQuantity);
       } else {
         // Create inventory item if it doesn't exist at destination
         await this.createInventoryItem({
+          userId: transfer.userId,
           productId: transfer.productId,
           location: transfer.toLocation,
           quantity: transfer.quantity,
@@ -773,6 +874,68 @@ export class DatabaseStorage implements IStorage {
       // In a production app, consider using a different driver or implementing compensating transactions
       console.error('Failed to create stock transfer:', error);
       throw new Error('Failed to create stock transfer. Database operation failed.');
+    }
+  }
+
+  // User Product Settings
+  async getUserProductSettings(userId: string, productId?: string): Promise<UserProductSettings[]> {
+    if (productId) {
+      const result = await db
+        .select()
+        .from(userProductSettings)
+        .where(and(
+          eq(userProductSettings.userId, userId),
+          eq(userProductSettings.productId, productId)
+        ));
+      return result;
+    }
+    
+    return await db
+      .select()
+      .from(userProductSettings)
+      .where(eq(userProductSettings.userId, userId));
+  }
+
+  async upsertUserProductSettings(
+    userId: string,
+    productId: string,
+    settings: { minCarStock: number, minTotalStock: number }
+  ): Promise<UserProductSettings> {
+    // Check if settings exist
+    const existing = await db
+      .select()
+      .from(userProductSettings)
+      .where(and(
+        eq(userProductSettings.userId, userId),
+        eq(userProductSettings.productId, productId)
+      ));
+
+    if (existing.length > 0) {
+      // Update existing settings
+      const updated = await db
+        .update(userProductSettings)
+        .set({
+          minCarStock: settings.minCarStock,
+          minTotalStock: settings.minTotalStock,
+        })
+        .where(and(
+          eq(userProductSettings.userId, userId),
+          eq(userProductSettings.productId, productId)
+        ))
+        .returning();
+      return updated[0];
+    } else {
+      // Insert new settings
+      const inserted = await db
+        .insert(userProductSettings)
+        .values({
+          userId,
+          productId,
+          minCarStock: settings.minCarStock,
+          minTotalStock: settings.minTotalStock,
+        })
+        .returning();
+      return inserted[0];
     }
   }
 }
