@@ -42,7 +42,7 @@ export interface IStorage {
   getInventory(userId: string, location?: string): Promise<(Inventory & { product: Product })[]>;
   getInventoryItem(userId: string, productId: string, location: string): Promise<Inventory | undefined>;
   getInventorySummary(userId: string, location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]>;
-  getLowStockItems(userId: string, location?: string): Promise<(Inventory & { product: Product })[]>;
+  getLowStockItems(userId: string, location?: string): Promise<(Inventory & { product: Product; userSettings?: UserProductSettings })[]>;
   createInventoryItem(item: InsertInventory): Promise<Inventory>;
   updateInventoryQuantity(userId: string, productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
   deleteInventoryItem(userId: string, productId: string, location: string): Promise<boolean>;
@@ -506,7 +506,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Check products with settings against minCarStock
-      const lowStockProducts: (Inventory & { product: Product })[] = [];
+      const lowStockProducts: (Inventory & { product: Product; userSettings?: UserProductSettings })[] = [];
       for (const product of allProducts) {
         const settings = settingsMap.get(product.id);
         if (settings) {
@@ -525,6 +525,7 @@ export class DatabaseStorage implements IStorage {
               expirationDate: null,
               updatedAt: null,
               product,
+              userSettings: settings,
             });
           }
         }
@@ -558,7 +559,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Check products with settings against minTotalStock
-      const lowStockProducts: (Inventory & { product: Product })[] = [];
+      const lowStockProducts: (Inventory & { product: Product; userSettings?: UserProductSettings })[] = [];
       for (const product of allProducts) {
         const settings = settingsMap.get(product.id);
         if (settings) {
@@ -577,6 +578,7 @@ export class DatabaseStorage implements IStorage {
               expirationDate: null,
               updatedAt: null,
               product,
+              userSettings: settings,
             });
           }
         }
@@ -610,7 +612,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Check products with settings against minTotalStock
-      const lowStockProducts: (Inventory & { product: Product })[] = [];
+      const lowStockProducts: (Inventory & { product: Product; userSettings?: UserProductSettings })[] = [];
       for (const product of allProducts) {
         const settings = settingsMap.get(product.id);
         if (settings) {
@@ -629,6 +631,7 @@ export class DatabaseStorage implements IStorage {
               expirationDate: null,
               updatedAt: null,
               product,
+              userSettings: settings,
             });
           }
         }
