@@ -29,6 +29,14 @@ export function extractUserInfo(req: AuthRequest, res: Response, next: NextFunct
   const userEmail = auth.payload.email;
   const adminEmail = process.env.AUTH0_ADMIN_EMAIL;
   req.isAdmin = userEmail === adminEmail;
+  
+  // Debug logging
+  console.log('Auth check:', {
+    userEmail,
+    adminEmail,
+    isAdmin: req.isAdmin,
+    emailsMatch: userEmail === adminEmail
+  });
 
   next();
 }
