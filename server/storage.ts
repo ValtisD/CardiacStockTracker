@@ -840,7 +840,8 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       // If any part fails, log error - note: neon-http doesn't support transactions
       // In a production app, consider using a different driver or implementing compensating transactions
-      console.error('Failed to create implant procedure:', error);
+      // SECURITY: Only log error type, not full error object to prevent sensitive data exposure
+      console.error('Failed to create implant procedure:', error instanceof Error ? error.message : 'Unknown error');
       throw new Error('Failed to create implant procedure. Database operation failed.');
     }
   }
@@ -966,7 +967,8 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       // If any part fails, log error - note: neon-http doesn't support transactions
       // In a production app, consider using a different driver or implementing compensating transactions
-      console.error('Failed to create stock transfer:', error);
+      // SECURITY: Only log error type, not full error object to prevent sensitive data exposure
+      console.error('Failed to create stock transfer:', error instanceof Error ? error.message : 'Unknown error');
       throw new Error('Failed to create stock transfer. Database operation failed.');
     }
   }
