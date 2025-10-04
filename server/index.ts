@@ -7,6 +7,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Trust proxy - needed for rate limiting to work correctly behind Replit's proxy
+app.set('trust proxy', true);
+
 // SECURITY: Rate limiting to prevent brute-force attacks
 // Apply to all API routes
 const apiLimiter = rateLimit({
