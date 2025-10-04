@@ -23,6 +23,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { parseGS1Barcode, formatGS1Display, isGS1Barcode, GS1Data } from "@/lib/gs1Parser";
+import { useTranslation } from 'react-i18next';
 
 interface BarcodeScannerProps {
   isOpen: boolean;
@@ -35,8 +36,9 @@ export default function BarcodeScanner({
   isOpen, 
   onClose, 
   onScanComplete, 
-  title = "Scan Barcode" 
+  title 
 }: BarcodeScannerProps) {
+  const { t } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState<string>('');
   const [manualCode, setManualCode] = useState<string>('');
@@ -112,10 +114,10 @@ export default function BarcodeScanner({
       
       if (!response.ok) {
         if (response.status === 404) {
-          setError('Product not found. Please check the barcode or try manual entry.');
+          setError(t('barcode.productNotFound'));
           setProductInfo(null);
         } else {
-          setError('Failed to search for product. Please try again.');
+          setError(t('barcode.searchFailed'));
         }
         return;
       }
@@ -124,12 +126,12 @@ export default function BarcodeScanner({
       if (products && products.length > 0) {
         setProductInfo(products[0]);
       } else {
-        setError('Product not found. Please check the barcode or try manual entry.');
+        setError(t('barcode.productNotFound'));
         setProductInfo(null);
       }
     } catch (err) {
       console.error('Error searching for product:', err);
-      setError('Failed to connect to server. Please try again.');
+      setError(t('barcode.connectionFailed'));
       setProductInfo(null);
     } finally {
       setIsSearching(false);
@@ -192,7 +194,7 @@ export default function BarcodeScanner({
       const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices();
       
       if (videoInputDevices.length === 0) {
-        setError('No camera found on this device.');
+        setError(t('barcode.noCameraFound'));
         setIsScanning(false);
         return;
       }
@@ -305,7 +307,7 @@ export default function BarcodeScanner({
       
     } catch (err) {
       console.error('Camera access error:', err);
-      setError('Unable to access camera. Please use manual entry or check camera permissions in your browser settings.');
+      setError(t('barcode.cameraAccessError'));
       setIsScanning(false);
       
       // Clean up any partially initialized stream
@@ -376,7 +378,7 @@ export default function BarcodeScanner({
 
   const simulateScan = () => {
     // Removed simulation - users should use manual entry
-    setError('Please use manual entry to input barcode numbers.');
+    setError(t('barcode.useManualEntry'));
   };
 
   const handleBarcodeDetected = async (barcode: string) => {
@@ -450,7 +452,7 @@ export default function BarcodeScanner({
     const newQuantity = currentQuantity + adjustment;
     
     if (newQuantity < 0) {
-      setError('Cannot set quantity below zero');
+      setError(t('barcode.quantityBelowZero'));
       return;
     }
     
@@ -525,7 +527,7 @@ export default function BarcodeScanner({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scan className="h-5 w-5" />
-            {title}
+            {title || t('barcode.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -544,12 +546,12 @@ export default function BarcodeScanner({
                 ) : isSearching ? (
                   <div className="text-center">
                     <Loader2 className="h-16 w-16 mx-auto mb-2 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground">Searching for product...</p>
+                    <p className="text-sm text-muted-foreground">{t('barcode.searching')}</p>
                   </div>
                 ) : scannedCode && productInfo ? (
                   <div className="text-center">
                     <CheckCircle className="h-16 w-16 mx-auto mb-2 text-green-500" />
-                    <p className="text-sm font-medium">Product Found!</p>
+                    <p className="text-sm font-medium">{t('barcode.productFound')}</p>
                     <Badge variant="secondary" className="mt-2" data-testid="badge-scanned-code">
                       {scannedCode}
                     </Badge>
@@ -557,7 +559,7 @@ export default function BarcodeScanner({
                 ) : scannedCode ? (
                   <div className="text-center">
                     <X className="h-16 w-16 mx-auto mb-2 text-destructive" />
-                    <p className="text-sm font-medium">Product Not Found</p>
+                    <p className="text-sm font-medium">{t('barcode.productNotFoundShort')}</p>
                     <Badge variant="secondary" className="mt-2">
                       {scannedCode}
                     </Badge>
@@ -565,7 +567,7 @@ export default function BarcodeScanner({
                 ) : (
                   <div className="text-center">
                     <Scan className="h-16 w-16 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Ready to scan</p>
+                    <p className="text-sm text-muted-foreground">{t('barcode.readyToScan')}</p>
                   </div>
                 )}
               </div>
@@ -581,35 +583,35 @@ export default function BarcodeScanner({
           {gs1Data && (gs1Data.gtin || gs1Data.expirationDate || gs1Data.serialNumber || gs1Data.lotNumber) && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Barcode Data (GS1)</CardTitle>
+                <CardTitle className="text-base">{t('barcode.barcodeData')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {gs1Data.gtin && (
                   <div>
-                    <span className="text-sm font-medium">Item Number (GTIN):</span>
+                    <span className="text-sm font-medium">{t('barcode.itemNumber')}</span>
                     <span className="ml-2 text-sm font-mono" data-testid="text-gs1-gtin">{gs1Data.gtin}</span>
                   </div>
                 )}
                 {gs1Data.expirationDate && (
                   <div>
-                    <span className="text-sm font-medium">Expiration Date:</span>
+                    <span className="text-sm font-medium">{t('barcode.expirationDate')}</span>
                     <span className="ml-2 text-sm" data-testid="text-gs1-expiration">{gs1Data.expirationDate}</span>
                   </div>
                 )}
                 {gs1Data.serialNumber && (
                   <div>
-                    <span className="text-sm font-medium">Serial Number:</span>
+                    <span className="text-sm font-medium">{t('barcode.serialNumber')}</span>
                     <span className="ml-2 text-sm font-mono" data-testid="text-gs1-serial">{gs1Data.serialNumber}</span>
                   </div>
                 )}
                 {gs1Data.lotNumber && (
                   <div>
-                    <span className="text-sm font-medium">Lot Number:</span>
+                    <span className="text-sm font-medium">{t('barcode.lotNumber')}</span>
                     <span className="ml-2 text-sm font-mono" data-testid="text-gs1-lot">{gs1Data.lotNumber}</span>
                   </div>
                 )}
                 <div className="pt-2 border-t">
-                  <span className="text-xs text-muted-foreground">Raw: </span>
+                  <span className="text-xs text-muted-foreground">{t('barcode.raw')} </span>
                   <span className="text-xs font-mono text-muted-foreground">{formatGS1Display(gs1Data)}</span>
                 </div>
               </CardContent>
@@ -619,19 +621,19 @@ export default function BarcodeScanner({
           {productInfo && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Product Information</CardTitle>
+                <CardTitle className="text-base">{t('barcode.productInformation')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div>
-                  <span className="text-sm font-medium">Name:</span>
+                  <span className="text-sm font-medium">{t('barcode.name')}</span>
                   <span className="ml-2 text-sm" data-testid="text-product-name">{productInfo.name}</span>
                 </div>
                 <div>
-                  <span className="text-sm font-medium">Model:</span>
+                  <span className="text-sm font-medium">{t('barcode.model')}</span>
                   <span className="ml-2 text-sm" data-testid="text-product-model">{productInfo.modelNumber}</span>
                 </div>
                 <div>
-                  <span className="text-sm font-medium">GTIN:</span>
+                  <span className="text-sm font-medium">{t('barcode.gtin')}</span>
                   <span className="ml-2 text-sm font-mono" data-testid="text-product-gtin">{productInfo.gtin}</span>
                 </div>
               </CardContent>
@@ -641,18 +643,15 @@ export default function BarcodeScanner({
           {productInfo && currentInventory && currentInventory.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Current Inventory</CardTitle>
+                <CardTitle className="text-base">{t('barcode.currentInventory')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {currentInventory.map(inv => {
-                  const isLowStock = inv.location === 'car' 
-                    ? inv.quantity < inv.product.minCarStock
-                    : inv.quantity < inv.product.minTotalStock;
                   return (
                     <div key={inv.id} className="flex justify-between items-center">
                       <span className="text-sm font-medium capitalize">{inv.location}:</span>
-                      <Badge variant={isLowStock ? "destructive" : "secondary"}>
-                        {inv.quantity} units
+                      <Badge variant="secondary">
+                        {inv.quantity} {t('barcode.units')}
                       </Badge>
                     </div>
                   );
@@ -666,27 +665,27 @@ export default function BarcodeScanner({
           {false && productInfo && showInventoryUpdate && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Update Inventory</CardTitle>
+                <CardTitle className="text-base">{t('barcode.updateInventory')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="location">{t('barcode.location')}</Label>
                   <Select value={selectedLocation} onValueChange={setSelectedLocation}>
                     <SelectTrigger id="location" data-testid="select-location">
-                      <SelectValue placeholder="Select location" />
+                      <SelectValue placeholder={t('barcode.selectLocation')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="home">Home</SelectItem>
-                      <SelectItem value="car">Car</SelectItem>
+                      <SelectItem value="home">{t('barcode.home')}</SelectItem>
+                      <SelectItem value="car">{t('barcode.car')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="quantity">Quantity Adjustment</Label>
+                  <Label htmlFor="quantity">{t('barcode.quantityAdjustment')}</Label>
                   <Input
                     id="quantity"
                     type="number"
-                    placeholder="Enter +/- amount (e.g., +5 or -3)"
+                    placeholder={t('barcode.enterAdjustment')}
                     value={quantityAdjustment}
                     onChange={(e) => setQuantityAdjustment(e.target.value)}
                     data-testid="input-quantity-adjustment"
@@ -699,7 +698,7 @@ export default function BarcodeScanner({
                     className="flex-1"
                     data-testid="button-cancel-inventory"
                   >
-                    Cancel
+                    {t('barcode.cancel')}
                   </Button>
                   <Button
                     onClick={handleInventoryUpdate}
@@ -710,10 +709,10 @@ export default function BarcodeScanner({
                     {updateInventoryMutation.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
+                        {t('barcode.updating')}
                       </>
                     ) : (
-                      'Update'
+                      t('barcode.update')
                     )}
                   </Button>
                 </div>
@@ -728,17 +727,17 @@ export default function BarcodeScanner({
               className="w-full"
               data-testid="button-show-manual-entry"
             >
-              Enter Code Manually
+              {t('barcode.enterCodeManually')}
             </Button>
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Manual Entry</CardTitle>
+                <CardTitle className="text-base">{t('barcode.manualEntry')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter barcode, model, or serial number"
+                    placeholder={t('barcode.enterBarcodePlaceholder')}
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleManualEntry()}
@@ -766,7 +765,7 @@ export default function BarcodeScanner({
                 data-testid="button-start-camera"
               >
                 <Camera className="h-4 w-4 mr-2" />
-                Start Camera
+                {t('barcode.startCamera')}
               </Button>
             )}
             
@@ -778,7 +777,7 @@ export default function BarcodeScanner({
                     variant="outline"
                     size="icon"
                     data-testid="button-switch-camera"
-                    title="Switch Camera"
+                    title={t('barcode.switchCamera')}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
@@ -790,7 +789,7 @@ export default function BarcodeScanner({
                   data-testid="button-stop-camera"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Stop Scanning
+                  {t('barcode.stopScanning')}
                 </Button>
               </div>
             )}
@@ -802,7 +801,7 @@ export default function BarcodeScanner({
                   variant="outline"
                   data-testid="button-scan-again"
                 >
-                  Scan Again
+                  {t('barcode.scanAgain')}
                 </Button>
                 <Button 
                   onClick={handleConfirm} 
@@ -810,7 +809,7 @@ export default function BarcodeScanner({
                   data-testid="button-confirm-scan"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Confirm
+                  {t('barcode.confirm')}
                 </Button>
               </>
             )}
