@@ -192,20 +192,36 @@
     "toggleAdminFailed": "Failed to update admin status",
     "cannotModifyPrimeAdmin": "Cannot modify prime admin status"
   },
+  "sidebar": {
+    "navigation": "Navigation",
+    "management": "Management",
+    "admin": "Admin",
+    "dashboard": "Dashboard",
+    "homeInventory": "Home Inventory",
+    "carStock": "Car Stock",
+    "hospitals": "Hospitals",
+    "implantReports": "Implant Reports",
+    "products": "Products",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "userManagement": "User Management"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "selectLanguage": "Select Language",
     "german": "German",
     "english": "English",
-    "preferences": "Preferences",
+    "preferences": "Language Settings",
     "updateSuccess": "Settings updated",
     "updateFailed": "Failed to update settings",
     "thresholds": "Stock Thresholds",
     "configureThresholds": "Configure thresholds for products",
     "minCarStock": "Min Car Stock",
     "minTotalStock": "Min Total Stock",
-    "saveThresholds": "Save Thresholds"
+    "saveThresholds": "Save Thresholds",
+    "languageSettings": "Language Settings",
+    "productSettings": "Product Settings"
   },
   "barcode": {
     "title": "Scan Barcode",

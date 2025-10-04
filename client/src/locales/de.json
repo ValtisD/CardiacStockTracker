@@ -192,20 +192,36 @@
     "toggleAdminFailed": "Fehler beim Aktualisieren des Administratorstatus",
     "cannotModifyPrimeAdmin": "Hauptadministratorstatus kann nicht geändert werden"
   },
+  "sidebar": {
+    "navigation": "Navigation",
+    "management": "Verwaltung",
+    "admin": "Admin",
+    "dashboard": "Dashboard",
+    "homeInventory": "Lagerbestand Zuhause",
+    "carStock": "Fahrzeugbestand",
+    "hospitals": "Krankenhäuser",
+    "implantReports": "Implantatberichte",
+    "products": "Produkte",
+    "analytics": "Analytics",
+    "settings": "Einstellungen",
+    "userManagement": "Benutzerverwaltung"
+  },
   "settings": {
     "title": "Einstellungen",
     "language": "Sprache",
     "selectLanguage": "Sprache auswählen",
     "german": "Deutsch",
     "english": "Englisch",
-    "preferences": "Einstellungen",
+    "preferences": "Spracheinstellungen",
     "updateSuccess": "Einstellungen aktualisiert",
     "updateFailed": "Fehler beim Aktualisieren der Einstellungen",
     "thresholds": "Bestandsschwellenwerte",
     "configureThresholds": "Schwellenwerte für Produkte konfigurieren",
     "minCarStock": "Min. Fahrzeugbestand",
     "minTotalStock": "Min. Gesamtbestand",
-    "saveThresholds": "Schwellenwerte speichern"
+    "saveThresholds": "Schwellenwerte speichern",
+    "languageSettings": "Spracheinstellungen",
+    "productSettings": "Produkteinstellungen"
   },
   "barcode": {
     "title": "Barcode scannen",
