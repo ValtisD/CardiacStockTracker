@@ -34,7 +34,7 @@ The application uses **Auth0** for multi-user authentication with role-based acc
   - Record procedures and view their own data
   - Cannot modify the shared product catalog
 
-All user data (inventory, hospitals, procedures, transfers) is isolated by `userId` from the Auth0 JWT `sub` claim.
+All user data (inventory, procedures, transfers) is isolated by `userId` from the Auth0 JWT `sub` claim. **Hospitals** and **Products** are globally shared across all users.
 
 ## System Architecture
 
@@ -64,7 +64,7 @@ The backend is an Express.js server providing a RESTful API. It uses a middlewar
 PostgreSQL (Neon serverless) is the primary database, using Drizzle ORM for schema management and migrations. The schema includes:
 - **Products**: Simplified reference database storing GTIN (unique), Model Number, Product Name, and minimum stock thresholds (minCarStock, minTotalStock). Acts as a lookup catalog for barcode scanning workflows.
 - **Inventory**: Tracks individual inventory items by location (home/car) with per-item serial number, lot number, and expiration date tracking. Each row represents a unique item.
-- **Hospitals**: Manages customer details.
+- **Hospitals**: Manages customer details (global - shared across all users).
 - **Implant Procedures**: Records surgical procedure details.
 - **Procedure Materials**: Tracks material usage for procedures.
 - **Stock Transfers**: Logs inventory movements.
