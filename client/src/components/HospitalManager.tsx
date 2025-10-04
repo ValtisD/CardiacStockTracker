@@ -247,7 +247,7 @@ export default function HospitalManager() {
                         <MapPin className="h-3 w-3 mt-1 text-muted-foreground" />
                         <div className="text-sm">
                           <div>{hospital.address}</div>
-                          <div>{hospital.city}, {hospital.state} {hospital.zipCode}</div>
+                          <div>{hospital.zipCode} {hospital.city}</div>
                         </div>
                       </div>
                     </TableCell>
@@ -387,7 +387,6 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
       name: initialData?.name || "",
       address: initialData?.address || "",
       city: initialData?.city || "",
-      state: initialData?.state || "",
       zipCode: initialData?.zipCode || "",
       primaryPhysician: initialData?.primaryPhysician || undefined,
       contactPhone: initialData?.contactPhone || undefined,
@@ -434,43 +433,7 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
           )}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="e.g., Springfield"
-                    {...field}
-                    data-testid="input-hospital-city"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="e.g., IL"
-                    {...field}
-                    data-testid="input-hospital-state"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="zipCode"
@@ -479,9 +442,27 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
                 <FormLabel>Zip Code</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., 62701"
+                    placeholder="e.g., 10115"
                     {...field}
                     data-testid="input-hospital-zipcode"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Berlin"
+                    {...field}
+                    data-testid="input-hospital-city"
                   />
                 </FormControl>
                 <FormMessage />
