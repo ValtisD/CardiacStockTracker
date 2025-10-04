@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -8,11 +8,13 @@ import {
   insertImplantProcedureSchema,
   insertProcedureMaterialSchema,
   insertStockTransferSchema,
+  insertUserProductSettingsSchema,
 } from "@shared/schema";
+import { requireAuth, requireAdmin, type AuthRequest } from "./middleware/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Products
-  app.get("/api/products", async (req, res) => {
+  // Products (read operations are public, mutations require admin)
+  app.get("/api/products", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const products = await storage.getProducts();
       res.json(products);
@@ -22,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/:id", async (req, res) => {
+  app.get("/api/products/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const product = await storage.getProduct(req.params.id);
       if (!product) {
@@ -35,8 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-  app.get("/api/products/search/:query", async (req, res) => {
+  app.get("/api/products/search/:query", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const products = await storage.searchProducts(req.params.query);
       if (products.length === 0) {
@@ -49,7 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
       const product = await storage.createProduct(validatedData);
@@ -60,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/products/:id", async (req, res) => {
+  app.patch("/api/products/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const product = await storage.updateProduct(req.params.id, req.body);
       if (!product) {
@@ -73,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const deleted = await storage.deleteProduct(req.params.id);
       if (!deleted) {
@@ -86,11 +87,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Inventory
-  app.get("/api/inventory", async (req, res) => {
+  // User Product Settings (per-user min stock thresholds)
+  app.get("/api/user-product-settings", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
+      const settings = await storage.getUserProductSettings(userId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching user product settings:", error);
+      res.status(500).json({ error: "Failed to fetch user product settings" });
+    }
+  });
+
+  app.put("/api/user-product-settings/:productId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { productId } = req.params;
+      const validatedData = insertUserProductSettingsSchema.parse({
+        userId,
+        productId,
+        ...req.body
+      });
+      const { minCarStock = 0, minTotalStock = 0 } = validatedData;
+      const settings = await storage.upsertUserProductSettings(userId, productId, { minCarStock, minTotalStock });
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating user product settings:", error);
+      res.status(400).json({ error: "Failed to update user product settings" });
+    }
+  });
+
+  // Inventory (user-specific)
+  app.get("/api/inventory", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
       const location = req.query.location as string | undefined;
-      const inventory = await storage.getInventory(location);
+      const inventory = await storage.getInventory(userId, location);
       res.json(inventory);
     } catch (error) {
       console.error("Error fetching inventory:", error);
@@ -98,10 +130,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/inventory/summary", async (req, res) => {
+  app.get("/api/inventory/summary", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const location = req.query.location as string | undefined;
-      const summary = await storage.getInventorySummary(location);
+      const summary = await storage.getInventorySummary(userId, location);
       res.json(summary);
     } catch (error) {
       console.error("Error fetching inventory summary:", error);
@@ -109,10 +142,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/inventory/low-stock", async (req, res) => {
+  app.get("/api/inventory/low-stock", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const location = req.query.location as string | undefined;
-      const lowStockItems = await storage.getLowStockItems(location);
+      const lowStockItems = await storage.getLowStockItems(userId, location);
       res.json(lowStockItems);
     } catch (error) {
       console.error("Error fetching low stock items:", error);
@@ -120,15 +154,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory", async (req, res) => {
+  app.post("/api/inventory", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const validatedData = insertInventorySchema.parse(req.body);
+      const userId = req.userId!;
+      const validatedData = insertInventorySchema.parse({
+        ...req.body,
+        userId
+      });
       const inventory = await storage.createInventoryItem(validatedData);
       res.status(201).json(inventory);
     } catch (error: any) {
       console.error("Error creating inventory item:", error);
       
-      // Check for unique constraint violation on serial number
       if (error.code === '23505' && error.constraint === 'inventory_serial_number_unique') {
         return res.status(409).json({ 
           error: "Serial number already exists in inventory",
@@ -140,9 +177,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ID-based routes for individual inventory items (MUST be before the generic productId/location routes)
-  app.patch("/api/inventory/item/:id", async (req, res) => {
+  // ID-based routes for individual inventory items
+  app.patch("/api/inventory/item/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const { id } = req.params;
       const { quantity } = req.body;
       
@@ -150,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Quantity must be a number" });
       }
       
-      const inventory = await storage.updateInventoryQuantityById(id, quantity);
+      const inventory = await storage.updateInventoryQuantityById(userId, id, quantity);
       if (!inventory) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
@@ -161,10 +199,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/inventory/item/:id", async (req, res) => {
+  app.delete("/api/inventory/item/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const { id } = req.params;
-      const success = await storage.deleteInventoryItemById(id);
+      const success = await storage.deleteInventoryItemById(userId, id);
       if (!success) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
@@ -175,8 +214,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory/item/:id/transfer", async (req, res) => {
+  app.post("/api/inventory/item/:id/transfer", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const { id } = req.params;
       const { toLocation, quantity } = req.body;
       
@@ -188,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Quantity must be a positive number" });
       }
       
-      const inventory = await storage.transferInventoryItem(id, toLocation, quantity);
+      const inventory = await storage.transferInventoryItem(userId, id, toLocation, quantity);
       if (!inventory) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
@@ -201,9 +241,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Legacy routes using productId and location (kept for backwards compatibility)
-  app.patch("/api/inventory/:productId/:location", async (req, res) => {
+  // Legacy routes using productId and location
+  app.patch("/api/inventory/:productId/:location", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const { productId, location } = req.params;
       const { quantity } = req.body;
       
@@ -211,7 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Quantity must be a number" });
       }
       
-      const inventory = await storage.updateInventoryQuantity(productId, location, quantity);
+      const inventory = await storage.updateInventoryQuantity(userId, productId, location, quantity);
       if (!inventory) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
@@ -222,10 +263,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/inventory/:productId/:location", async (req, res) => {
+  app.delete("/api/inventory/:productId/:location", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const { productId, location } = req.params;
-      const success = await storage.deleteInventoryItem(productId, location);
+      const success = await storage.deleteInventoryItem(userId, productId, location);
       if (!success) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
@@ -236,10 +278,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Hospitals
-  app.get("/api/hospitals", async (req, res) => {
+  // Hospitals (user-specific)
+  app.get("/api/hospitals", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const hospitals = await storage.getHospitals();
+      const userId = req.userId!;
+      const hospitals = await storage.getHospitals(userId);
       res.json(hospitals);
     } catch (error) {
       console.error("Error fetching hospitals:", error);
@@ -247,9 +290,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/hospitals/:id", async (req, res) => {
+  app.get("/api/hospitals/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const hospital = await storage.getHospital(req.params.id);
+      const userId = req.userId!;
+      const hospital = await storage.getHospital(userId, req.params.id);
       if (!hospital) {
         return res.status(404).json({ error: "Hospital not found" });
       }
@@ -260,9 +304,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/hospitals", async (req, res) => {
+  app.post("/api/hospitals", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const validatedData = insertHospitalSchema.parse(req.body);
+      const userId = req.userId!;
+      const validatedData = insertHospitalSchema.parse({
+        ...req.body,
+        userId
+      });
       const hospital = await storage.createHospital(validatedData);
       res.status(201).json(hospital);
     } catch (error) {
@@ -271,9 +319,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/hospitals/:id", async (req, res) => {
+  app.patch("/api/hospitals/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const hospital = await storage.updateHospital(req.params.id, req.body);
+      const userId = req.userId!;
+      const hospital = await storage.updateHospital(userId, req.params.id, req.body);
       if (!hospital) {
         return res.status(404).json({ error: "Hospital not found" });
       }
@@ -284,9 +333,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/hospitals/:id", async (req, res) => {
+  app.delete("/api/hospitals/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const deleted = await storage.deleteHospital(req.params.id);
+      const userId = req.userId!;
+      const deleted = await storage.deleteHospital(userId, req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Hospital not found" });
       }
@@ -297,10 +347,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Implant Procedures
-  app.get("/api/implant-procedures", async (req, res) => {
+  // Implant Procedures (user-specific)
+  app.get("/api/implant-procedures", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const procedures = await storage.getImplantProcedures();
+      const userId = req.userId!;
+      const procedures = await storage.getImplantProcedures(userId);
       res.json(procedures);
     } catch (error) {
       console.error("Error fetching implant procedures:", error);
@@ -308,9 +359,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/implant-procedures/:id", async (req, res) => {
+  app.get("/api/implant-procedures/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const procedure = await storage.getImplantProcedure(req.params.id);
+      const userId = req.userId!;
+      const procedure = await storage.getImplantProcedure(userId, req.params.id);
       if (!procedure) {
         return res.status(404).json({ error: "Procedure not found" });
       }
@@ -321,7 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/implant-procedures/:id/materials", async (req, res) => {
+  app.get("/api/implant-procedures/:id/materials", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const materials = await storage.getProcedureMaterials(req.params.id);
       res.json(materials);
@@ -331,10 +383,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/implant-procedures", async (req, res) => {
+  app.post("/api/implant-procedures", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const userId = req.userId!;
       const { materials, ...procedureData } = req.body;
-      const validatedProcedure = insertImplantProcedureSchema.parse(procedureData);
+      const validatedProcedure = insertImplantProcedureSchema.parse({
+        ...procedureData,
+        userId
+      });
       const validatedMaterials = materials?.map((m: any) => 
         insertProcedureMaterialSchema.parse(m)
       ) || [];
@@ -361,16 +417,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/implant-procedures/:id", async (req, res) => {
+  app.patch("/api/implant-procedures/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      console.log("PATCH /api/implant-procedures/:id - ID:", req.params.id);
-      console.log("PATCH /api/implant-procedures/:id - Body:", JSON.stringify(req.body));
-      
+      const userId = req.userId!;
       const updateData = insertImplantProcedureSchema.partial().parse(req.body);
-      console.log("PATCH /api/implant-procedures/:id - Validated data:", JSON.stringify(updateData));
       
-      const procedure = await storage.updateImplantProcedure(req.params.id, updateData);
-      console.log("PATCH /api/implant-procedures/:id - Result:", procedure ? "Found" : "Not found");
+      const procedure = await storage.updateImplantProcedure(userId, req.params.id, updateData);
       
       if (!procedure) {
         return res.status(404).json({ error: "Procedure not found" });
@@ -385,9 +437,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/implant-procedures/:id", async (req, res) => {
+  app.delete("/api/implant-procedures/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const deleted = await storage.deleteImplantProcedure(req.params.id);
+      const userId = req.userId!;
+      const deleted = await storage.deleteImplantProcedure(userId, req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Procedure not found" });
       }
@@ -398,10 +451,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stock Transfers
-  app.get("/api/stock-transfers", async (req, res) => {
+  // Stock Transfers (user-specific)
+  app.get("/api/stock-transfers", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const transfers = await storage.getStockTransfers();
+      const userId = req.userId!;
+      const transfers = await storage.getStockTransfers(userId);
       res.json(transfers);
     } catch (error) {
       console.error("Error fetching stock transfers:", error);
@@ -409,9 +463,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/stock-transfers", async (req, res) => {
+  app.post("/api/stock-transfers", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const validatedData = insertStockTransferSchema.parse(req.body);
+      const userId = req.userId!;
+      const validatedData = insertStockTransferSchema.parse({
+        ...req.body,
+        userId
+      });
       const transfer = await storage.createStockTransfer(validatedData);
       res.status(201).json(transfer);
     } catch (error: any) {

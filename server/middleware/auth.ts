@@ -33,6 +33,9 @@ export function extractUserInfo(req: AuthRequest, res: Response, next: NextFunct
   next();
 }
 
+// Combined middleware: validate JWT and extract user info
+export const requireAuth = [jwtCheck, extractUserInfo];
+
 // Middleware to require admin privileges
 export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   if (!req.isAdmin) {

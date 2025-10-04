@@ -58,6 +58,8 @@ export interface IStorage {
   getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital })[]>;
   getImplantProcedure(userId: string, id: string): Promise<ImplantProcedure | undefined>;
   createImplantProcedure(procedure: InsertImplantProcedure, materials: InsertProcedureMaterial[]): Promise<ImplantProcedure>;
+  updateImplantProcedure(userId: string, id: string, procedureData: Partial<InsertImplantProcedure>): Promise<ImplantProcedure | null>;
+  deleteImplantProcedure(userId: string, id: string): Promise<boolean>;
   getProcedureMaterials(procedureId: string): Promise<ProcedureMaterial[]>;
 
   // Stock Transfers (user-specific)
@@ -65,8 +67,8 @@ export interface IStorage {
   createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer>;
   
   // Individual inventory item methods (for serial-tracked items)
-  updateInventoryQuantityById(id: string, quantity: number): Promise<Inventory | undefined>;
-  deleteInventoryItemById(id: string): Promise<boolean>;
+  updateInventoryQuantityById(userId: string, id: string, quantity: number): Promise<Inventory | undefined>;
+  deleteInventoryItemById(userId: string, id: string): Promise<boolean>;
   transferInventoryItem(userId: string, id: string, toLocation: string, transferQuantity?: number): Promise<Inventory | undefined>;
 }
 
@@ -299,6 +301,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInventoryQuantityById(
+    userId: string,
     id: string,
     quantity: number
   ): Promise<Inventory | undefined> {
@@ -306,7 +309,10 @@ export class DatabaseStorage implements IStorage {
     if (quantity <= 0) {
       const result = await db
         .delete(inventory)
-        .where(eq(inventory.id, id))
+        .where(and(
+          eq(inventory.id, id),
+          eq(inventory.userId, userId)
+        ))
         .returning();
       return result[0];
     }
@@ -314,7 +320,10 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .update(inventory)
       .set({ quantity, updatedAt: new Date() })
-      .where(eq(inventory.id, id))
+      .where(and(
+        eq(inventory.id, id),
+        eq(inventory.userId, userId)
+      ))
       .returning();
     return result[0];
   }
@@ -331,10 +340,13 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async deleteInventoryItemById(id: string): Promise<boolean> {
+  async deleteInventoryItemById(userId: string, id: string): Promise<boolean> {
     const result = await db
       .delete(inventory)
-      .where(eq(inventory.id, id))
+      .where(and(
+        eq(inventory.id, id),
+        eq(inventory.userId, userId)
+      ))
       .returning();
     return result.length > 0;
   }
@@ -783,25 +795,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateImplantProcedure(
+    userId: string,
     id: string,
     procedureData: Partial<InsertImplantProcedure>
   ): Promise<ImplantProcedure | null> {
     const result = await db
       .update(implantProcedures)
       .set(procedureData)
-      .where(eq(implantProcedures.id, id))
+      .where(and(
+        eq(implantProcedures.id, id),
+        eq(implantProcedures.userId, userId)
+      ))
       .returning();
     return result[0] || null;
   }
 
-  async deleteImplantProcedure(id: string): Promise<boolean> {
-    // First delete all associated materials
+  async deleteImplantProcedure(userId: string, id: string): Promise<boolean> {
+    // First verify ownership
+    const procedure = await this.getImplantProcedure(userId, id);
+    if (!procedure) {
+      return false;
+    }
+    
+    // Delete all associated materials
     await db.delete(procedureMaterials).where(eq(procedureMaterials.procedureId, id));
     
     // Then delete the procedure
     const result = await db
       .delete(implantProcedures)
-      .where(eq(implantProcedures.id, id))
+      .where(and(
+        eq(implantProcedures.id, id),
+        eq(implantProcedures.userId, userId)
+      ))
       .returning();
     return result.length > 0;
   }
