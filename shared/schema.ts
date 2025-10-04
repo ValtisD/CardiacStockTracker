@@ -100,16 +100,19 @@ export const insertProductSchema = createInsertSchema(products).omit({
 
 export const insertInventorySchema = createInsertSchema(inventory).omit({
   id: true,
+  userId: true,
   updatedAt: true,
 });
 
 export const insertHospitalSchema = createInsertSchema(hospitals).omit({
   id: true,
+  userId: true,
   createdAt: true,
 });
 
 export const insertImplantProcedureSchema = createInsertSchema(implantProcedures).omit({
   id: true,
+  userId: true,
   createdAt: true,
 });
 
@@ -120,11 +123,13 @@ export const insertProcedureMaterialSchema = createInsertSchema(procedureMateria
 
 export const insertStockTransferSchema = createInsertSchema(stockTransfers).omit({
   id: true,
+  userId: true,
   transferDate: true,
 });
 
 export const insertUserProductSettingsSchema = createInsertSchema(userProductSettings).omit({
   id: true,
+  userId: true,
   createdAt: true,
 });
 
