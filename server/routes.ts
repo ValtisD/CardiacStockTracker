@@ -299,11 +299,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Hospitals (user-specific)
+  // Hospitals (global - shared across all users)
   app.get("/api/hospitals", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.userId!;
-      const hospitals = await storage.getHospitals(userId);
+      const hospitals = await storage.getHospitals();
       res.json(hospitals);
     } catch (error) {
       console.error("Error fetching hospitals:", error instanceof Error ? error.message : 'Unknown error');
@@ -313,8 +312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/hospitals/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.userId!;
-      const hospital = await storage.getHospital(userId, req.params.id);
+      const hospital = await storage.getHospital(req.params.id);
       if (!hospital) {
         return res.status(404).json({ error: "Hospital not found" });
       }
@@ -327,11 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/hospitals", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.userId!;
-      const validatedData = insertHospitalSchema.parse({
-        ...req.body,
-        userId
-      });
+      const validatedData = insertHospitalSchema.parse(req.body);
       const hospital = await storage.createHospital(validatedData);
       res.status(201).json(hospital);
     } catch (error) {
@@ -342,9 +336,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/hospitals/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.userId!;
       const validatedData = updateHospitalSchema.parse(req.body);
-      const hospital = await storage.updateHospital(userId, req.params.id, validatedData);
+      const hospital = await storage.updateHospital(req.params.id, validatedData);
       if (!hospital) {
         return res.status(404).json({ error: "Hospital not found" });
       }
@@ -360,8 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/hospitals/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.userId!;
-      const deleted = await storage.deleteHospital(userId, req.params.id);
+      const deleted = await storage.deleteHospital(req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Hospital not found" });
       }
