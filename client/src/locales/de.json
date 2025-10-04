@@ -217,7 +217,14 @@
     "gtinNotInDatabase": "GTIN nicht in der Datenbank",
     "scanFailed": "Scannen fehlgeschlagen",
     "couldNotScanBarcode": "Barcode konnte nicht gescannt werden",
-    "current": "Aktuell"
+    "current": "Aktuell",
+    "addInventoryItem": "Artikel zum Inventar hinzufügen",
+    "addInventoryDescription": "Fügen Sie ein neues Gerät oder Material zu Ihrem Lagerbestand hinzu",
+    "trackingMode": "Verfolgungsmodus",
+    "serialNumberUnique": "Seriennummer (eindeutig)",
+    "lotNumberBatch": "Chargennummer (Charge)",
+    "expirationDateOptional": "Ablaufdatum (Optional)",
+    "pickDate": "Datum auswählen"
   },
   "products": {
     "title": "Produkte",
@@ -296,7 +303,17 @@
     "hospitalNotesPlaceholder": "Zusätzliche Notizen oder Anweisungen",
     "facilities": "Einrichtungen",
     "recentProcedures": "Letzte Eingriffe",
-    "totalProcedures30Days": "Gesamteingriffe (letzte 30 Tage)"
+    "totalProcedures30Days": "Gesamteingriffe (letzte 30 Tage)",
+    "activeFacilities": "Aktive Einrichtungen",
+    "totalHospitals": "Krankenhäuser insgesamt",
+    "hospitalName": "Krankenhausname",
+    "primaryPhysicianOptional": "Hauptarzt (Optional)",
+    "contactPhoneOptional": "Kontakttelefon (Optional)",
+    "notesOptional": "Notizen (Optional)",
+    "notesPlaceholder": "Zusätzliche Notizen eingeben...",
+    "physicianPlaceholder": "Arztname eingeben",
+    "phonePlaceholder": "Telefonnummer eingeben",
+    "addNewHospital": "Neues Krankenhaus hinzufügen"
   },
   "procedures": {
     "title": "Eingriffe",

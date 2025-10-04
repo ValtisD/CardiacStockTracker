@@ -217,7 +217,14 @@
     "gtinNotInDatabase": "GTIN not in database",
     "scanFailed": "Scan Failed",
     "couldNotScanBarcode": "Could not scan barcode",
-    "current": "Current"
+    "current": "Current",
+    "addInventoryItem": "Add Inventory Item",
+    "addInventoryDescription": "Add a new device or material to your stock",
+    "trackingMode": "Tracking Mode",
+    "serialNumberUnique": "Serial Number (Unique)",
+    "lotNumberBatch": "Lot Number (Batch)",
+    "expirationDateOptional": "Expiration Date (Optional)",
+    "pickDate": "Pick a date"
   },
   "products": {
     "title": "Products",
@@ -296,7 +303,17 @@
     "hospitalNotesPlaceholder": "Additional notes or instructions",
     "facilities": "Facilities",
     "recentProcedures": "Recent Procedures",
-    "totalProcedures30Days": "Total Procedures (Last 30 Days)"
+    "totalProcedures30Days": "Total Procedures (Last 30 Days)",
+    "activeFacilities": "Active Facilities",
+    "totalHospitals": "Total Hospitals",
+    "hospitalName": "Hospital Name",
+    "primaryPhysicianOptional": "Primary Physician (Optional)",
+    "contactPhoneOptional": "Contact Phone (Optional)",
+    "notesOptional": "Notes (Optional)",
+    "notesPlaceholder": "Enter additional notes...",
+    "physicianPlaceholder": "Enter physician name",
+    "phonePlaceholder": "Enter phone number",
+    "addNewHospital": "Add New Hospital"
   },
   "procedures": {
     "title": "Procedures",

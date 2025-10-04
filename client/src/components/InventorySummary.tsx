@@ -101,7 +101,7 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Package className="h-4 w-4" />
-          Stock by Model Number
+          {t('inventory.stockByModelNumber')}
         </CardTitle>
       </CardHeader>
       <CardContent>
