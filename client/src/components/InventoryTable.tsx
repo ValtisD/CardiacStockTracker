@@ -34,7 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
-import type { Inventory, Product } from "@shared/schema";
+import type { Inventory, Product, UserProductSettings } from "@shared/schema";
 
 type InventoryWithProduct = Inventory & { product: Product };
 
@@ -59,6 +59,12 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   // Fetch low stock items to determine which products are low
   const { data: lowStockData } = useQuery<InventoryWithProduct[]>({
     queryKey: [`/api/inventory/low-stock?location=${location}`],
+    refetchOnWindowFocus: true,
+  });
+
+  // Fetch user product settings to display minimum quantities
+  const { data: userSettings } = useQuery<UserProductSettings[]>({
+    queryKey: ['/api/user-product-settings'],
     refetchOnWindowFocus: true,
   });
 
@@ -196,6 +202,14 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   // Helper function to check if item is low stock
   const isLowStock = (item: InventoryWithProduct) => {
     return lowStockProductIds.has(item.productId);
+  };
+
+  // Helper function to get minimum quantity from user settings
+  const getMinQuantity = (productId: string): number => {
+    const settings = userSettings?.find(s => s.productId === productId);
+    if (!settings) return 0;
+    // For car location, show minCarStock; for home location, show minTotalStock
+    return location === 'car' ? settings.minCarStock : settings.minTotalStock;
   };
 
   const filteredItems = items
@@ -452,7 +466,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Total: {productAggregates.get(item.productId)?.totalQty || item.quantity} | 
-                        Min: {location === 'car' ? item.product.minCarStock : item.product.minTotalStock}
+                        Min: {getMinQuantity(item.productId)}
                       </div>
                     </TableCell>
                     <TableCell>
