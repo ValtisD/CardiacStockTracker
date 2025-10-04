@@ -31,9 +31,8 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Temporarily disabled all rate limiters to debug
-// app.use('/api', apiLimiter);
-// app.use('/api/users/*/toggle-admin', authLimiter);
+app.use('/api', apiLimiter);
+app.use('/api/users/*/toggle-admin', authLimiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -60,10 +59,7 @@ app.use((req, res, next) => {
     const message = err.message || "Internal Server Error";
 
     // SECURITY: Only log error message, not full error object to prevent sensitive data exposure
-    console.error("Error handler caught error:", err);
-    console.error("Error type:", typeof err, "Is Error?", err instanceof Error);
-    console.error("Error message:", err.message);
-    console.error("Error status:", err.status, "statusCode:", err.statusCode);
+    console.error("Error handler:", err instanceof Error ? err.message : 'Unknown error');
     res.status(status).json({ message });
   });
 

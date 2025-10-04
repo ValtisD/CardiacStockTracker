@@ -520,13 +520,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Toggle admin status (admin-only, cannot toggle prime admin)
   app.post("/api/users/:userId/toggle-admin", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
-      console.log("Toggle admin request received - body:", req.body);
       const targetUserId = req.params.userId;
       const validatedData = toggleAdminSchema.parse(req.body);
       const { email, isAdmin } = validatedData;
       const currentUserId = req.userId!;
-      
-      console.log("Validated data:", { targetUserId, email, isAdmin, currentUserId });
       
       // Prevent toggling the prime admin
       const primeAdminEmail = process.env.AUTH0_ADMIN_EMAIL;
@@ -536,21 +533,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (isAdmin) {
         // Revoke admin access
-        console.log("Revoking admin access for:", targetUserId);
         await storage.revokeAdminAccess(targetUserId);
       } else {
         // Grant admin access
-        console.log("Granting admin access for:", targetUserId, email);
         await storage.grantAdminAccess(targetUserId, email, currentUserId);
       }
 
-      console.log("Admin toggle successful");
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Error toggling admin status:", error);
-      console.error("Error details:", error instanceof Error ? error.message : 'Unknown error', error.name);
+      console.error("Error toggling admin status:", error instanceof Error ? error.message : 'Unknown error');
       if (error.name === 'ZodError') {
-        console.error("Zod validation errors:", error.errors);
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
       }
       res.status(500).json({ error: "Failed to toggle admin status" });
