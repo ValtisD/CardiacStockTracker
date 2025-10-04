@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Edit, Trash2, Package } from "lucide-react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,6 +20,10 @@ import ProductForm from "@/components/ProductForm";
 export default function ProductsList() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth0();
+  
+  const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;
+  const isAdmin = user?.email === adminEmail;
 
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -93,9 +98,7 @@ export default function ProductsList() {
               <TableHead>GTIN</TableHead>
               <TableHead>Model Number</TableHead>
               <TableHead>Product Name</TableHead>
-              <TableHead className="text-center">Min Car Stock</TableHead>
-              <TableHead className="text-center">Min Total Stock</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -110,32 +113,28 @@ export default function ProductsList() {
                 <TableCell data-testid={`text-product-name-${product.id}`}>
                   {product.name}
                 </TableCell>
-                <TableCell className="text-center" data-testid={`text-min-car-${product.id}`}>
-                  {product.minCarStock}
-                </TableCell>
-                <TableCell className="text-center" data-testid={`text-min-total-${product.id}`}>
-                  {product.minTotalStock}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingProduct(product)}
-                      data-testid={`button-edit-${product.id}`}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(product.id)}
-                      data-testid={`button-delete-${product.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingProduct(product)}
+                        data-testid={`button-edit-${product.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(product.id)}
+                        data-testid={`button-delete-${product.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

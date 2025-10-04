@@ -160,6 +160,10 @@ function ImplantReportsPage() {
 
 function ProductsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
+  const { user } = useAuth0();
+  
+  const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;
+  const isAdmin = user?.email === adminEmail;
 
   const handleSubmitSuccess = () => {
     setShowAddForm(false);
@@ -180,9 +184,11 @@ function ProductsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold">Product Management</h2>
-        <Button onClick={() => setShowAddForm(true)} data-testid="button-add-product">
-          Add Product
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setShowAddForm(true)} data-testid="button-add-product">
+            Add Product
+          </Button>
+        )}
       </div>
       <ProductsList />
     </div>
