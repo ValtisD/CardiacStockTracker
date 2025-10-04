@@ -111,7 +111,6 @@ export default function ImplantProceduresList() {
                 <TableHead>Date</TableHead>
                 <TableHead>Hospital</TableHead>
                 <TableHead>Procedure Type</TableHead>
-                <TableHead>Patient ID</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -134,9 +133,6 @@ export default function ImplantProceduresList() {
                     <Badge variant="outline" data-testid={`badge-type-${procedure.id}`}>
                       {procedure.procedureType}
                     </Badge>
-                  </TableCell>
-                  <TableCell data-testid={`text-patient-${procedure.id}`}>
-                    {procedure.patientId || <span className="text-muted-foreground">-</span>}
                   </TableCell>
                   <TableCell data-testid={`text-notes-${procedure.id}`}>
                     {procedure.notes ? (

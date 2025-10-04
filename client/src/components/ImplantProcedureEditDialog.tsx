@@ -35,7 +35,6 @@ const editProcedureSchema = z.object({
   hospitalId: z.string().min(1, "Hospital is required"),
   implantDate: z.string().min(1, "Implant date is required"),
   procedureType: z.string().min(1, "Procedure type is required"),
-  patientId: z.string().optional(),
   deviceUsed: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -65,11 +64,6 @@ export default function ImplantProcedureEditDialog({
 
   const { data: procedure } = useQuery<ImplantProcedureWithHospital>({
     queryKey: ["/api/implant-procedures", procedureId],
-    queryFn: async () => {
-      const res = await fetch(`/api/implant-procedures/${procedureId}`);
-      if (!res.ok) throw new Error("Failed to fetch procedure");
-      return res.json();
-    },
     enabled: !!procedureId && isOpen,
   });
 
@@ -79,7 +73,6 @@ export default function ImplantProcedureEditDialog({
       hospitalId: "",
       implantDate: "",
       procedureType: "",
-      patientId: "",
       deviceUsed: "",
       notes: "",
     },
@@ -91,7 +84,6 @@ export default function ImplantProcedureEditDialog({
         hospitalId: procedure.hospitalId,
         implantDate: procedure.implantDate,
         procedureType: procedure.procedureType,
-        patientId: procedure.patientId || "",
         deviceUsed: procedure.deviceUsed || "",
         notes: procedure.notes || "",
       });
@@ -202,20 +194,6 @@ export default function ImplantProcedureEditDialog({
                       <SelectItem value="System Upgrade">System Upgrade</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="patientId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Patient ID (Optional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter patient ID" data-testid="input-patient-id" />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -59,7 +59,6 @@ export const implantProcedures = pgTable("implant_procedures", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: text("user_id").notNull(), // Auth0 user ID
   hospitalId: varchar("hospital_id").notNull().references(() => hospitals.id),
-  patientId: text("patient_id"), // Optional patient identifier
   implantDate: date("implant_date").notNull(),
   procedureType: text("procedure_type").notNull(), // Pacemaker, ICD, CRT
   deviceUsed: varchar("device_used"), // Product ID

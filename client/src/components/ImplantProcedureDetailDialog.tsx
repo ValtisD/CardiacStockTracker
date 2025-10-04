@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Calendar, Building2, User, Package, MapPin, Download } from "lucide-react";
+import { FileText, Calendar, Building2, Package, MapPin, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -82,10 +82,6 @@ export default function ImplantProcedureDetailDialog({
     }
     doc.text(`Procedure Type: ${procedure.procedureType}`, 14, yPos);
     yPos += 7;
-    if (procedure.patientId) {
-      doc.text(`Patient ID: ${procedure.patientId}`, 14, yPos);
-      yPos += 7;
-    }
     
     // Device Information
     if (procedure.deviceUsed) {
@@ -223,16 +219,6 @@ export default function ImplantProcedureDetailDialog({
                       <Badge variant="outline" data-testid="badge-procedure-type">
                         {procedure.procedureType}
                       </Badge>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Patient ID</p>
-                      <p className="text-base" data-testid="text-procedure-patient">
-                        {procedure.patientId || <span className="text-muted-foreground">Not specified</span>}
-                      </p>
                     </div>
                   </div>
                 </div>
