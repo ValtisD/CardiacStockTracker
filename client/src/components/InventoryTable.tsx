@@ -30,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -231,7 +230,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     });
 
   const lowStockItems = filteredItems.filter(item => isLowStock(item));
-  const stockLevel = filteredItems.length > 0 ? (filteredItems.reduce((sum, item) => sum + item.quantity, 0) / filteredItems.length) * 10 : 0;
 
   const handleQuantityChange = (item: InventoryWithProduct, direction: 'increase' | 'decrease') => {
     // Check if this is a serial-tracked item
@@ -381,10 +379,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
               <Plus className="h-4 w-4 mr-2" />
               {t('inventory.addToStock')}
             </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{t('inventory.stockLevel')}:</span>
-            <Progress value={stockLevel} className="flex-1 max-w-32" />
           </div>
         </CardHeader>
         <CardContent>
