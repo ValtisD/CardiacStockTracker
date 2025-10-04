@@ -146,6 +146,20 @@ export const insertUserProductSettingsSchema = createInsertSchema(userProductSet
   createdAt: true,
 });
 
+// Update schemas (for PATCH endpoints - all fields optional)
+export const updateProductSchema = insertProductSchema.partial();
+export const updateHospitalSchema = insertHospitalSchema.omit({ userId: true }).partial();
+
+// Additional validation schemas
+export const languageSchema = z.object({
+  language: z.enum(['de', 'en']),
+});
+
+export const toggleAdminSchema = z.object({
+  email: z.string().email(),
+  isAdmin: z.boolean(),
+});
+
 // Client-side schemas (for forms - userId added server-side)
 export const clientInsertInventorySchema = insertInventorySchema.omit({ userId: true });
 export const clientInsertHospitalSchema = insertHospitalSchema.omit({ userId: true });

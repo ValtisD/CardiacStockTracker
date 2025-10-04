@@ -9,6 +9,10 @@ import {
   insertProcedureMaterialSchema,
   insertStockTransferSchema,
   insertUserProductSettingsSchema,
+  updateProductSchema,
+  updateHospitalSchema,
+  languageSchema,
+  toggleAdminSchema,
 } from "@shared/schema";
 import { requireAuth, requireAdmin, type AuthRequest } from "./middleware/auth";
 
@@ -81,13 +85,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/products/:id", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
-      const product = await storage.updateProduct(req.params.id, req.body);
+      const validatedData = updateProductSchema.parse(req.body);
+      const product = await storage.updateProduct(req.params.id, validatedData);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
       res.json(product);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating product:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format", details: error.errors });
+      }
       res.status(400).json({ error: "Failed to update product" });
     }
   });
@@ -340,13 +348,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/hospitals/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.userId!;
-      const hospital = await storage.updateHospital(userId, req.params.id, req.body);
+      const validatedData = updateHospitalSchema.parse(req.body);
+      const hospital = await storage.updateHospital(userId, req.params.id, validatedData);
       if (!hospital) {
         return res.status(404).json({ error: "Hospital not found" });
       }
       res.json(hospital);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating hospital:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format", details: error.errors });
+      }
       res.status(400).json({ error: "Failed to update hospital" });
     }
   });
@@ -522,7 +534,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users/:userId/toggle-admin", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const targetUserId = req.params.userId;
-      const { email, isAdmin } = req.body;
+      const validatedData = toggleAdminSchema.parse(req.body);
+      const { email, isAdmin } = validatedData;
       const currentUserId = req.userId!;
       
       // Prevent toggling the prime admin
@@ -540,8 +553,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling admin status:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
       res.status(500).json({ error: "Failed to toggle admin status" });
     }
   });
@@ -561,16 +577,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/user/language", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.userId!;
-      const { language } = req.body;
-      
-      if (!language || !['de', 'en'].includes(language)) {
-        return res.status(400).json({ error: "Invalid language. Must be 'de' or 'en'" });
-      }
+      const validatedData = languageSchema.parse(req.body);
 
-      await storage.updateUserLanguage(userId, language);
-      res.json({ success: true, language });
-    } catch (error) {
+      await storage.updateUserLanguage(userId, validatedData.language);
+      res.json({ success: true, language: validatedData.language });
+    } catch (error: any) {
       console.error("Error updating user language:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid language. Must be 'de' or 'en'", details: error.errors });
+      }
       res.status(500).json({ error: "Failed to update user language" });
     }
   });
