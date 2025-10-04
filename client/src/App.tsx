@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient, setTokenProvider } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, LogOut } from "lucide-react";
 import type { Inventory } from "@shared/schema";
+import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 
 // Components
 import AppHeader from "@/components/AppHeader";
@@ -41,6 +42,51 @@ function ThemeToggle() {
     >
       {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
     </Button>
+  );
+}
+
+// User menu component
+function UserMenu() {
+  const { user, logout } = useAuth0();
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground" data-testid="text-user-email">
+        {user?.email}
+      </span>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+        data-testid="button-logout"
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        Logout
+      </Button>
+    </div>
+  );
+}
+
+// Login page
+function LoginPage() {
+  const { loginWithRedirect } = useAuth0();
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="text-center space-y-6 max-w-md mx-auto p-8">
+        <h1 className="text-4xl font-bold">CRM Inventory</h1>
+        <p className="text-muted-foreground">
+          Medical device inventory management for cardiac rhythm management field engineers
+        </p>
+        <Button
+          onClick={() => loginWithRedirect()}
+          size="lg"
+          data-testid="button-login"
+        >
+          Login to Continue
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -184,6 +230,41 @@ function Router() {
 }
 
 function AppContent() {
+  const { isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+  // Set up token provider for API requests
+  useEffect(() => {
+    if (isAuthenticated) {
+      setTokenProvider(async () => {
+        try {
+          return await getAccessTokenSilently();
+        } catch (error) {
+          console.error("Failed to get access token:", error);
+          throw error;
+        }
+      });
+    }
+  }, [isAuthenticated, getAccessTokenSilently]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -248,6 +329,7 @@ function AppContent() {
               </div>
               
               <div className="flex items-center gap-2">
+                <UserMenu />
                 <ThemeToggle />
               </div>
             </header>
@@ -264,9 +346,35 @@ function AppContent() {
 }
 
 export default function App() {
+  const domain = import.meta.env.VITE_AUTH0_DOMAIN;
+  const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+  const audience = import.meta.env.VITE_AUTH0_AUDIENCE;
+
+  if (!domain || !clientId || !audience) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4 max-w-md mx-auto p-8">
+          <h2 className="text-2xl font-semibold text-destructive">Configuration Error</h2>
+          <p className="text-muted-foreground">
+            Auth0 configuration is missing. Please set VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID, and VITE_AUTH0_AUDIENCE environment variables.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
+    <Auth0Provider
+      domain={domain}
+      clientId={clientId}
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: audience,
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>
+    </Auth0Provider>
   );
 }
