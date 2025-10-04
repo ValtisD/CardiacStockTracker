@@ -46,6 +46,11 @@ export const requireAuth = [jwtCheck, extractUserInfo];
 
 // Middleware to require admin privileges
 export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+  console.log('requireAdmin check:', {
+    isAdmin: req.isAdmin,
+    userId: req.userId
+  });
+  
   if (!req.isAdmin) {
     return res.status(403).json({ error: 'Forbidden - admin access required' });
   }
