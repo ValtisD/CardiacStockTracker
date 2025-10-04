@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Moon, Sun, LogOut } from "lucide-react";
 import type { Inventory } from "@shared/schema";
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
+import { useLanguageSync } from "@/hooks/useLanguageSync";
 
 // Components
 import AppHeader from "@/components/AppHeader";
@@ -23,6 +24,7 @@ import ImplantReportForm from "@/components/ImplantReportForm";
 import ImplantProceduresList from "@/components/ImplantProceduresList";
 import UserProductSettings from "@/components/UserProductSettings";
 import UserManagement from "@/components/UserManagement";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
 // Theme toggle component
@@ -210,12 +212,7 @@ function AnalyticsPage() {
 }
 
 function SettingsPage() {
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Settings</h2>
-      <UserProductSettings />
-    </div>
-  );
+  return <Settings />;
 }
 
 function UserManagementPage() {
@@ -304,6 +301,9 @@ function AuthenticatedApp() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user } = useAuth0();
+  
+  // Sync user's language preference from backend
+  useLanguageSync();
 
   // Check if user is admin
   const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;

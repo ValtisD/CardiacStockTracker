@@ -78,6 +78,10 @@ export interface IStorage {
   getAllUsers(): Promise<{ userId: string; email: string; isAdmin: boolean; isPrimeAdmin: boolean; inventoryCount: number; recentProcedureCount: number }[]>;
   grantAdminAccess(userId: string, userEmail: string, grantedBy: string): Promise<void>;
   revokeAdminAccess(userId: string): Promise<void>;
+  
+  // User Preferences
+  getUserLanguage(userId: string): Promise<string>;
+  updateUserLanguage(userId: string, language: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1097,6 +1101,24 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(adminUsers)
       .where(eq(adminUsers.userId, userId));
+  }
+
+  // User Preferences
+  async getUserLanguage(userId: string): Promise<string> {
+    const result = await db
+      .select({ language: users.language })
+      .from(users)
+      .where(eq(users.userId, userId))
+      .limit(1);
+    
+    return result[0]?.language || 'de'; // Default to German
+  }
+
+  async updateUserLanguage(userId: string, language: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ language })
+      .where(eq(users.userId, userId));
   }
 }
 

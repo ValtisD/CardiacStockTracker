@@ -546,6 +546,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User preferences
+  app.get("/api/user/language", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const language = await storage.getUserLanguage(userId);
+      res.json({ language });
+    } catch (error) {
+      console.error("Error fetching user language:", error);
+      res.status(500).json({ error: "Failed to fetch user language" });
+    }
+  });
+
+  app.put("/api/user/language", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { language } = req.body;
+      
+      if (!language || !['de', 'en'].includes(language)) {
+        return res.status(400).json({ error: "Invalid language. Must be 'de' or 'en'" });
+      }
+
+      await storage.updateUserLanguage(userId, language);
+      res.json({ success: true, language });
+    } catch (error) {
+      console.error("Error updating user language:", error);
+      res.status(500).json({ error: "Failed to update user language" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
