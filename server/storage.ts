@@ -50,12 +50,12 @@ export interface IStorage {
   updateInventoryQuantity(userId: string, productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
   deleteInventoryItem(userId: string, productId: string, location: string): Promise<boolean>;
 
-  // Hospitals (user-specific)
-  getHospitals(userId: string): Promise<Hospital[]>;
-  getHospital(userId: string, id: string): Promise<Hospital | undefined>;
+  // Hospitals (global - shared across all users)
+  getHospitals(): Promise<Hospital[]>;
+  getHospital(id: string): Promise<Hospital | undefined>;
   createHospital(hospital: InsertHospital): Promise<Hospital>;
-  updateHospital(userId: string, id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined>;
-  deleteHospital(userId: string, id: string): Promise<boolean>;
+  updateHospital(id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined>;
+  deleteHospital(id: string): Promise<boolean>;
 
   // Implant Procedures (user-specific)
   getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital; deviceProduct?: Product | null })[]>;
@@ -692,16 +692,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Hospitals
-  async getHospitals(userId: string): Promise<Hospital[]> {
-    return await db.select().from(hospitals).where(eq(hospitals.userId, userId));
+  // Hospitals (global - shared across all users)
+  async getHospitals(): Promise<Hospital[]> {
+    return await db.select().from(hospitals);
   }
 
-  async getHospital(userId: string, id: string): Promise<Hospital | undefined> {
-    const result = await db.select().from(hospitals).where(and(
-      eq(hospitals.userId, userId),
-      eq(hospitals.id, id)
-    ));
+  async getHospital(id: string): Promise<Hospital | undefined> {
+    const result = await db.select().from(hospitals).where(eq(hospitals.id, id));
     return result[0];
   }
 
@@ -710,23 +707,17 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async updateHospital(userId: string, id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined> {
+  async updateHospital(id: string, hospital: Partial<InsertHospital>): Promise<Hospital | undefined> {
     const result = await db
       .update(hospitals)
       .set(hospital)
-      .where(and(
-        eq(hospitals.userId, userId),
-        eq(hospitals.id, id)
-      ))
+      .where(eq(hospitals.id, id))
       .returning();
     return result[0];
   }
 
-  async deleteHospital(userId: string, id: string): Promise<boolean> {
-    const result = await db.delete(hospitals).where(and(
-      eq(hospitals.userId, userId),
-      eq(hospitals.id, id)
-    )).returning();
+  async deleteHospital(id: string): Promise<boolean> {
+    const result = await db.delete(hospitals).where(eq(hospitals.id, id)).returning();
     return result.length > 0;
   }
 
