@@ -216,7 +216,8 @@
     "autoFilled": "Informationen automatisch ausgefüllt",
     "gtinNotInDatabase": "GTIN nicht in der Datenbank",
     "scanFailed": "Scannen fehlgeschlagen",
-    "couldNotScanBarcode": "Barcode konnte nicht gescannt werden"
+    "couldNotScanBarcode": "Barcode konnte nicht gescannt werden",
+    "current": "Aktuell"
   },
   "products": {
     "title": "Produkte",
@@ -251,7 +252,8 @@
     "productNamePlaceholder": "Produktname eingeben",
     "saving": "Speichert...",
     "updateProduct": "Produkt aktualisieren",
-    "scanBarcodeTitle": "Produkt-Barcode scannen"
+    "scanBarcodeTitle": "Produkt-Barcode scannen",
+    "productName": "Produktname"
   },
   "hospitals": {
     "title": "Krankenhäuser",
@@ -291,7 +293,10 @@
     "cityPlaceholder": "Stadtnamen eingeben",
     "primaryPhysicianPlaceholder": "Arztname eingeben",
     "contactPhonePlaceholder": "Kontakttelefon eingeben",
-    "hospitalNotesPlaceholder": "Zusätzliche Notizen oder Anweisungen"
+    "hospitalNotesPlaceholder": "Zusätzliche Notizen oder Anweisungen",
+    "facilities": "Einrichtungen",
+    "recentProcedures": "Letzte Eingriffe",
+    "totalProcedures30Days": "Gesamteingriffe (letzte 30 Tage)"
   },
   "procedures": {
     "title": "Eingriffe",

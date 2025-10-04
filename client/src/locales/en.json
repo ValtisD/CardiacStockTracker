@@ -216,7 +216,8 @@
     "autoFilled": "Information auto-filled",
     "gtinNotInDatabase": "GTIN not in database",
     "scanFailed": "Scan Failed",
-    "couldNotScanBarcode": "Could not scan barcode"
+    "couldNotScanBarcode": "Could not scan barcode",
+    "current": "Current"
   },
   "products": {
     "title": "Products",
@@ -251,7 +252,8 @@
     "productNamePlaceholder": "Enter product name",
     "saving": "Saving...",
     "updateProduct": "Update Product",
-    "scanBarcodeTitle": "Scan Product Barcode"
+    "scanBarcodeTitle": "Scan Product Barcode",
+    "productName": "Product Name"
   },
   "hospitals": {
     "title": "Hospitals",
@@ -291,7 +293,10 @@
     "cityPlaceholder": "Enter city name",
     "primaryPhysicianPlaceholder": "Enter physician name",
     "contactPhonePlaceholder": "Enter contact phone",
-    "hospitalNotesPlaceholder": "Additional notes or instructions"
+    "hospitalNotesPlaceholder": "Additional notes or instructions",
+    "facilities": "Facilities",
+    "recentProcedures": "Recent Procedures",
+    "totalProcedures30Days": "Total Procedures (Last 30 Days)"
   },
   "procedures": {
     "title": "Procedures",
