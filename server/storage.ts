@@ -30,6 +30,7 @@ export interface IStorage {
   getProduct(id: string): Promise<Product | undefined>;
   getProductByGtin(gtin: string): Promise<Product | undefined>;
   searchProducts(query: string): Promise<Product[]>;
+  searchProductsByMultipleFields(userId: string, query: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
@@ -93,6 +94,40 @@ export class DatabaseStorage implements IStorage {
       sql`${products.modelNumber} = ${query} OR ${products.gtin} = ${query}`
     );
     return result;
+  }
+
+  async searchProductsByMultipleFields(userId: string, query: string): Promise<Product[]> {
+    // First, search in products table by GTIN or model number
+    const productResults = await db.select().from(products).where(
+      sql`${products.modelNumber} = ${query} OR ${products.gtin} = ${query}`
+    );
+    
+    if (productResults.length > 0) {
+      return productResults;
+    }
+    
+    // If not found in products, search by serial number in user's inventory
+    const inventoryResults = await db
+      .select({
+        product: products
+      })
+      .from(inventory)
+      .innerJoin(products, eq(inventory.productId, products.id))
+      .where(
+        and(
+          eq(inventory.userId, userId),
+          eq(inventory.serialNumber, query)
+        )
+      );
+    
+    // Return unique products (in case multiple items have same serial)
+    const uniqueProducts = inventoryResults
+      .map(r => r.product)
+      .filter((product, index, self) => 
+        index === self.findIndex(p => p.id === product.id)
+      );
+    
+    return uniqueProducts;
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {

@@ -137,8 +137,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const handleManualGtinLookup = async () => {
     if (!manualGtin.trim()) {
       toast({
-        title: "GTIN required",
-        description: "Please enter a GTIN to search for a product.",
+        title: "Search required",
+        description: "Please enter a GTIN, model number, or serial number to search.",
         variant: "destructive",
       });
       return;
@@ -146,17 +146,13 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
 
     setIsLoadingProduct(true);
     try {
-      const response = await fetch(`/api/products?gtin=${encodeURIComponent(manualGtin.trim())}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch product');
-      }
-      
+      const response = await apiRequest('GET', `/api/products/multi-search/${encodeURIComponent(manualGtin.trim())}`);
       const products: Product[] = await response.json();
       
       if (products.length === 0) {
         toast({
           title: "Product not found",
-          description: `No product found with GTIN: ${manualGtin}`,
+          description: `No product found matching: ${manualGtin}`,
           variant: "destructive",
         });
         setIsLoadingProduct(false);
@@ -174,7 +170,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
     } catch (error) {
       toast({
         title: "Lookup failed",
-        description: error instanceof Error ? error.message : "Failed to lookup product by GTIN",
+        description: error instanceof Error ? error.message : "Failed to search for product",
         variant: "destructive",
       });
     } finally {
@@ -332,10 +328,10 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                 </Button>
               </div>
 
-              {/* Manual GTIN Entry */}
+              {/* Manual Product Search */}
               <div className="flex gap-2">
                 <Input
-                  placeholder="Or enter GTIN manually..."
+                  placeholder="Or search by GTIN, Model #, or Serial #..."
                   value={manualGtin}
                   onChange={(e) => setManualGtin(e.target.value)}
                   onKeyDown={(e) => {
@@ -345,16 +341,16 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                     }
                   }}
                   disabled={isLoadingProduct || addInventoryMutation.isPending}
-                  data-testid="input-manual-gtin"
+                  data-testid="input-manual-search"
                   className="flex-1"
                 />
                 <Button
                   type="button"
                   onClick={handleManualGtinLookup}
                   disabled={!manualGtin.trim() || isLoadingProduct || addInventoryMutation.isPending}
-                  data-testid="button-lookup-gtin"
+                  data-testid="button-search-product"
                 >
-                  {isLoadingProduct ? "Looking up..." : "Lookup"}
+                  {isLoadingProduct ? "Searching..." : "Search"}
                 </Button>
               </div>
 

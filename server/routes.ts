@@ -50,6 +50,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced search by GTIN, model number, or serial number (user-specific for serial search)
+  app.get("/api/products/multi-search/:query", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      if (!req.auth?.payload?.sub) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const products = await storage.searchProductsByMultipleFields(req.auth.payload.sub, req.params.query);
+      if (products.length === 0) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      res.json(products);
+    } catch (error) {
+      console.error("Error searching products by multiple fields:", error);
+      res.status(500).json({ error: "Failed to search products" });
+    }
+  });
+
   app.post("/api/products", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
