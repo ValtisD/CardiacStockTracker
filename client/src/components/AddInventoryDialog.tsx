@@ -207,26 +207,25 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       // Product not found - try to find by GTIN from GS1 data
       if (parsedGs1Data?.gtin) {
         try {
-          const response = await fetch(`/api/products?gtin=${parsedGs1Data.gtin}`);
-          if (response.ok) {
-            const products: Product[] = await response.json();
-            if (products.length > 0) {
-              const product = products[0];
-              foundProduct = product;
-              setSelectedProduct(product);
-              form.setValue("productId", product.id);
-              
-              toast({
-                title: "Product Found by GTIN",
-                description: `${product.name} - ${product.modelNumber}`,
-              });
-            } else {
-              toast({
-                title: "Product Not Found",
-                description: "No product found with this GTIN. Please add the product first.",
-                variant: "destructive",
-              });
-            }
+          const response = await apiRequest('GET', `/api/products/multi-search/${encodeURIComponent(parsedGs1Data.gtin)}`);
+          const products: Product[] = await response.json();
+          
+          if (products.length > 0) {
+            const product = products[0];
+            foundProduct = product;
+            setSelectedProduct(product);
+            form.setValue("productId", product.id);
+            
+            toast({
+              title: "Product Found by GTIN",
+              description: `${product.name} - ${product.modelNumber}`,
+            });
+          } else {
+            toast({
+              title: "Product Not Found",
+              description: "No product found with this GTIN. Please add the product first.",
+              variant: "destructive",
+            });
           }
         } catch (error) {
           toast({
