@@ -56,7 +56,7 @@ export interface IStorage {
   deleteHospital(userId: string, id: string): Promise<boolean>;
 
   // Implant Procedures (user-specific)
-  getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital; deviceProduct?: Product })[]>;
+  getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital; deviceProduct?: Product | null })[]>;
   getImplantProcedure(userId: string, id: string): Promise<ImplantProcedure | undefined>;
   createImplantProcedure(procedure: InsertImplantProcedure, materials: InsertProcedureMaterial[]): Promise<ImplantProcedure>;
   updateImplantProcedure(userId: string, id: string, procedureData: Partial<InsertImplantProcedure>): Promise<ImplantProcedure | null>;
@@ -71,6 +71,9 @@ export interface IStorage {
   updateInventoryQuantityById(userId: string, id: string, quantity: number): Promise<Inventory | undefined>;
   deleteInventoryItemById(userId: string, id: string): Promise<boolean>;
   transferInventoryItem(userId: string, id: string, toLocation: string, transferQuantity?: number): Promise<Inventory | undefined>;
+  
+  // User Management (admin-only)
+  getAllUsers(): Promise<{ userId: string; inventoryCount: number; hospitalCount: number; procedureCount: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -715,7 +718,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Implant Procedures
-  async getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital; deviceProduct?: Product })[]> {
+  async getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital; deviceProduct?: Product | null })[]> {
     return await db
       .select({
         id: implantProcedures.id,
@@ -1020,6 +1023,58 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return inserted[0];
     }
+  }
+
+  // User Management
+  async getAllUsers(): Promise<{ userId: string; inventoryCount: number; hospitalCount: number; procedureCount: number }[]> {
+    // Get unique user IDs from inventory
+    const inventoryUsers = await db
+      .select({
+        userId: inventory.userId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(inventory)
+      .groupBy(inventory.userId);
+
+    // Get unique user IDs from hospitals
+    const hospitalUsers = await db
+      .select({
+        userId: hospitals.userId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(hospitals)
+      .groupBy(hospitals.userId);
+
+    // Get unique user IDs from procedures
+    const procedureUsers = await db
+      .select({
+        userId: implantProcedures.userId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(implantProcedures)
+      .groupBy(implantProcedures.userId);
+
+    // Combine all user IDs
+    const userIds = new Set<string>();
+    inventoryUsers.forEach(u => userIds.add(u.userId));
+    hospitalUsers.forEach(u => userIds.add(u.userId));
+    procedureUsers.forEach(u => userIds.add(u.userId));
+
+    // Build result with counts
+    const userStats = Array.from(userIds).map(userId => {
+      const invCount = inventoryUsers.find(u => u.userId === userId)?.count || 0;
+      const hospCount = hospitalUsers.find(u => u.userId === userId)?.count || 0;
+      const procCount = procedureUsers.find(u => u.userId === userId)?.count || 0;
+
+      return {
+        userId,
+        inventoryCount: invCount,
+        hospitalCount: hospCount,
+        procedureCount: procCount,
+      };
+    });
+
+    return userStats;
   }
 }
 

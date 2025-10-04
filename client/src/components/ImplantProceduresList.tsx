@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ImplantProcedureWithHospital extends ImplantProcedure {
   hospital: Hospital;
-  deviceProduct?: Product;
+  deviceProduct?: Product | null;
 }
 
 export default function ImplantProceduresList() {

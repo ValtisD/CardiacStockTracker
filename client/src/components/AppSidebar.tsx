@@ -1,4 +1,4 @@
-import { Home, Package, Car, Hospital, FileText, Settings, BarChart } from "lucide-react";
+import { Home, Package, Car, Hospital, FileText, Settings, BarChart, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,12 +16,14 @@ interface AppSidebarProps {
   currentPath?: string;
   onNavigate?: (path: string) => void;
   lowStockAlerts?: { home: number; car: number };
+  isAdmin?: boolean;
 }
 
 export default function AppSidebar({ 
   currentPath = '/', 
   onNavigate,
-  lowStockAlerts = { home: 0, car: 0 }
+  lowStockAlerts = { home: 0, car: 0 },
+  isAdmin = false
 }: AppSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -89,6 +91,16 @@ export default function AppSidebar({
       active: currentPath === '/settings',
     },
   ];
+
+  // Add User Management for admins only
+  const adminItems = isAdmin ? [
+    {
+      title: "User Management",
+      url: "/users",
+      icon: Users,
+      active: currentPath === '/users',
+    },
+  ] : [];
 
   return (
     <Sidebar>
@@ -158,6 +170,37 @@ export default function AppSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Section */}
+        {isAdmin && adminItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild
+                      data-active={item.active}
+                      data-testid={`nav-${item.url.replace('/', '-')}`}
+                    >
+                      <a 
+                        href={item.url}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleNavigation(item.url);
+                        }}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

@@ -22,6 +22,7 @@ import HospitalManager from "@/components/HospitalManager";
 import ImplantReportForm from "@/components/ImplantReportForm";
 import ImplantProceduresList from "@/components/ImplantProceduresList";
 import UserProductSettings from "@/components/UserProductSettings";
+import UserManagement from "@/components/UserManagement";
 import NotFound from "@/pages/not-found";
 
 // Theme toggle component
@@ -217,6 +218,10 @@ function SettingsPage() {
   );
 }
 
+function UserManagementPage() {
+  return <UserManagement />;
+}
+
 function Router() {
   return (
     <Switch>
@@ -228,6 +233,7 @@ function Router() {
       <Route path="/products" component={ProductsPage} />
       <Route path="/analytics" component={AnalyticsPage} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/users" component={UserManagementPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -297,6 +303,11 @@ function AppContent() {
 function AuthenticatedApp() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { user } = useAuth0();
+
+  // Check if user is admin
+  const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;
+  const isAdmin = user?.email === adminEmail;
 
   // Fetch real low stock data from backend
   const { data: homeLowStock } = useQuery<Inventory[]>({
@@ -338,6 +349,7 @@ function AuthenticatedApp() {
             currentPath={currentPath}
             onNavigate={handleNavigate}
             lowStockAlerts={lowStockAlerts}
+            isAdmin={isAdmin}
           />
           <div className="flex flex-col flex-1">
             <header className="flex items-center justify-between p-4 border-b border-card-border bg-card">
