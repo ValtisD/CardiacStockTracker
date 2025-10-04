@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Users } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Users, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -10,17 +10,47 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserStats {
   userId: string;
+  email: string;
+  isAdmin: boolean;
+  isPrimeAdmin: boolean;
   inventoryCount: number;
-  hospitalCount: number;
-  procedureCount: number;
+  recentProcedureCount: number;
 }
 
 export default function UserManagement() {
+  const { toast } = useToast();
+  
   const { data: users, isLoading } = useQuery<UserStats[]>({
     queryKey: ["/api/users"],
+  });
+
+  const toggleAdminMutation = useMutation({
+    mutationFn: async ({ userId, email, isAdmin }: { userId: string; email: string; isAdmin: boolean }) => {
+      return apiRequest(`/api/users/${userId}/toggle-admin`, {
+        method: "POST",
+        body: JSON.stringify({ email, isAdmin }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Success",
+        description: "Admin status updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update admin status",
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -40,6 +70,23 @@ export default function UserManagement() {
     );
   }
 
+  const handleToggleAdmin = (user: UserStats) => {
+    if (user.isPrimeAdmin) {
+      toast({
+        title: "Cannot modify",
+        description: "Prime admin status cannot be changed",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toggleAdminMutation.mutate({
+      userId: user.userId,
+      email: user.email,
+      isAdmin: user.isAdmin,
+    });
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -57,37 +104,50 @@ export default function UserManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User ID</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Admin</TableHead>
                 <TableHead className="text-right">Inventory Items</TableHead>
-                <TableHead className="text-right">Hospitals</TableHead>
-                <TableHead className="text-right">Procedures</TableHead>
-                <TableHead className="text-right">Total Activity</TableHead>
+                <TableHead className="text-right">Recent Procedures (90d)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => {
-                const totalActivity = user.inventoryCount + user.hospitalCount + user.procedureCount;
                 return (
                   <TableRow 
                     key={user.userId}
                     data-testid={`row-user-${user.userId}`}
                   >
-                    <TableCell className="font-medium font-mono text-sm" data-testid={`text-userid-${user.userId}`}>
-                      {user.userId}
+                    <TableCell className="font-medium" data-testid={`text-email-${user.userId}`}>
+                      <div className="flex items-center gap-2">
+                        {user.email}
+                        {user.isPrimeAdmin && (
+                          <Badge variant="default" className="text-xs" data-testid={`badge-prime-admin-${user.userId}`}>
+                            <Shield className="h-3 w-3 mr-1" />
+                            Prime Admin
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell data-testid={`cell-admin-toggle-${user.userId}`}>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={user.isAdmin}
+                          onCheckedChange={() => handleToggleAdmin(user)}
+                          disabled={user.isPrimeAdmin || toggleAdminMutation.isPending}
+                          data-testid={`switch-admin-${user.userId}`}
+                        />
+                        {user.isAdmin && !user.isPrimeAdmin && (
+                          <Badge variant="secondary" className="text-xs" data-testid={`badge-admin-${user.userId}`}>
+                            Admin
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right" data-testid={`text-inventory-${user.userId}`}>
                       {user.inventoryCount}
                     </TableCell>
-                    <TableCell className="text-right" data-testid={`text-hospitals-${user.userId}`}>
-                      {user.hospitalCount}
-                    </TableCell>
                     <TableCell className="text-right" data-testid={`text-procedures-${user.userId}`}>
-                      {user.procedureCount}
-                    </TableCell>
-                    <TableCell className="text-right" data-testid={`text-total-${user.userId}`}>
-                      <Badge variant={totalActivity > 0 ? "default" : "outline"}>
-                        {totalActivity}
-                      </Badge>
+                      {user.recentProcedureCount}
                     </TableCell>
                   </TableRow>
                 );
