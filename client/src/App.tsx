@@ -274,22 +274,12 @@ function AuthenticatedApp() {
 
   // Fetch real low stock data from backend
   const { data: homeLowStock } = useQuery<Inventory[]>({
-    queryKey: ["/api/inventory/low-stock", "home"],
-    queryFn: async () => {
-      const response = await fetch('/api/inventory/low-stock?location=home');
-      if (!response.ok) return [];
-      return response.json();
-    },
+    queryKey: ["/api/inventory/low-stock?location=home"],
     refetchOnWindowFocus: true,
   });
 
   const { data: carLowStock } = useQuery<Inventory[]>({
-    queryKey: ["/api/inventory/low-stock", "car"],
-    queryFn: async () => {
-      const response = await fetch('/api/inventory/low-stock?location=car');
-      if (!response.ok) return [];
-      return response.json();
-    },
+    queryKey: ["/api/inventory/low-stock?location=car"],
     refetchOnWindowFocus: true,
   });
 
