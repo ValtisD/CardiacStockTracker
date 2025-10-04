@@ -11,6 +11,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 interface AppSidebarProps {
   currentPath?: string;
@@ -26,6 +27,7 @@ export default function AppSidebar({
   isAdmin = false
 }: AppSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
+  const { t } = useTranslation();
 
   const handleNavigation = (path: string) => {
     console.log('Navigating to:', path);
@@ -38,33 +40,33 @@ export default function AppSidebar({
 
   const mainItems = [
     {
-      title: "Dashboard",
+      title: t('sidebar.dashboard'),
       url: "/",
       icon: Home,
       active: currentPath === '/',
     },
     {
-      title: "Home Inventory",
+      title: t('sidebar.homeInventory'),
       url: "/inventory/home",
       icon: Package,
       active: currentPath === '/inventory/home',
       alert: lowStockAlerts.home > 0 ? lowStockAlerts.home : undefined,
     },
     {
-      title: "Car Stock",
+      title: t('sidebar.carStock'),
       url: "/inventory/car",
       icon: Car,
       active: currentPath === '/inventory/car',
       alert: lowStockAlerts.car > 0 ? lowStockAlerts.car : undefined,
     },
     {
-      title: "Hospitals",
+      title: t('sidebar.hospitals'),
       url: "/hospitals",
       icon: Hospital,
       active: currentPath === '/hospitals',
     },
     {
-      title: "Implant Reports",
+      title: t('sidebar.implantReports'),
       url: "/reports",
       icon: FileText,
       active: currentPath === '/reports',
@@ -73,19 +75,19 @@ export default function AppSidebar({
 
   const managementItems = [
     {
-      title: "Products",
+      title: t('sidebar.products'),
       url: "/products",
       icon: Package,
       active: currentPath === '/products',
     },
     {
-      title: "Analytics",
+      title: t('sidebar.analytics'),
       url: "/analytics",
       icon: BarChart,
       active: currentPath === '/analytics',
     },
     {
-      title: "Settings",
+      title: t('sidebar.settings'),
       url: "/settings",
       icon: Settings,
       active: currentPath === '/settings',
@@ -95,7 +97,7 @@ export default function AppSidebar({
   // Add User Management for admins only
   const adminItems = isAdmin ? [
     {
-      title: "User Management",
+      title: t('sidebar.userManagement'),
       url: "/users",
       icon: Users,
       active: currentPath === '/users',
@@ -107,7 +109,7 @@ export default function AppSidebar({
       <SidebarContent>
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('sidebar.navigation')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
@@ -144,7 +146,7 @@ export default function AppSidebar({
 
         {/* Management Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('sidebar.management')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementItems.map((item) => (
@@ -174,7 +176,7 @@ export default function AppSidebar({
         {/* Admin Section */}
         {isAdmin && adminItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.admin')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminItems.map((item) => (
