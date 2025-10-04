@@ -55,8 +55,9 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    // SECURITY: Only log error message, not full error object to prevent sensitive data exposure
+    console.error("Error handler:", err instanceof Error ? err.message : 'Unknown error');
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after

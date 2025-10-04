@@ -11,6 +11,8 @@ import {
   insertUserProductSettingsSchema,
   updateProductSchema,
   updateHospitalSchema,
+  updateInventoryQuantitySchema,
+  transferInventoryItemSchema,
   languageSchema,
   toggleAdminSchema,
 } from "@shared/schema";
@@ -23,7 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const products = await storage.getProducts();
       res.json(products);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching products:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
@@ -36,7 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(product);
     } catch (error) {
-      console.error("Error fetching product:", error);
+      console.error("Error fetching product:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch product" });
     }
   });
@@ -49,7 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(products);
     } catch (error) {
-      console.error("Error searching products:", error);
+      console.error("Error searching products:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to search products" });
     }
   });
@@ -67,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(products);
     } catch (error) {
-      console.error("Error searching products by multiple fields:", error);
+      console.error("Error searching products by multiple fields:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to search products" });
     }
   });
@@ -78,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const product = await storage.createProduct(validatedData);
       res.status(201).json(product);
     } catch (error) {
-      console.error("Error creating product:", error);
+      console.error("Error creating product:", error instanceof Error ? error.message : 'Unknown error');
       res.status(400).json({ error: "Failed to create product" });
     }
   });
@@ -92,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(product);
     } catch (error: any) {
-      console.error("Error updating product:", error);
+      console.error("Error updating product:", error instanceof Error ? error.message : 'Unknown error');
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid data format", details: error.errors });
       }
@@ -108,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error("Error deleting product:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to delete product" });
     }
   });
@@ -120,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = await storage.getUserProductSettings(userId);
       res.json(settings);
     } catch (error) {
-      console.error("Error fetching user product settings:", error);
+      console.error("Error fetching user product settings:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch user product settings" });
     }
   });
@@ -138,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = await storage.upsertUserProductSettings(userId, productId, { minCarStock, minTotalStock });
       res.json(settings);
     } catch (error) {
-      console.error("Error updating user product settings:", error);
+      console.error("Error updating user product settings:", error instanceof Error ? error.message : 'Unknown error');
       res.status(400).json({ error: "Failed to update user product settings" });
     }
   });
@@ -151,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const inventory = await storage.getInventory(userId, location);
       res.json(inventory);
     } catch (error) {
-      console.error("Error fetching inventory:", error);
+      console.error("Error fetching inventory:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch inventory" });
     }
   });
@@ -163,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const summary = await storage.getInventorySummary(userId, location);
       res.json(summary);
     } catch (error) {
-      console.error("Error fetching inventory summary:", error);
+      console.error("Error fetching inventory summary:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch inventory summary" });
     }
   });
@@ -175,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lowStockItems = await storage.getLowStockItems(userId, location);
       res.json(lowStockItems);
     } catch (error) {
-      console.error("Error fetching low stock items:", error);
+      console.error("Error fetching low stock items:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch low stock items" });
     }
   });
@@ -190,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const inventory = await storage.createInventoryItem(validatedData);
       res.status(201).json(inventory);
     } catch (error: any) {
-      console.error("Error creating inventory item:", error);
+      console.error("Error creating inventory item:", error instanceof Error ? error.message : 'Unknown error');
       
       if (error.code === '23505' && error.constraint === 'inventory_serial_number_unique') {
         return res.status(409).json({ 
@@ -208,19 +210,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.userId!;
       const { id } = req.params;
-      const { quantity } = req.body;
+      const validatedData = updateInventoryQuantitySchema.parse(req.body);
       
-      if (typeof quantity !== 'number') {
-        return res.status(400).json({ error: "Quantity must be a number" });
-      }
-      
-      const inventory = await storage.updateInventoryQuantityById(userId, id, quantity);
+      const inventory = await storage.updateInventoryQuantityById(userId, id, validatedData.quantity);
       if (!inventory) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
       res.json(inventory);
-    } catch (error) {
-      console.error("Error updating inventory item:", error);
+    } catch (error: any) {
+      console.error("Error updating inventory item:", error instanceof Error ? error.message : 'Unknown error');
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format", details: error.errors });
+      }
       res.status(400).json({ error: "Failed to update inventory item" });
     }
   });
@@ -235,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting inventory item:", error);
+      console.error("Error deleting inventory item:", error instanceof Error ? error.message : 'Unknown error');
       res.status(400).json({ error: "Failed to delete inventory item" });
     }
   });
@@ -244,23 +245,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.userId!;
       const { id } = req.params;
-      const { toLocation, quantity } = req.body;
+      const validatedData = transferInventoryItemSchema.parse(req.body);
       
-      if (!toLocation || (toLocation !== 'home' && toLocation !== 'car')) {
-        return res.status(400).json({ error: "Invalid location. Must be 'home' or 'car'" });
-      }
-      
-      if (quantity !== undefined && (typeof quantity !== 'number' || quantity <= 0)) {
-        return res.status(400).json({ error: "Quantity must be a positive number" });
-      }
-      
-      const inventory = await storage.transferInventoryItem(userId, id, toLocation, quantity);
+      const inventory = await storage.transferInventoryItem(userId, id, validatedData.toLocation, validatedData.quantity);
       if (!inventory) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
       res.json(inventory);
-    } catch (error) {
-      console.error("Error transferring inventory item:", error);
+    } catch (error: any) {
+      console.error("Error transferring inventory item:", error instanceof Error ? error.message : 'Unknown error');
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format", details: error.errors });
+      }
       res.status(400).json({ 
         error: error instanceof Error ? error.message : "Failed to transfer inventory item" 
       });
@@ -272,19 +268,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.userId!;
       const { productId, location } = req.params;
-      const { quantity } = req.body;
+      const validatedData = updateInventoryQuantitySchema.parse(req.body);
       
-      if (typeof quantity !== 'number') {
-        return res.status(400).json({ error: "Quantity must be a number" });
-      }
-      
-      const inventory = await storage.updateInventoryQuantity(userId, productId, location, quantity);
+      const inventory = await storage.updateInventoryQuantity(userId, productId, location, validatedData.quantity);
       if (!inventory) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
       res.json(inventory);
-    } catch (error) {
-      console.error("Error updating inventory:", error);
+    } catch (error: any) {
+      console.error("Error updating inventory:", error instanceof Error ? error.message : 'Unknown error');
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format", details: error.errors });
+      }
       res.status(400).json({ error: "Failed to update inventory" });
     }
   });
@@ -299,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting inventory item:", error);
+      console.error("Error deleting inventory item:", error instanceof Error ? error.message : 'Unknown error');
       res.status(400).json({ error: "Failed to delete inventory item" });
     }
   });
@@ -311,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hospitals = await storage.getHospitals(userId);
       res.json(hospitals);
     } catch (error) {
-      console.error("Error fetching hospitals:", error);
+      console.error("Error fetching hospitals:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch hospitals" });
     }
   });
@@ -325,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(hospital);
     } catch (error) {
-      console.error("Error fetching hospital:", error);
+      console.error("Error fetching hospital:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch hospital" });
     }
   });
@@ -340,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hospital = await storage.createHospital(validatedData);
       res.status(201).json(hospital);
     } catch (error) {
-      console.error("Error creating hospital:", error);
+      console.error("Error creating hospital:", error instanceof Error ? error.message : 'Unknown error');
       res.status(400).json({ error: "Failed to create hospital" });
     }
   });
@@ -355,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(hospital);
     } catch (error: any) {
-      console.error("Error updating hospital:", error);
+      console.error("Error updating hospital:", error instanceof Error ? error.message : 'Unknown error');
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid data format", details: error.errors });
       }
@@ -372,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting hospital:", error);
+      console.error("Error deleting hospital:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to delete hospital" });
     }
   });
@@ -384,7 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const procedures = await storage.getImplantProcedures(userId);
       res.json(procedures);
     } catch (error) {
-      console.error("Error fetching implant procedures:", error);
+      console.error("Error fetching implant procedures:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch implant procedures" });
     }
   });
@@ -398,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(procedure);
     } catch (error) {
-      console.error("Error fetching procedure:", error);
+      console.error("Error fetching procedure:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch procedure" });
     }
   });
@@ -408,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const materials = await storage.getProcedureMaterials(req.params.id);
       res.json(materials);
     } catch (error) {
-      console.error("Error fetching procedure materials:", error);
+      console.error("Error fetching procedure materials:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch procedure materials" });
     }
   });
@@ -431,7 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.status(201).json(procedure);
     } catch (error: any) {
-      console.error("Error creating implant procedure:", error);
+      console.error("Error creating implant procedure:", error instanceof Error ? error.message : 'Unknown error');
       if (error.message) {
         if (error.message.includes("Insufficient stock") || error.message.includes("not found in")) {
           return res.status(400).json({ error: error.message });
@@ -459,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(procedure);
     } catch (error: any) {
-      console.error("Error updating implant procedure:", error);
+      console.error("Error updating implant procedure:", error instanceof Error ? error.message : 'Unknown error');
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid data format", details: error.errors });
       }
@@ -476,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting implant procedure:", error);
+      console.error("Error deleting implant procedure:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to delete implant procedure" });
     }
   });
@@ -488,7 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transfers = await storage.getStockTransfers(userId);
       res.json(transfers);
     } catch (error) {
-      console.error("Error fetching stock transfers:", error);
+      console.error("Error fetching stock transfers:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch stock transfers" });
     }
   });
@@ -503,7 +498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transfer = await storage.createStockTransfer(validatedData);
       res.status(201).json(transfer);
     } catch (error: any) {
-      console.error("Error creating stock transfer:", error);
+      console.error("Error creating stock transfer:", error instanceof Error ? error.message : 'Unknown error');
       if (error.message) {
         if (error.message.includes("Insufficient stock") || error.message.includes("not found in")) {
           return res.status(400).json({ error: error.message });
@@ -525,7 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getAllUsers();
       res.json(users);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching users:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch users" });
     }
   });
@@ -554,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Error toggling admin status:", error);
+      console.error("Error toggling admin status:", error instanceof Error ? error.message : 'Unknown error');
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
       }
@@ -569,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const language = await storage.getUserLanguage(userId);
       res.json({ language });
     } catch (error) {
-      console.error("Error fetching user language:", error);
+      console.error("Error fetching user language:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to fetch user language" });
     }
   });
@@ -582,7 +577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserLanguage(userId, validatedData.language);
       res.json({ success: true, language: validatedData.language });
     } catch (error: any) {
-      console.error("Error updating user language:", error);
+      console.error("Error updating user language:", error instanceof Error ? error.message : 'Unknown error');
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid language. Must be 'de' or 'en'", details: error.errors });
       }

@@ -150,6 +150,16 @@ export const insertUserProductSettingsSchema = createInsertSchema(userProductSet
 export const updateProductSchema = insertProductSchema.partial();
 export const updateHospitalSchema = insertHospitalSchema.omit({ userId: true }).partial();
 
+// Inventory operation schemas
+export const updateInventoryQuantitySchema = z.object({
+  quantity: z.number().int().min(0),
+});
+
+export const transferInventoryItemSchema = z.object({
+  toLocation: z.enum(['home', 'car']),
+  quantity: z.number().int().min(1).optional(),
+});
+
 // Additional validation schemas
 export const languageSchema = z.object({
   language: z.enum(['de', 'en']),
