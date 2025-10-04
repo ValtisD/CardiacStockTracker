@@ -11,12 +11,6 @@ app.use((req, res, next) => {
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
-  // Log Authorization header for debugging
-  if (path.startsWith("/api")) {
-    const authHeader = req.headers.authorization;
-    console.log(`[${req.method} ${path}] Auth header:`, authHeader ? `${authHeader.substring(0, 30)}...` : 'MISSING');
-  }
-
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;

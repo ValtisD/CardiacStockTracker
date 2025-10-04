@@ -8,6 +8,34 @@ This full-stack application tracks medical devices, leads, and materials for car
 
 Preferred communication style: Simple, everyday language.
 
+## Authentication & Authorization
+
+The application uses **Auth0** for multi-user authentication with role-based access control.
+
+**Setup Requirements**:
+- Auth0 Domain: `dev-aljdisualoyvqfhx.eu.auth0.com`
+- Auth0 Client ID: `NFyp8wssAs7cBwNd1FhvilAaDWQeae1A`
+- Auth0 Audience: `https://CRM-Stock-Dimi`
+- Admin Email: `valtisdimitris@gmail.com`
+
+**Important**: Auth0 must be configured with a custom action to include the email claim in access tokens:
+1. Go to Auth0 Dashboard → Actions → Flows → Login
+2. Create custom action "Add email to token"
+3. Add code: `api.accessToken.setCustomClaim('email', event.user.email);`
+4. Deploy and add to login flow
+
+**Authorization Model**:
+- **Admin users** (identified by email matching `AUTH0_ADMIN_EMAIL`):
+  - Can add/edit/delete products in the shared product catalog
+  - Full access to all features
+- **Regular users**:
+  - Manage their own inventory (home/car stock)
+  - Configure their own stock alert thresholds via userProductSettings
+  - Record procedures and view their own data
+  - Cannot modify the shared product catalog
+
+All user data (inventory, hospitals, procedures, transfers) is isolated by `userId` from the Auth0 JWT `sub` claim.
+
 ## System Architecture
 
 ### Frontend

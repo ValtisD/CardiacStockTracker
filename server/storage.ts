@@ -395,6 +395,7 @@ export class DatabaseStorage implements IStorage {
         .from(inventory)
         .where(
           and(
+            eq(inventory.userId, userId),
             eq(inventory.productId, productId),
             eq(inventory.location, toLocation),
             eq(inventory.trackingMode, 'lot'),

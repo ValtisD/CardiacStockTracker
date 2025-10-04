@@ -29,14 +29,6 @@ export function extractUserInfo(req: AuthRequest, res: Response, next: NextFunct
   const userEmail = auth.payload.email;
   const adminEmail = process.env.AUTH0_ADMIN_EMAIL;
   req.isAdmin = userEmail === adminEmail;
-  
-  // Debug logging
-  console.log('Auth check:', {
-    userEmail,
-    adminEmail,
-    isAdmin: req.isAdmin,
-    emailsMatch: userEmail === adminEmail
-  });
 
   next();
 }
@@ -46,11 +38,6 @@ export const requireAuth = [jwtCheck, extractUserInfo];
 
 // Middleware to require admin privileges
 export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  console.log('requireAdmin check:', {
-    isAdmin: req.isAdmin,
-    userId: req.userId
-  });
-  
   if (!req.isAdmin) {
     return res.status(403).json({ error: 'Forbidden - admin access required' });
   }
