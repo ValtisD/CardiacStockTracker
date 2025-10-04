@@ -94,16 +94,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
   });
 
   const { data: carInventory = [], isLoading: inventoryLoading } = useQuery<InventoryWithProduct[]>({
-    queryKey: ['/api/inventory', { location: 'car' }],
-    queryFn: async () => {
-      const res = await fetch('/api/inventory?location=car', {
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        throw new Error('Failed to fetch inventory');
-      }
-      return res.json();
-    },
+    queryKey: ['/api/inventory?location=car'],
   });
 
   const createProcedureMutation = useMutation({

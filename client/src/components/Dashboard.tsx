@@ -32,39 +32,19 @@ export default function Dashboard() {
   const [showExpiringReport, setShowExpiringReport] = useState(false);
   const { toast } = useToast();
   const { data: homeInventory, isLoading: homeLoading, error: homeError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory", "home"],
-    queryFn: async () => {
-      const response = await fetch('/api/inventory?location=home');
-      if (!response.ok) throw new Error('Failed to fetch home inventory');
-      return response.json();
-    },
+    queryKey: ["/api/inventory?location=home"],
   });
 
   const { data: carInventory, isLoading: carLoading, error: carError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory", "car"],
-    queryFn: async () => {
-      const response = await fetch('/api/inventory?location=car');
-      if (!response.ok) throw new Error('Failed to fetch car inventory');
-      return response.json();
-    },
+    queryKey: ["/api/inventory?location=car"],
   });
 
   const { data: homeLowStock, isLoading: homeLowStockLoading, error: homeLowStockError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory/low-stock", "home"],
-    queryFn: async () => {
-      const response = await fetch('/api/inventory/low-stock?location=home');
-      if (!response.ok) throw new Error('Failed to fetch home low stock');
-      return response.json();
-    },
+    queryKey: ["/api/inventory/low-stock?location=home"],
   });
 
   const { data: carLowStock, isLoading: carLowStockLoading, error: carLowStockError } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory/low-stock", "car"],
-    queryFn: async () => {
-      const response = await fetch('/api/inventory/low-stock?location=car');
-      if (!response.ok) throw new Error('Failed to fetch car low stock');
-      return response.json();
-    },
+    queryKey: ["/api/inventory/low-stock?location=car"],
   });
 
   const { data: procedures, isLoading: proceduresLoading, error: proceduresError } = useQuery<ImplantProcedureWithHospital[]>({

@@ -25,27 +25,13 @@ interface InventorySummaryProps {
 
 export default function InventorySummary({ location }: InventorySummaryProps) {
   const { data: summaryData, isLoading } = useQuery<InventorySummary[]>({
-    queryKey: ["/api/inventory/summary", location],
-    queryFn: async () => {
-      const response = await fetch(`/api/inventory/summary?location=${location}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory summary');
-      }
-      return response.json();
-    },
+    queryKey: [`/api/inventory/summary?location=${location}`],
     refetchOnWindowFocus: true,
   });
 
   // Fetch low stock data to mark items
   const { data: lowStockData } = useQuery<{ product: Product }[]>({
-    queryKey: ["/api/inventory/low-stock", location],
-    queryFn: async () => {
-      const response = await fetch(`/api/inventory/low-stock?location=${location}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch low stock items');
-      }
-      return response.json();
-    },
+    queryKey: [`/api/inventory/low-stock?location=${location}`],
     refetchOnWindowFocus: true,
   });
 

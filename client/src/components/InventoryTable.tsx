@@ -52,27 +52,13 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   const { toast } = useToast();
 
   const { data: inventoryData, isLoading, error } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory", location],
-    queryFn: async () => {
-      const response = await fetch(`/api/inventory?location=${location}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory');
-      }
-      return response.json();
-    },
+    queryKey: [`/api/inventory?location=${location}`],
     refetchOnWindowFocus: true,
   });
 
   // Fetch low stock items to determine which products are low
   const { data: lowStockData } = useQuery<InventoryWithProduct[]>({
-    queryKey: ["/api/inventory/low-stock", location],
-    queryFn: async () => {
-      const response = await fetch(`/api/inventory/low-stock?location=${location}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch low stock items');
-      }
-      return response.json();
-    },
+    queryKey: [`/api/inventory/low-stock?location=${location}`],
     refetchOnWindowFocus: true,
   });
 
