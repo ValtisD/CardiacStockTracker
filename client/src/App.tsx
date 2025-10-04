@@ -168,11 +168,13 @@ function ImplantReportsPage() {
 
 function ProductsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
-  const { user } = useAuth0();
   const { t } = useTranslation();
-  
-  const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;
-  const isAdmin = user?.email === adminEmail;
+
+  const { data: currentUser } = useQuery<{ userId: string; email: string; isAdmin: boolean; isPrimeAdmin: boolean }>({
+    queryKey: ["/api/user/me"],
+  });
+
+  const isAdmin = currentUser?.isAdmin || false;
 
   const handleSubmitSuccess = () => {
     setShowAddForm(false);
