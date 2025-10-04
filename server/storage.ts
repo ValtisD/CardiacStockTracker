@@ -56,7 +56,7 @@ export interface IStorage {
   deleteHospital(userId: string, id: string): Promise<boolean>;
 
   // Implant Procedures (user-specific)
-  getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital })[]>;
+  getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital; deviceProduct?: Product })[]>;
   getImplantProcedure(userId: string, id: string): Promise<ImplantProcedure | undefined>;
   createImplantProcedure(procedure: InsertImplantProcedure, materials: InsertProcedureMaterial[]): Promise<ImplantProcedure>;
   updateImplantProcedure(userId: string, id: string, procedureData: Partial<InsertImplantProcedure>): Promise<ImplantProcedure | null>;
@@ -715,7 +715,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Implant Procedures
-  async getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital })[]> {
+  async getImplantProcedures(userId: string): Promise<(ImplantProcedure & { hospital: Hospital; deviceProduct?: Product })[]> {
     return await db
       .select({
         id: implantProcedures.id,
@@ -728,9 +728,11 @@ export class DatabaseStorage implements IStorage {
         notes: implantProcedures.notes,
         createdAt: implantProcedures.createdAt,
         hospital: hospitals,
+        deviceProduct: products,
       })
       .from(implantProcedures)
       .innerJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
+      .leftJoin(products, eq(implantProcedures.deviceUsed, products.id))
       .where(eq(implantProcedures.userId, userId))
       .orderBy(desc(implantProcedures.implantDate));
   }

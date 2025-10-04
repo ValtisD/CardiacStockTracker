@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { FileText, Pencil, Trash2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { FileText, Pencil, Trash2, Search } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { ImplantProcedure, Hospital } from "@shared/schema";
+import type { ImplantProcedure, Hospital, Product } from "@shared/schema";
 import { format } from "date-fns";
 import ImplantProcedureDetailDialog from "@/components/ImplantProcedureDetailDialog";
 import ImplantProcedureEditDialog from "@/components/ImplantProcedureEditDialog";
@@ -31,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ImplantProcedureWithHospital extends ImplantProcedure {
   hospital: Hospital;
+  deviceProduct?: Product;
 }
 
 export default function ImplantProceduresList() {
@@ -38,11 +40,36 @@ export default function ImplantProceduresList() {
   const [editProcedureId, setEditProcedureId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [procedureToDelete, setProcedureToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   
   const { data: procedures, isLoading } = useQuery<ImplantProcedureWithHospital[]>({
     queryKey: ["/api/implant-procedures"],
   });
+
+  // Filter procedures based on search query
+  const filteredProcedures = procedures?.filter((procedure) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase().trim();
+    
+    // Search in device serial number
+    if (procedure.deviceSerialNumber?.toLowerCase().includes(query)) {
+      return true;
+    }
+    
+    // Search in device model number
+    if (procedure.deviceProduct?.modelNumber?.toLowerCase().includes(query)) {
+      return true;
+    }
+    
+    // Search in device name
+    if (procedure.deviceProduct?.name?.toLowerCase().includes(query)) {
+      return true;
+    }
+    
+    return false;
+  }) || [];
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -104,19 +131,41 @@ export default function ImplantProceduresList() {
   return (
     <>
       <Card>
+        <CardHeader className="pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by serial number, lot number, device name, or model..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-procedures"
+            />
+          </div>
+        </CardHeader>
         <CardContent className="p-0">
+          {filteredProcedures.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+              <p>No procedures match your search.</p>
+              <p className="text-sm mt-2">Try a different search term.</p>
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Hospital</TableHead>
                 <TableHead>Procedure Type</TableHead>
+                <TableHead>Device Name</TableHead>
+                <TableHead>Model Number</TableHead>
+                <TableHead>Serial/Lot Number</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {procedures.map((procedure) => (
+              {filteredProcedures.map((procedure) => (
                 <TableRow 
                   key={procedure.id} 
                   data-testid={`row-procedure-${procedure.id}`}
@@ -133,6 +182,21 @@ export default function ImplantProceduresList() {
                     <Badge variant="outline" data-testid={`badge-type-${procedure.id}`}>
                       {procedure.procedureType}
                     </Badge>
+                  </TableCell>
+                  <TableCell data-testid={`text-device-name-${procedure.id}`}>
+                    {procedure.deviceProduct?.name || (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell data-testid={`text-model-number-${procedure.id}`}>
+                    {procedure.deviceProduct?.modelNumber || (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell data-testid={`text-serial-lot-${procedure.id}`}>
+                    {procedure.deviceSerialNumber || (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell data-testid={`text-notes-${procedure.id}`}>
                     {procedure.notes ? (
@@ -167,14 +231,15 @@ export default function ImplantProceduresList() {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
-        
-        <ImplantProcedureDetailDialog
-          procedureId={selectedProcedureId}
-          isOpen={!!selectedProcedureId}
-          onClose={() => setSelectedProcedureId(null)}
-        />
       </Card>
+      
+      <ImplantProcedureDetailDialog
+        procedureId={selectedProcedureId}
+        isOpen={!!selectedProcedureId}
+        onClose={() => setSelectedProcedureId(null)}
+      />
 
       <ImplantProcedureEditDialog
         procedureId={editProcedureId}
