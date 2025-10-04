@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Product } from "@shared/schema";
+import type { Product, UserProductSettings } from "@shared/schema";
 
 interface InventorySummary {
   product: Product;
@@ -35,8 +35,21 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
     refetchOnWindowFocus: true,
   });
 
+  // Fetch user product settings to display minimum quantities
+  const { data: userSettings } = useQuery<UserProductSettings[]>({
+    queryKey: ['/api/user-product-settings'],
+    refetchOnWindowFocus: true,
+  });
+
   const isLowStock = (productId: string): boolean => {
     return lowStockData?.some(item => item.product.id === productId) || false;
+  };
+
+  const getMinQuantity = (productId: string): number => {
+    const settings = userSettings?.find(s => s.productId === productId);
+    if (!settings) return 0;
+    // For car location, show minCarStock; for home location, show minTotalStock
+    return location === 'car' ? settings.minCarStock : settings.minTotalStock;
   };
 
   if (isLoading) {
@@ -87,7 +100,8 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
             <TableRow>
               <TableHead>Model Number</TableHead>
               <TableHead>Product Name</TableHead>
-              <TableHead className="text-right">Total Quantity</TableHead>
+              <TableHead className="text-right">Current</TableHead>
+              <TableHead className="text-right">Minimum</TableHead>
               <TableHead className="text-right">Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -102,6 +116,9 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
                 </TableCell>
                 <TableCell className="text-right" data-testid={`text-quantity-${item.product.id}`}>
                   {item.totalQuantity}
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground" data-testid={`text-min-quantity-${item.product.id}`}>
+                  {getMinQuantity(item.product.id)}
                 </TableCell>
                 <TableCell className="text-right">
                   {isLowStock(item.product.id) ? (
