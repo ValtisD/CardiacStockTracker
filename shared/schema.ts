@@ -91,6 +91,24 @@ export const stockTransfers = pgTable("stock_transfers", {
   notes: text("notes"),
 });
 
+// Users table - stores basic user info from Auth0
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull().unique(), // Auth0 user ID (sub claim)
+  email: text("email").notNull(), // Email from Auth0 token
+  lastSeen: timestamp("last_seen").default(sql`now()`),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// Admin users - stores which users have admin privileges (in addition to the prime admin from env)
+export const adminUsers = pgTable("admin_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull().unique(), // Auth0 user ID
+  userEmail: text("user_email").notNull(), // Store email for reference
+  grantedAt: timestamp("granted_at").default(sql`now()`),
+  grantedBy: text("granted_by").notNull(), // User ID of admin who granted access
+});
+
 // Insert schemas
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
@@ -155,3 +173,5 @@ export type InsertStockTransfer = z.infer<typeof insertStockTransferSchema>;
 
 export type UserProductSettings = typeof userProductSettings.$inferSelect;
 export type InsertUserProductSettings = z.infer<typeof insertUserProductSettingsSchema>;
+
+export type AdminUser = typeof adminUsers.$inferSelect;

@@ -8,6 +8,8 @@ import {
   procedureMaterials,
   stockTransfers,
   userProductSettings,
+  users,
+  adminUsers,
   type Product,
   type InsertProduct,
   type Inventory,
@@ -73,7 +75,9 @@ export interface IStorage {
   transferInventoryItem(userId: string, id: string, toLocation: string, transferQuantity?: number): Promise<Inventory | undefined>;
   
   // User Management (admin-only)
-  getAllUsers(): Promise<{ userId: string; inventoryCount: number; hospitalCount: number; procedureCount: number }[]>;
+  getAllUsers(): Promise<{ userId: string; email: string; isAdmin: boolean; isPrimeAdmin: boolean; inventoryCount: number; recentProcedureCount: number }[]>;
+  grantAdminAccess(userId: string, userEmail: string, grantedBy: string): Promise<void>;
+  revokeAdminAccess(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1026,8 +1030,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // User Management
-  async getAllUsers(): Promise<{ userId: string; inventoryCount: number; hospitalCount: number; procedureCount: number }[]> {
-    // Get unique user IDs from inventory
+  async getAllUsers(): Promise<{ userId: string; email: string; isAdmin: boolean; isPrimeAdmin: boolean; inventoryCount: number; recentProcedureCount: number }[]> {
+    const primeAdminEmail = process.env.AUTH0_ADMIN_EMAIL;
+    
+    // Get all users from users table
+    const allUsers = await db.select().from(users);
+
+    // Get admin users
+    const adminUserRecords = await db.select().from(adminUsers);
+    const adminUserIds = new Set(adminUserRecords.map(a => a.userId));
+
+    // Get inventory counts per user
     const inventoryUsers = await db
       .select({
         userId: inventory.userId,
@@ -1036,45 +1049,54 @@ export class DatabaseStorage implements IStorage {
       .from(inventory)
       .groupBy(inventory.userId);
 
-    // Get unique user IDs from hospitals
-    const hospitalUsers = await db
-      .select({
-        userId: hospitals.userId,
-        count: sql<number>`count(*)::int`,
-      })
-      .from(hospitals)
-      .groupBy(hospitals.userId);
-
-    // Get unique user IDs from procedures
+    // Get procedures from last 90 days per user
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
     const procedureUsers = await db
       .select({
         userId: implantProcedures.userId,
         count: sql<number>`count(*)::int`,
       })
       .from(implantProcedures)
+      .where(sql`${implantProcedures.implantDate} >= ${ninetyDaysAgo.toISOString().split('T')[0]}`)
       .groupBy(implantProcedures.userId);
 
-    // Combine all user IDs
-    const userIds = new Set<string>();
-    inventoryUsers.forEach(u => userIds.add(u.userId));
-    hospitalUsers.forEach(u => userIds.add(u.userId));
-    procedureUsers.forEach(u => userIds.add(u.userId));
-
     // Build result with counts
-    const userStats = Array.from(userIds).map(userId => {
-      const invCount = inventoryUsers.find(u => u.userId === userId)?.count || 0;
-      const hospCount = hospitalUsers.find(u => u.userId === userId)?.count || 0;
-      const procCount = procedureUsers.find(u => u.userId === userId)?.count || 0;
+    const userStats = allUsers.map(user => {
+      const invCount = inventoryUsers.find(u => u.userId === user.userId)?.count || 0;
+      const procCount = procedureUsers.find(u => u.userId === user.userId)?.count || 0;
+      const isPrimeAdmin = user.email === primeAdminEmail;
+      const isAdmin = isPrimeAdmin || adminUserIds.has(user.userId);
 
       return {
-        userId,
+        userId: user.userId,
+        email: user.email,
+        isAdmin,
+        isPrimeAdmin,
         inventoryCount: invCount,
-        hospitalCount: hospCount,
-        procedureCount: procCount,
+        recentProcedureCount: procCount,
       };
     });
 
     return userStats;
+  }
+
+  async grantAdminAccess(userId: string, userEmail: string, grantedBy: string): Promise<void> {
+    await db
+      .insert(adminUsers)
+      .values({
+        userId,
+        userEmail,
+        grantedBy,
+      })
+      .onConflictDoNothing();
+  }
+
+  async revokeAdminAccess(userId: string): Promise<void> {
+    await db
+      .delete(adminUsers)
+      .where(eq(adminUsers.userId, userId));
   }
 }
 

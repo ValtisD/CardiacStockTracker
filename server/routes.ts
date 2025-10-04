@@ -518,6 +518,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Toggle admin status (admin-only, cannot toggle prime admin)
+  app.post("/api/users/:userId/toggle-admin", requireAuth, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const targetUserId = req.params.userId;
+      const { email, isAdmin } = req.body;
+      const currentUserId = req.userId!;
+      
+      // Prevent toggling the prime admin
+      const primeAdminEmail = process.env.AUTH0_ADMIN_EMAIL;
+      if (email === primeAdminEmail) {
+        return res.status(403).json({ error: "Cannot modify prime admin status" });
+      }
+
+      if (isAdmin) {
+        // Revoke admin access
+        await storage.revokeAdminAccess(targetUserId);
+      } else {
+        // Grant admin access
+        await storage.grantAdminAccess(targetUserId, email, currentUserId);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error toggling admin status:", error);
+      res.status(500).json({ error: "Failed to toggle admin status" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
