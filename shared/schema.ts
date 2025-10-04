@@ -100,20 +100,23 @@ export const insertProductSchema = createInsertSchema(products).omit({
 
 export const insertInventorySchema = createInsertSchema(inventory).omit({
   id: true,
-  userId: true,
   updatedAt: true,
+}).extend({
+  userId: z.string().optional(),
 });
 
 export const insertHospitalSchema = createInsertSchema(hospitals).omit({
   id: true,
-  userId: true,
   createdAt: true,
+}).extend({
+  userId: z.string().optional(),
 });
 
 export const insertImplantProcedureSchema = createInsertSchema(implantProcedures).omit({
   id: true,
-  userId: true,
   createdAt: true,
+}).extend({
+  userId: z.string().optional(),
 });
 
 export const insertProcedureMaterialSchema = createInsertSchema(procedureMaterials).omit({
@@ -123,14 +126,16 @@ export const insertProcedureMaterialSchema = createInsertSchema(procedureMateria
 
 export const insertStockTransferSchema = createInsertSchema(stockTransfers).omit({
   id: true,
-  userId: true,
   transferDate: true,
+}).extend({
+  userId: z.string().optional(),
 });
 
 export const insertUserProductSettingsSchema = createInsertSchema(userProductSettings).omit({
   id: true,
-  userId: true,
   createdAt: true,
+}).extend({
+  userId: z.string().optional(),
 });
 
 // Types
