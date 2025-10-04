@@ -101,22 +101,16 @@ export const insertProductSchema = createInsertSchema(products).omit({
 export const insertInventorySchema = createInsertSchema(inventory).omit({
   id: true,
   updatedAt: true,
-}).extend({
-  userId: z.string().optional(),
 });
 
 export const insertHospitalSchema = createInsertSchema(hospitals).omit({
   id: true,
   createdAt: true,
-}).extend({
-  userId: z.string().optional(),
 });
 
 export const insertImplantProcedureSchema = createInsertSchema(implantProcedures).omit({
   id: true,
   createdAt: true,
-}).extend({
-  userId: z.string().optional(),
 });
 
 export const insertProcedureMaterialSchema = createInsertSchema(procedureMaterials).omit({
@@ -127,16 +121,19 @@ export const insertProcedureMaterialSchema = createInsertSchema(procedureMateria
 export const insertStockTransferSchema = createInsertSchema(stockTransfers).omit({
   id: true,
   transferDate: true,
-}).extend({
-  userId: z.string().optional(),
 });
 
 export const insertUserProductSettingsSchema = createInsertSchema(userProductSettings).omit({
   id: true,
   createdAt: true,
-}).extend({
-  userId: z.string().optional(),
 });
+
+// Client-side schemas (for forms - userId added server-side)
+export const clientInsertInventorySchema = insertInventorySchema.omit({ userId: true });
+export const clientInsertHospitalSchema = insertHospitalSchema.omit({ userId: true });
+export const clientInsertImplantProcedureSchema = insertImplantProcedureSchema.omit({ userId: true });
+export const clientInsertStockTransferSchema = insertStockTransferSchema.omit({ userId: true });
+export const clientInsertUserProductSettingsSchema = insertUserProductSettingsSchema.omit({ userId: true });
 
 // Types
 export type Product = typeof products.$inferSelect;

@@ -44,10 +44,11 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Hospital, InsertHospital, ImplantProcedure } from "@shared/schema";
-import { insertHospitalSchema } from "@shared/schema";
+import type { Hospital, ImplantProcedure } from "@shared/schema";
+import { clientInsertHospitalSchema } from "@shared/schema";
+import { z } from "zod";
 
-type HospitalFormData = InsertHospital;
+type HospitalFormData = z.infer<typeof clientInsertHospitalSchema>;
 
 interface HospitalWithProcedures extends Hospital {
   recentProcedures: number;
@@ -382,7 +383,7 @@ interface HospitalFormProps {
 
 function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: HospitalFormProps) {
   const form = useForm<HospitalFormData>({
-    resolver: zodResolver(insertHospitalSchema),
+    resolver: zodResolver(clientInsertHospitalSchema),
     defaultValues: {
       name: initialData?.name || "",
       address: initialData?.address || "",
