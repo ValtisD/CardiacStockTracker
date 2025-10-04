@@ -86,7 +86,12 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
 
   const addInventoryMutation = useMutation({
     mutationFn: async (data: AddInventoryFormData) => {
-      return await apiRequest('POST', '/api/inventory', data);
+      const payload = {
+        ...data,
+        serialNumber: data.trackingMode === 'serial' ? data.serialNumber : null,
+        lotNumber: data.trackingMode === 'lot' ? data.lotNumber : null,
+      };
+      return await apiRequest('POST', '/api/inventory', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
