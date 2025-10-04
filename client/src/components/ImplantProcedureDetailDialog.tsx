@@ -44,21 +44,11 @@ export default function ImplantProcedureDetailDialog({
 }: ImplantProcedureDetailDialogProps) {
   const { data: procedure, isLoading: isProcedureLoading } = useQuery<ImplantProcedureWithHospital>({
     queryKey: ["/api/implant-procedures", procedureId],
-    queryFn: async () => {
-      const res = await fetch(`/api/implant-procedures/${procedureId}`);
-      if (!res.ok) throw new Error("Failed to fetch procedure");
-      return res.json();
-    },
     enabled: !!procedureId && isOpen,
   });
 
   const { data: materials, isLoading: isMaterialsLoading } = useQuery<ProcedureMaterialWithProduct[]>({
     queryKey: ["/api/implant-procedures", procedureId, "materials"],
-    queryFn: async () => {
-      const res = await fetch(`/api/implant-procedures/${procedureId}/materials`);
-      if (!res.ok) throw new Error("Failed to fetch materials");
-      return res.json();
-    },
     enabled: !!procedureId && isOpen,
   });
 
@@ -87,7 +77,7 @@ export default function ImplantProcedureDetailDialog({
     doc.text(`Hospital: ${procedure.hospital.name}`, 14, yPos);
     yPos += 7;
     if (procedure.hospital.address) {
-      doc.text(`Address: ${procedure.hospital.address}, ${procedure.hospital.city}, ${procedure.hospital.state}`, 14, yPos);
+      doc.text(`Address: ${procedure.hospital.address}, ${procedure.hospital.zipCode} ${procedure.hospital.city}`, 14, yPos);
       yPos += 7;
     }
     doc.text(`Procedure Type: ${procedure.procedureType}`, 14, yPos);

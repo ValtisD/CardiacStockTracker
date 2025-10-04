@@ -139,6 +139,12 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
 
   const deviceProducts = products; // All products can be used as devices
 
+  // Helper function to get available quantity for a product in car stock
+  const getCarStockQuantity = (productId: string): number => {
+    const inventoryItems = carInventory.filter(inv => inv.productId === productId);
+    return inventoryItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
   const handleSubmit = (data: ImplantReportData) => {
     const allMaterials = [...materials, ...leads, ...otherMaterials].filter(m => m.name.trim() !== '');
     
@@ -650,11 +656,14 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {deviceProducts.map(device => (
-                              <SelectItem key={device.id} value={device.id}>
-                                {device.name} ({device.modelNumber})
-                              </SelectItem>
-                            ))}
+                            {deviceProducts.map(device => {
+                              const carQty = getCarStockQuantity(device.id);
+                              return (
+                                <SelectItem key={device.id} value={device.id}>
+                                  {device.name} ({device.modelNumber}) - Car: {carQty}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                         <Button
