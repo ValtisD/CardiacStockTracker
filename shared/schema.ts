@@ -40,10 +40,9 @@ export const inventory = pgTable("inventory", {
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
 
-// Hospitals/Customers - user-specific
+// Hospitals/Customers - global (shared across all users)
 export const hospitals = pgTable("hospitals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: text("user_id").notNull(), // Auth0 user ID
   name: text("name").notNull(),
   address: text("address").notNull(),
   city: text("city").notNull(),
@@ -148,7 +147,7 @@ export const insertUserProductSettingsSchema = createInsertSchema(userProductSet
 
 // Update schemas (for PATCH endpoints - all fields optional)
 export const updateProductSchema = insertProductSchema.partial();
-export const updateHospitalSchema = insertHospitalSchema.omit({ userId: true }).partial();
+export const updateHospitalSchema = insertHospitalSchema.partial();
 
 // Inventory operation schemas
 export const updateInventoryQuantitySchema = z.object({
@@ -172,7 +171,7 @@ export const toggleAdminSchema = z.object({
 
 // Client-side schemas (for forms - userId added server-side)
 export const clientInsertInventorySchema = insertInventorySchema.omit({ userId: true });
-export const clientInsertHospitalSchema = insertHospitalSchema.omit({ userId: true });
+export const clientInsertHospitalSchema = insertHospitalSchema; // Hospitals are now global - no userId to omit
 export const clientInsertImplantProcedureSchema = insertImplantProcedureSchema.omit({ userId: true });
 export const clientInsertStockTransferSchema = insertStockTransferSchema.omit({ userId: true });
 export const clientInsertUserProductSettingsSchema = insertUserProductSettingsSchema.omit({ userId: true });
