@@ -15,10 +15,13 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   if (getAccessToken) {
     try {
       const token = await getAccessToken();
+      console.log("Access token retrieved:", token ? `${token.substring(0, 20)}...` : "null");
       headers["Authorization"] = `Bearer ${token}`;
     } catch (error) {
       console.error("Failed to get access token:", error);
     }
+  } else {
+    console.warn("No token provider configured");
   }
   
   return headers;
