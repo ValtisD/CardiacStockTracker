@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from 'react-i18next';
 import { Package, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -24,6 +25,7 @@ interface InventorySummaryProps {
 }
 
 export default function InventorySummary({ location }: InventorySummaryProps) {
+  const { t } = useTranslation();
   const { data: summaryData, isLoading } = useQuery<InventorySummary[]>({
     queryKey: [`/api/inventory/summary?location=${location}`],
     refetchOnWindowFocus: true,

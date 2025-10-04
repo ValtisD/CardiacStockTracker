@@ -10,6 +10,7 @@ import { Moon, Sun, LogOut } from "lucide-react";
 import type { Inventory } from "@shared/schema";
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
+import { useTranslation } from "react-i18next";
 
 // Components
 import AppHeader from "@/components/AppHeader";
@@ -52,6 +53,7 @@ function ThemeToggle() {
 // User menu component
 function UserMenu() {
   const { user, logout } = useAuth0();
+  const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-2">
@@ -65,7 +67,7 @@ function UserMenu() {
         data-testid="button-logout"
       >
         <LogOut className="h-4 w-4 mr-2" />
-        Logout
+        {t('common.logout')}
       </Button>
     </div>
   );
@@ -74,20 +76,21 @@ function UserMenu() {
 // Login page
 function LoginPage() {
   const { loginWithRedirect } = useAuth0();
+  const { t } = useTranslation();
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="text-center space-y-6 max-w-md mx-auto p-8">
-        <h1 className="text-4xl font-bold">CRM Inventory</h1>
+        <h1 className="text-4xl font-bold">{t('app.title')}</h1>
         <p className="text-muted-foreground">
-          Medical device inventory management for cardiac rhythm management field engineers
+          {t('app.description')}
         </p>
         <Button
           onClick={() => loginWithRedirect()}
           size="lg"
           data-testid="button-login"
         >
-          Login to Continue
+          {t('app.loginButton')}
         </Button>
       </div>
     </div>
@@ -135,6 +138,7 @@ function HospitalsPage() {
 
 function ImplantReportsPage() {
   const [showNewReport, setShowNewReport] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmitSuccess = () => {
     setShowNewReport(false);
@@ -152,9 +156,9 @@ function ImplantReportsPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">Implant Reports</h2>
+        <h2 className="text-2xl font-semibold">{t('procedures.title')}</h2>
         <Button onClick={() => setShowNewReport(true)} data-testid="button-new-report">
-          New Report
+          {t('procedures.addProcedure')}
         </Button>
       </div>
       <ImplantProceduresList />
@@ -165,6 +169,7 @@ function ImplantReportsPage() {
 function ProductsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const { user } = useAuth0();
+  const { t } = useTranslation();
   
   const adminEmail = import.meta.env.VITE_AUTH0_ADMIN_EMAIL || import.meta.env.AUTH0_ADMIN_EMAIL;
   const isAdmin = user?.email === adminEmail;
@@ -187,10 +192,10 @@ function ProductsPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">Product Management</h2>
+        <h2 className="text-2xl font-semibold">{t('products.title')}</h2>
         {isAdmin && (
           <Button onClick={() => setShowAddForm(true)} data-testid="button-add-product">
-            Add Product
+            {t('products.addProduct')}
           </Button>
         )}
       </div>
@@ -200,12 +205,14 @@ function ProductsPage() {
 }
 
 function AnalyticsPage() {
+  const { t } = useTranslation();
+  
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Analytics & Reports</h2>
+      <h2 className="text-2xl font-semibold mb-6">{t('analytics.title')}</h2>
       <div className="text-center py-12 text-muted-foreground">
-        <p>Analytics dashboard will be displayed here.</p>
-        <p className="text-sm mt-2">View usage patterns, inventory trends, and procedure statistics.</p>
+        <p>{t('analytics.comingSoon')}</p>
+        <p className="text-sm mt-2">{t('analytics.description')}</p>
       </div>
     </div>
   );

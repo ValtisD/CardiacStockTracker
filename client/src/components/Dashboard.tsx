@@ -17,6 +17,7 @@ import type { Inventory, ImplantProcedure, Product, Hospital as HospitalType } f
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from 'react-i18next';
 
 interface InventoryWithProduct extends Inventory {
   product?: Product;
@@ -27,6 +28,7 @@ interface ImplantProcedureWithHospital extends ImplantProcedure {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [showProceduresDialog, setShowProceduresDialog] = useState(false);
   const [showExpiringReport, setShowExpiringReport] = useState(false);
@@ -90,18 +92,18 @@ export default function Dashboard() {
     return (
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Dashboard</h2>
+          <h2 className="text-2xl font-semibold">{t('dashboard.title')}</h2>
         </div>
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Error Loading Dashboard
+              {t('dashboard.errorLoadingDashboard')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Unable to load dashboard data. Please try again later.
+              {t('dashboard.unableToLoadData')}
             </p>
           </CardContent>
         </Card>
@@ -112,9 +114,9 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Dashboard</h2>
+        <h2 className="text-2xl font-semibold">{t('dashboard.title')}</h2>
         <Badge variant="secondary" data-testid="text-last-updated">
-          Last updated: {new Date().toLocaleDateString()}
+          {t('dashboard.lastUpdated')} {new Date().toLocaleDateString()}
         </Badge>
       </div>
 
@@ -122,7 +124,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="hover-elevate cursor-pointer" onClick={() => setLocation("/inventory/home")} data-testid="card-home-stock">
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Home Stock</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.homeStock')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -137,13 +139,13 @@ export default function Dashboard() {
             )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {isLoading ? (
-                <span>Loading...</span>
+                <span>{t('common.loading')}</span>
               ) : homeLowStockCount > 0 ? (
                 <Badge variant="destructive" className="text-xs">
-                  {homeLowStockCount} low stock
+                  {homeLowStockCount} {t('dashboard.lowStock').toLowerCase()}
                 </Badge>
               ) : (
-                <span className="text-green-600">All items in stock</span>
+                <span className="text-green-600">{t('dashboard.allItemsInStock')}</span>
               )}
             </div>
           </CardContent>
@@ -151,7 +153,7 @@ export default function Dashboard() {
 
         <Card className="hover-elevate cursor-pointer" onClick={() => setLocation("/inventory/car")} data-testid="card-car-stock">
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Car Stock</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.carStock')}</CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -166,13 +168,13 @@ export default function Dashboard() {
             )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {isLoading ? (
-                <span>Loading...</span>
+                <span>{t('common.loading')}</span>
               ) : carLowStockCount > 0 ? (
                 <Badge variant="destructive" className="text-xs">
-                  {carLowStockCount} low stock
+                  {carLowStockCount} {t('dashboard.lowStock').toLowerCase()}
                 </Badge>
               ) : (
-                <span className="text-green-600">All items ready</span>
+                <span className="text-green-600">{t('dashboard.allItemsReady')}</span>
               )}
             </div>
           </CardContent>
@@ -182,7 +184,7 @@ export default function Dashboard() {
           <DialogTrigger asChild>
             <Card className="hover-elevate cursor-pointer" data-testid="card-recent-procedures">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Recent Procedures</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('dashboard.recentProcedures')}</CardTitle>
                 <Hospital className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -196,18 +198,18 @@ export default function Dashboard() {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Last 30 days
+                  {t('dashboard.last30Days')}
                 </p>
               </CardContent>
             </Card>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Recent Procedures (Last 30 Days)</DialogTitle>
+              <DialogTitle>{t('dashboard.recentProceduresDialog')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               {recentProcedures.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No procedures in the last 30 days</p>
+                <p className="text-center text-muted-foreground py-8">{t('dashboard.noProceduresLast30Days')}</p>
               ) : (
                 recentProcedures.map((procedure) => (
                   <Card key={procedure.id} data-testid={`card-procedure-${procedure.id}`}>
@@ -223,14 +225,9 @@ export default function Dashboard() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {procedure.patientId && (
-                        <div className="text-sm">
-                          <span className="font-medium">Patient ID:</span> {procedure.patientId}
-                        </div>
-                      )}
                       {procedure.notes && (
                         <div className="text-sm">
-                          <span className="font-medium">Notes:</span> {procedure.notes}
+                          <span className="font-medium">{t('procedures.notes')}:</span> {procedure.notes}
                         </div>
                       )}
                     </CardContent>
@@ -245,7 +242,7 @@ export default function Dashboard() {
           <DialogTrigger asChild>
             <Card className="hover-elevate cursor-pointer" data-testid="card-expiring-soon">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('dashboard.expiringSoon')}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -259,7 +256,7 @@ export default function Dashboard() {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Next 90 days
+                  {t('dashboard.next90Days')}
                 </p>
               </CardContent>
             </Card>
@@ -267,7 +264,7 @@ export default function Dashboard() {
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
-                Expiring Products Report (Next 90 Days)
+                {t('dashboard.expiringReportTitle')}
                 <Button
                   size="sm"
                   variant="outline"
@@ -275,10 +272,10 @@ export default function Dashboard() {
                     const doc = new jsPDF();
                     
                     doc.setFontSize(18);
-                    doc.text("Expiring Products Report", 14, 20);
+                    doc.text(t('dashboard.expiringReportTitle'), 14, 20);
                     doc.setFontSize(11);
-                    doc.text(`Generated: ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
-                    doc.text("Products expiring in the next 90 days", 14, 34);
+                    doc.text(`${t('dashboard.generated')} ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
+                    doc.text(t('dashboard.productsExpiringNext90Days'), 14, 34);
                     
                     const tableData = expiringItems.map(item => {
                       const daysUntil = Math.ceil((new Date(item.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -295,7 +292,7 @@ export default function Dashboard() {
                     
                     autoTable(doc, {
                       startY: 40,
-                      head: [['Product', 'Model', 'GTIN', 'Location', 'Qty', 'Expiration', 'Days']],
+                      head: [[t('dashboard.tableProduct'), t('dashboard.tableModel'), t('dashboard.tableGtin'), t('dashboard.tableLocation'), t('dashboard.tableQty'), t('dashboard.tableExpiration'), t('dashboard.tableDays')]],
                       body: tableData,
                       theme: 'striped',
                       headStyles: { fillColor: [59, 130, 246] },
@@ -316,13 +313,13 @@ export default function Dashboard() {
                   data-testid="button-export-expiring"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Export PDF
+                  {t('dashboard.exportPdf')}
                 </Button>
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               {expiringItems.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No items expiring in the next 90 days</p>
+                <p className="text-center text-muted-foreground py-8">{t('dashboard.noExpiringItems')}</p>
               ) : (
                 expiringItems.map((item) => {
                   const daysUntil = Math.ceil((new Date(item.expirationDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -333,12 +330,12 @@ export default function Dashboard() {
                           <div className="flex-1">
                             <CardTitle className="text-base">{item.product?.name}</CardTitle>
                             <p className="text-sm text-muted-foreground">
-                              Model: {item.product?.modelNumber}
+                              {t('dashboard.model')} {item.product?.modelNumber}
                             </p>
                           </div>
                           <div className="text-right">
                             <Badge variant={daysUntil < 30 ? "destructive" : "secondary"}>
-                              {daysUntil} days
+                              {daysUntil} {t('dashboard.days')}
                             </Badge>
                             <p className="text-xs text-muted-foreground mt-1">{item.location}</p>
                           </div>
@@ -346,24 +343,24 @@ export default function Dashboard() {
                       </CardHeader>
                       <CardContent className="space-y-1 text-sm">
                         <div>
-                          <span className="font-medium">Expires:</span> {format(new Date(item.expirationDate!), "MMM dd, yyyy")}
+                          <span className="font-medium">{t('dashboard.expires')}</span> {format(new Date(item.expirationDate!), "MMM dd, yyyy")}
                         </div>
                         <div>
-                          <span className="font-medium">Quantity:</span> {item.quantity}
+                          <span className="font-medium">{t('inventory.quantity')}:</span> {item.quantity}
                         </div>
                         {item.serialNumber && (
                           <div>
-                            <span className="font-medium">Serial:</span> {item.serialNumber}
+                            <span className="font-medium">{t('inventory.serial')}:</span> {item.serialNumber}
                           </div>
                         )}
                         {item.lotNumber && (
                           <div>
-                            <span className="font-medium">Lot:</span> {item.lotNumber}
+                            <span className="font-medium">{t('inventory.lot')}:</span> {item.lotNumber}
                           </div>
                         )}
                         {item.product?.gtin && (
                           <div>
-                            <span className="font-medium">GTIN:</span> {item.product.gtin}
+                            <span className="font-medium">{t('products.gtin')}:</span> {item.product.gtin}
                           </div>
                         )}
                       </CardContent>
@@ -381,26 +378,26 @@ export default function Dashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Quick Actions
+            {t('dashboard.quickActions')}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/reports">
             <Button className="justify-start gap-2 w-full" data-testid="button-new-implant-report">
               <Calendar className="h-4 w-4" />
-              New Implant Report
+              {t('dashboard.newImplantReport')}
             </Button>
           </Link>
           <Link href="/products">
             <Button variant="outline" className="justify-start gap-2 w-full" data-testid="button-add-product">
               <Plus className="h-4 w-4" />
-              Add New Product
+              {t('dashboard.addNewProduct')}
             </Button>
           </Link>
           <Link href="/hospitals">
             <Button variant="outline" className="justify-start gap-2 w-full" data-testid="button-add-hospital">
               <Building2 className="h-4 w-4" />
-              Add New Hospital
+              {t('dashboard.addNewHospital')}
             </Button>
           </Link>
           <Button 
@@ -415,10 +412,10 @@ export default function Dashboard() {
               const doc = new jsPDF();
               
               doc.setFontSize(18);
-              doc.text("Car Stock Transfer Report", 14, 20);
+              doc.text(t('dashboard.carStockTransferReportTitle'), 14, 20);
               doc.setFontSize(11);
-              doc.text(`Generated: ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
-              doc.text("Items to transfer from home stock to car", 14, 34);
+              doc.text(`${t('dashboard.generated')} ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
+              doc.text(t('dashboard.itemsToTransfer'), 14, 34);
               
               const tableData = carLowStock.map(item => {
                 const minCarStock = (item as any).userSettings?.minCarStock || 0;
@@ -435,7 +432,7 @@ export default function Dashboard() {
               
               autoTable(doc, {
                 startY: 40,
-                head: [['Product', 'Model', 'GTIN', 'Cur', 'Min', 'Xfer']],
+                head: [[t('dashboard.tableProduct'), t('dashboard.tableModel'), t('dashboard.tableGtin'), t('dashboard.tableCur'), t('dashboard.tableMin'), t('dashboard.tableXfer')]],
                 body: tableData,
                 theme: 'striped',
                 headStyles: { fillColor: [59, 130, 246] },
@@ -455,7 +452,7 @@ export default function Dashboard() {
             disabled={!carLowStock || carLowStock.length === 0}
           >
             <Car className="h-4 w-4" />
-            Car Stock Report
+            {t('dashboard.carStockReport')}
           </Button>
           <Button 
             variant="outline" 
@@ -470,10 +467,10 @@ export default function Dashboard() {
               const doc = new jsPDF();
               
               doc.setFontSize(18);
-              doc.text("Home Stock Reorder Report", 14, 20);
+              doc.text(t('dashboard.homeStockReorderReportTitle'), 14, 20);
               doc.setFontSize(11);
-              doc.text(`Generated: ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
-              doc.text("Items to reorder from suppliers", 14, 34);
+              doc.text(`${t('dashboard.generated')} ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
+              doc.text(t('dashboard.itemsToReorder'), 14, 34);
               
               const tableData = homeLowStock.map(item => {
                 const minTotalStock = (item as any).userSettings?.minTotalStock || 0;
@@ -490,7 +487,7 @@ export default function Dashboard() {
               
               autoTable(doc, {
                 startY: 40,
-                head: [['Product', 'Model', 'GTIN', 'Cur', 'Min', 'Reord']],
+                head: [[t('dashboard.tableProduct'), t('dashboard.tableModel'), t('dashboard.tableGtin'), t('dashboard.tableCur'), t('dashboard.tableMin'), t('dashboard.tableReord')]],
                 body: tableData,
                 theme: 'striped',
                 headStyles: { fillColor: [239, 68, 68] },
@@ -511,27 +508,27 @@ export default function Dashboard() {
               const itemsList = homeLowStock.map(item => {
                 const minTotalStock = (item as any).userSettings?.minTotalStock || 0;
                 const reorderQty = Math.max(0, minTotalStock - item.quantity);
-                return `${item.product?.modelNumber || 'N/A'} - ${reorderQty} Stück`;
+                return `${item.product?.modelNumber || 'N/A'} - ${reorderQty} ${t('dashboard.emailPieces')}`;
               }).join('\n');
               
-              const emailText = `Guten Tag,
+              const emailText = `${t('dashboard.emailGreeting')}
 
-bitte folgendes Material für mein Konsilager nachbestellen:
+${t('dashboard.emailPleaseReorder')}
 
 ${itemsList}
 
-Mit freundlichen Grüßen,`;
+${t('dashboard.emailClosing')}`;
               
               // Copy to clipboard
               navigator.clipboard.writeText(emailText).then(() => {
                 toast({
-                  title: "Email text copied",
-                  description: "The reorder text has been copied to your clipboard.",
+                  title: t('dashboard.emailTextCopied'),
+                  description: t('dashboard.reorderTextCopied'),
                 });
               }).catch((err) => {
                 toast({
-                  title: "Failed to copy",
-                  description: "Could not copy text to clipboard.",
+                  title: t('dashboard.failedToCopy'),
+                  description: t('dashboard.couldNotCopy'),
                   variant: "destructive"
                 });
               });
@@ -539,7 +536,7 @@ Mit freundlichen Grüßen,`;
             disabled={!homeLowStock || homeLowStock.length === 0}
           >
             <Mail className="h-4 w-4" />
-            Home Stock Report
+            {t('dashboard.homeStockReport')}
           </Button>
         </CardContent>
       </Card>
@@ -550,27 +547,27 @@ Mit freundlichen Grüßen,`;
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Low Stock Alerts
+              {t('dashboard.lowStockAlerts')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {homeLowStockCount > 0 && (
                 <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-md">
-                  <span className="text-sm">Home inventory has {homeLowStockCount} items running low</span>
+                  <span className="text-sm">{t('dashboard.homeInventoryLowCount', { count: homeLowStockCount })}</span>
                   <Link href="/inventory/home">
                     <Button size="sm" variant="destructive" data-testid="button-view-home-alerts">
-                      View Items
+                      {t('dashboard.viewItems')}
                     </Button>
                   </Link>
                 </div>
               )}
               {carLowStockCount > 0 && (
                 <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-md">
-                  <span className="text-sm">Car inventory needs restocking: {carLowStockCount} items</span>
+                  <span className="text-sm">{t('dashboard.carInventoryLowCount', { count: carLowStockCount })}</span>
                   <Link href="/inventory/car">
                     <Button size="sm" variant="destructive" data-testid="button-view-car-alerts">
-                      Restock Now
+                      {t('dashboard.restockNow')}
                     </Button>
                   </Link>
                 </div>
