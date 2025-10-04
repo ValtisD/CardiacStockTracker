@@ -52,10 +52,11 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
     return location === 'car' ? settings.minCarStock : settings.minTotalStock;
   };
 
-  // Filter out products with minTotalStock set to 0 (products no longer needed)
+  // Filter: only show products with settings where minTotalStock > 0
+  // Products without settings are hidden (new users don't see unconfigured products)
   const filteredSummaryData = summaryData?.filter(item => {
     const settings = userSettings?.find(s => s.productId === item.product.id);
-    if (!settings) return true; // Show products without settings
+    if (!settings) return false; // Hide products without settings
     return settings.minTotalStock > 0; // Only show products with minTotalStock > 0
   });
 
