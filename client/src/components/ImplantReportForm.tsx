@@ -9,6 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -27,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Hospital, Product, Inventory, InsertProcedureMaterial } from "@shared/schema";
+import { clientInsertHospitalSchema } from "@shared/schema";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import { GS1Data } from "@/lib/gs1Parser";
 
@@ -67,6 +74,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [scanningItem, setScanningItem] = useState<{ type: 'materials' | 'leads' | 'others' | 'device', id: string } | null>(null);
   const [scannedDeviceId, setScannedDeviceId] = useState<string>('');
+  const [isAddHospitalDialogOpen, setIsAddHospitalDialogOpen] = useState(false);
 
   const [materials, setMaterials] = useState<MaterialItem[]>([
     { id: '1', name: '', quantity: 1, source: 'car' },
@@ -121,6 +129,33 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       toast({
         title: "Error",
         description: error.message || "Failed to save implant procedure report",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createHospitalMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof clientInsertHospitalSchema>) => {
+      const res = await apiRequest("POST", "/api/hospitals", data);
+      return res.json();
+    },
+    onSuccess: (data: Hospital) => {
+      // Optimistically add the new hospital to the query data
+      queryClient.setQueryData<Hospital[]>(["/api/hospitals"], (old = []) => [...old, data]);
+      
+      toast({
+        title: "Success",
+        description: "Hospital added successfully",
+      });
+      setIsAddHospitalDialogOpen(false);
+      
+      // Set the newly created hospital as selected
+      form.setValue('hospitalId', data.id);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add hospital",
         variant: "destructive",
       });
     },
@@ -566,20 +601,31 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Hospital/Facility</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-hospital">
-                            <SelectValue placeholder="Select hospital" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {hospitals.map(hospital => (
-                            <SelectItem key={hospital.id} value={hospital.id}>
-                              {hospital.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-hospital" className="flex-1">
+                              <SelectValue placeholder="Select hospital" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {hospitals.map(hospital => (
+                              <SelectItem key={hospital.id} value={hospital.id}>
+                                {hospital.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          onClick={() => setIsAddHospitalDialogOpen(true)}
+                          data-testid="button-add-hospital-inline"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -763,6 +809,198 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         onScanComplete={handleScanComplete}
         title="Scan Product Barcode"
       />
+
+      <Dialog open={isAddHospitalDialogOpen} onOpenChange={setIsAddHospitalDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Hospital</DialogTitle>
+          </DialogHeader>
+          <HospitalFormInline
+            onSubmit={(data) => createHospitalMutation.mutate(data)}
+            onCancel={() => setIsAddHospitalDialogOpen(false)}
+            isSubmitting={createHospitalMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+interface HospitalFormInlineProps {
+  onSubmit: (data: z.infer<typeof clientInsertHospitalSchema>) => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+}
+
+function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormInlineProps) {
+  const form = useForm<z.infer<typeof clientInsertHospitalSchema>>({
+    resolver: zodResolver(clientInsertHospitalSchema),
+    defaultValues: {
+      name: "",
+      address: "",
+      city: "",
+      zipCode: "",
+      primaryPhysician: undefined,
+      contactPhone: undefined,
+      notes: undefined,
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hospital Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., St. Mary's Medical Center"
+                  {...field}
+                  data-testid="input-inline-hospital-name"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., 123 Healthcare Blvd"
+                  {...field}
+                  data-testid="input-inline-hospital-address"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="zipCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Zip Code</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., 10115"
+                    {...field}
+                    data-testid="input-inline-hospital-zipcode"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Berlin"
+                    {...field}
+                    data-testid="input-inline-hospital-city"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="primaryPhysician"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Primary Physician (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Dr. Sarah Johnson"
+                    {...field}
+                    value={field.value || ""}
+                    data-testid="input-inline-hospital-physician"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="contactPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contact Phone (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., (555) 123-4567"
+                    {...field}
+                    value={field.value || ""}
+                    data-testid="input-inline-hospital-phone"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes (Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Additional notes about this facility..."
+                  {...field}
+                  value={field.value || ""}
+                  data-testid="input-inline-hospital-notes"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-4 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            data-testid="button-cancel-inline-hospital"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            data-testid="button-save-inline-hospital"
+          >
+            {isSubmitting ? "Saving..." : "Add Hospital"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
