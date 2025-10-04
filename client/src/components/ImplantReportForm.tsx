@@ -104,9 +104,9 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/implant-procedures'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/inventory/summary'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/inventory/low-stock'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
       
       toast({
         title: "Success",

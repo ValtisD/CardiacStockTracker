@@ -77,9 +77,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
       toast({
         title: "Transfer successful",
         description: "Stock has been transferred successfully.",
@@ -102,9 +102,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       return await apiRequest('PATCH', `/api/inventory/item/${id}`, { quantity });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
       toast({
         title: "Quantity updated",
         description: "Inventory quantity has been updated successfully.",
@@ -126,9 +126,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       return await apiRequest('DELETE', `/api/inventory/item/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
       toast({
         title: "Item deleted",
         description: "Inventory item has been deleted successfully.",
@@ -155,9 +155,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
       setShowTransferDialog(false);
       setTransferItem(null);
       setTransferQuantity('');

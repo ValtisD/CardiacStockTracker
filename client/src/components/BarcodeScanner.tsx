@@ -70,9 +70,9 @@ export default function BarcodeScanner({
       return await apiRequest('PATCH', `/api/inventory/${data.productId}/${data.location}`, { quantity: data.quantity });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/inventory/summary'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/inventory/low-stock'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
       setShowInventoryUpdate(false);
       setQuantityAdjustment('');
       setSelectedLocation('');

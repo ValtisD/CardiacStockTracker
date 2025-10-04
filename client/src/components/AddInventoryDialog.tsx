@@ -87,9 +87,9 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       return await apiRequest('POST', '/api/inventory', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory/low-stock"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
       toast({
         title: "Item added",
         description: "Inventory item has been added successfully.",
