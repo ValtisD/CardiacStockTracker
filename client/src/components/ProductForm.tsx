@@ -36,8 +36,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       gtin: product?.gtin || "",
       modelNumber: product?.modelNumber || "",
       name: product?.name || "",
-      minCarStock: product?.minCarStock || 0,
-      minTotalStock: product?.minTotalStock || 0,
     },
   });
 
@@ -180,48 +178,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                       placeholder="e.g., Medtronic Azure Pacemaker" 
                       {...field} 
                       data-testid="input-product-name"
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="minCarStock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Minimum Car Stock</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      placeholder="0" 
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      data-testid="input-min-car-stock"
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="minTotalStock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Minimum Total Stock</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number"
-                      placeholder="0" 
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      data-testid="input-min-total-stock"
                       disabled={isSubmitting}
                     />
                   </FormControl>
