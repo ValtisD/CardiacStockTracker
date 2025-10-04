@@ -186,6 +186,7 @@
     "stockByModelNumber": "Stock by Model Number",
     "currentQuantity": "Current Quantity",
     "minimumQuantity": "Minimum Quantity",
+    "model": "Model",
     "modelNumber": "Model Number",
     "productName": "Product Name",
     "gtin": "GTIN",
