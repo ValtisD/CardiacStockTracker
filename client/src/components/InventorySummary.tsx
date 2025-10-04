@@ -52,6 +52,13 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
     return location === 'car' ? settings.minCarStock : settings.minTotalStock;
   };
 
+  // Filter out products with minTotalStock set to 0 (products no longer needed)
+  const filteredSummaryData = summaryData?.filter(item => {
+    const settings = userSettings?.find(s => s.productId === item.product.id);
+    if (!settings) return true; // Show products without settings
+    return settings.minTotalStock > 0; // Only show products with minTotalStock > 0
+  });
+
   if (isLoading) {
     return (
       <Card>
@@ -68,7 +75,7 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
     );
   }
 
-  if (!summaryData || summaryData.length === 0) {
+  if (!filteredSummaryData || filteredSummaryData.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -106,7 +113,7 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {summaryData.map((item) => (
+            {filteredSummaryData.map((item) => (
               <TableRow key={item.product.id} data-testid={`row-summary-${item.product.id}`}>
                 <TableCell className="font-medium" data-testid={`text-model-${item.product.id}`}>
                   {item.product.modelNumber}
