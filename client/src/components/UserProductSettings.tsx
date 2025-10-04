@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Settings, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ interface SettingsFormData {
 }
 
 export default function UserProductSettings() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [pendingChanges, setPendingChanges] = useState<Map<string, SettingsFormData>>(new Map());
   const [savingProductId, setSavingProductId] = useState<string | null>(null);
@@ -48,8 +50,8 @@ export default function UserProductSettings() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user-product-settings"] });
       toast({
-        title: "Success",
-        description: "Stock thresholds updated successfully",
+        title: t("common.success"),
+        description: t("settings.thresholdsUpdated"),
       });
       // Clear pending changes only after successful save
       const newChanges = new Map(pendingChanges);
@@ -59,8 +61,8 @@ export default function UserProductSettings() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update stock thresholds",
+        title: t("common.error"),
+        description: error.message || t("settings.updateFailed"),
         variant: "destructive",
       });
       setSavingProductId(null);
@@ -104,7 +106,7 @@ export default function UserProductSettings() {
   if (productsLoading || settingsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading settings...</p>
+        <p className="text-muted-foreground">{t("settings.loading")}</p>
       </div>
     );
   }
@@ -113,8 +115,8 @@ export default function UserProductSettings() {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Settings className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-        <p>No products available.</p>
-        <p className="text-sm mt-2">Products must be added by an administrator before you can configure stock thresholds.</p>
+        <p>{t("settings.noProducts")}</p>
+        <p className="text-sm mt-2">{t("settings.noProductsHelp")}</p>
       </div>
     );
   }
@@ -124,21 +126,21 @@ export default function UserProductSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Stock Alert Thresholds
+          {t("settings.title")}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Configure minimum stock levels for each product. You'll receive alerts when stock falls below these thresholds.
+          {t("settings.description")}
         </p>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Model Number</TableHead>
-              <TableHead className="text-center">Min Car Stock</TableHead>
-              <TableHead className="text-center">Min Total Stock</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("settings.product")}</TableHead>
+              <TableHead>{t("settings.modelNumber")}</TableHead>
+              <TableHead className="text-center">{t("settings.minCarStock")}</TableHead>
+              <TableHead className="text-center">{t("settings.minTotalStock")}</TableHead>
+              <TableHead className="text-right">{t("common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -184,7 +186,7 @@ export default function UserProductSettings() {
                     data-testid={`button-save-${product.id}`}
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    {savingProductId === product.id ? "Saving..." : "Save"}
+                    {savingProductId === product.id ? t("settings.saving") : t("common.save")}
                   </Button>
                 </TableCell>
               </TableRow>

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Heart, Calendar, Building2, Plus, Minus, Scan, AlertCircle, X } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,16 +38,16 @@ import { clientInsertHospitalSchema } from "@shared/schema";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import { GS1Data } from "@/lib/gs1Parser";
 
-const implantReportSchema = z.object({
-  hospitalId: z.string().min(1, "Hospital is required"),
-  implantDate: z.string().min(1, "Implant date is required"),
-  procedureType: z.string().min(1, "Procedure type is required"),
+const getImplantReportSchema = (t: any) => z.object({
+  hospitalId: z.string().min(1, t('procedures.hospitalRequired')),
+  implantDate: z.string().min(1, t('procedures.implantDateRequired')),
+  procedureType: z.string().min(1, t('procedures.procedureTypeRequired')),
   deviceUsed: z.string().optional(),
   deviceSerialNumber: z.string().optional(),
   notes: z.string().optional(),
 });
 
-type ImplantReportData = z.infer<typeof implantReportSchema>;
+type ImplantReportData = z.infer<ReturnType<typeof getImplantReportSchema>>;
 
 interface MaterialItem {
   id: string;
@@ -69,6 +70,7 @@ interface InventoryWithProduct extends Inventory {
 }
 
 export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportFormProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
@@ -117,8 +119,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       });
       
       toast({
-        title: "Success",
-        description: "Implant procedure report saved successfully",
+        title: t('common.success'),
+        description: t('procedures.reportSavedSuccess'),
       });
 
       if (onSubmit) {
@@ -127,8 +129,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save implant procedure report",
+        title: t('common.error'),
+        description: error.message || t('procedures.reportSaveFailed'),
         variant: "destructive",
       });
     },
@@ -144,8 +146,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       queryClient.setQueryData<Hospital[]>(["/api/hospitals"], (old = []) => [...old, data]);
       
       toast({
-        title: "Success",
-        description: "Hospital added successfully",
+        title: t('common.success'),
+        description: t('procedures.hospitalAddedSuccess'),
       });
       setIsAddHospitalDialogOpen(false);
       
@@ -154,15 +156,15 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to add hospital",
+        title: t('common.error'),
+        description: error.message || t('procedures.hospitalAddFailed'),
         variant: "destructive",
       });
     },
   });
 
   const form = useForm<ImplantReportData>({
-    resolver: zodResolver(implantReportSchema),
+    resolver: zodResolver(getImplantReportSchema(t)),
     defaultValues: {
       hospitalId: "",
       implantDate: new Date().toISOString().split('T')[0],
@@ -197,16 +199,16 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       const inventoryItem = carInventory.find(inv => inv.productId === material.productId);
       if (!inventoryItem) {
         toast({
-          title: "Stock Error",
-          description: `Product ${material.materialName} not found in car inventory`,
+          title: t('procedures.stockError'),
+          description: t('procedures.productNotFoundInCar', { product: material.materialName }),
           variant: "destructive",
         });
         return;
       }
       if (material.quantity && inventoryItem.quantity < material.quantity) {
         toast({
-          title: "Insufficient Stock",
-          description: `Not enough stock for ${material.materialName}. Available: ${inventoryItem.quantity}, Required: ${material.quantity}`,
+          title: t('procedures.insufficientStock'),
+          description: t('procedures.notEnoughStock', { product: material.materialName, available: inventoryItem.quantity, required: material.quantity }),
           variant: "destructive",
         });
         return;
@@ -313,13 +315,13 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
           : `${productInfo.name} set as primary device`;
         
         toast({
-          title: "Device Scanned",
+          title: t('procedures.deviceScanned'),
           description: toastDescription,
         });
       } else {
         toast({
-          title: "Product Not Found",
-          description: "Scanned product not found in database.",
+          title: t('procedures.productNotFound'),
+          description: t('procedures.scannedProductNotInDb'),
           variant: "destructive",
         });
       }
@@ -329,8 +331,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         // Check for duplicate serialized items if serial number is present
         if (gs1Data?.serialNumber && checkDuplicateSerial(gs1Data.serialNumber, type, id)) {
           toast({
-            title: "Duplicate Item",
-            description: `${productInfo.name} (Serial: ${gs1Data.serialNumber}) has already been added to this report.`,
+            title: t('procedures.duplicateItem'),
+            description: t('procedures.itemAlreadyAdded', { product: productInfo.name, serial: gs1Data.serialNumber }),
             variant: "destructive",
           });
           setScanningItem(null);
@@ -355,7 +357,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
           : `${productInfo.name} added successfully`;
         
         toast({
-          title: "Product Scanned",
+          title: t('procedures.productScanned'),
           description: toastDescription,
         });
       } else {
@@ -365,8 +367,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         updateMaterialItem(type, id, 'scanned', true);
         
         toast({
-          title: "Barcode Scanned",
-          description: "Product not found in database. Barcode added as product name.",
+          title: t('procedures.barcodeScanned'),
+          description: t('procedures.productNotFoundBarcodeAdded'),
           variant: "default",
         });
       }
@@ -435,12 +437,12 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                       }}
                     >
                       <SelectTrigger className="h-8" data-testid={`select-${type}-${item.id}-product`}>
-                        <SelectValue placeholder={`Select ${title.slice(0, -1).toLowerCase()} ${index + 1}`}>
-                          {item.name || `Select ${title.slice(0, -1).toLowerCase()} ${index + 1}`}
+                        <SelectValue placeholder={t('procedures.selectItem', { number: index + 1 })}>
+                          {item.name || t('procedures.selectItem', { number: index + 1 })}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="manual">Enter manually...</SelectItem>
+                        <SelectItem value="manual">{t('procedures.enterManually')}</SelectItem>
                         {filteredProducts.map(product => (
                           <SelectItem key={product.id} value={product.id}>
                             {product.name} ({product.modelNumber})
@@ -451,7 +453,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                     {!item.productId && (
                       <Input
                         className="mt-1 h-8"
-                        placeholder="Enter name manually"
+                        placeholder={t('procedures.enterNameManually')}
                         value={item.name}
                         onChange={(e) => updateMaterialItem(type, item.id, 'name', e.target.value)}
                         data-testid={`input-${type}-${item.id}-name`}
@@ -492,9 +494,9 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="car">Car Stock</SelectItem>
-                        <SelectItem value="external">External</SelectItem>
-                        <SelectItem value="hospital">Hospital</SelectItem>
+                        <SelectItem value="car">{t('procedures.carStock')}</SelectItem>
+                        <SelectItem value="external">{t('procedures.external')}</SelectItem>
+                        <SelectItem value="hospital">{t('procedures.hospitalStock')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -520,18 +522,18 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                       <X className="h-3 w-3" />
                     </Button>
                     {item.scanned && (
-                      <Badge variant="secondary" className="text-xs">Scanned</Badge>
+                      <Badge variant="secondary" className="text-xs">{t('procedures.scanned')}</Badge>
                     )}
                   </div>
                 </div>
                 {item.serialNumber && (
                   <div className="text-xs text-muted-foreground ml-1">
-                    Serial: {item.serialNumber}
+                    {t('procedures.serial')}: {item.serialNumber}
                   </div>
                 )}
                 {item.lotNumber && !item.serialNumber && (
                   <div className="text-xs text-muted-foreground ml-1">
-                    Lot: {item.lotNumber}
+                    {t('procedures.lot')}: {item.lotNumber}
                   </div>
                 )}
                 {item.source === 'car' && item.productId && (
@@ -540,12 +542,12 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                       <>
                         <AlertCircle className="h-3 w-3 text-destructive" />
                         <span className="text-destructive" data-testid={`text-stock-warning-${type}-${item.id}`}>
-                          Insufficient stock! Available: {availableQty}
+                          {t('procedures.insufficientStockAvailable', { qty: availableQty })}
                         </span>
                       </>
                     ) : (
                       <span className="text-muted-foreground" data-testid={`text-stock-available-${type}-${item.id}`}>
-                        Available in car: {availableQty}
+                        {t('procedures.availableInCar', { qty: availableQty })}
                       </span>
                     )}
                   </div>
@@ -588,7 +590,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5" />
-            Implant Procedure Report
+            {t('procedures.implantProcedureReport')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -600,12 +602,12 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   name="hospitalId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Hospital/Facility</FormLabel>
+                      <FormLabel>{t('procedures.hospitalFacility')}</FormLabel>
                       <div className="flex gap-2">
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-hospital" className="flex-1">
-                              <SelectValue placeholder="Select hospital" />
+                              <SelectValue placeholder={t('procedures.selectHospital')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -636,7 +638,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   name="implantDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Implant Date</FormLabel>
+                      <FormLabel>{t('procedures.implantDate')}</FormLabel>
                       <FormControl>
                         <Input 
                           type="date" 
@@ -656,19 +658,19 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   name="procedureType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Procedure Type</FormLabel>
+                      <FormLabel>{t('procedures.procedureType')}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-procedure-type">
-                            <SelectValue placeholder="Select procedure type" />
+                            <SelectValue placeholder={t('procedures.selectProcedureType')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Pacemaker">Pacemaker Implant</SelectItem>
-                          <SelectItem value="ICD">ICD Implant</SelectItem>
-                          <SelectItem value="CRT">CRT Implant</SelectItem>
-                          <SelectItem value="Replacement">Device Replacement</SelectItem>
-                          <SelectItem value="Lead_Revision">Lead Revision</SelectItem>
+                          <SelectItem value="Pacemaker">{t('procedures.pacemakerImplant')}</SelectItem>
+                          <SelectItem value="ICD">{t('procedures.icdImplant')}</SelectItem>
+                          <SelectItem value="CRT">{t('procedures.crtImplant')}</SelectItem>
+                          <SelectItem value="Replacement">{t('procedures.deviceReplacement')}</SelectItem>
+                          <SelectItem value="Lead_Revision">{t('procedures.leadRevision')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -681,7 +683,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   name="deviceUsed"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Primary Device</FormLabel>
+                      <FormLabel>{t('procedures.primaryDevice')}</FormLabel>
                       <div className="flex gap-2">
                         <Select 
                           onValueChange={(value) => {
@@ -691,14 +693,14 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                             if (serialNumber) {
                               form.setValue('deviceSerialNumber', serialNumber);
                             } else if (lotNumber) {
-                              form.setValue('deviceSerialNumber', `Lot: ${lotNumber}`);
+                              form.setValue('deviceSerialNumber', `${t('procedures.lot')}: ${lotNumber}`);
                             }
                           }} 
                           value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger data-testid="select-device">
-                              <SelectValue placeholder="Select device" />
+                              <SelectValue placeholder={t('procedures.selectDevice')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -706,7 +708,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                               const carQty = getCarStockQuantity(device.id);
                               return (
                                 <SelectItem key={device.id} value={device.id}>
-                                  {device.name} ({device.modelNumber}) - Car: {carQty}
+                                  {device.name} ({device.modelNumber}) - {t('procedures.car')}: {carQty}
                                 </SelectItem>
                               );
                             })}
@@ -724,7 +726,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                       </div>
                       {form.watch('deviceSerialNumber') && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          Serial: {form.watch('deviceSerialNumber')}
+                          {t('procedures.serial')}: {form.watch('deviceSerialNumber')}
                         </div>
                       )}
                       <FormMessage />
@@ -735,21 +737,21 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
 
               <div className="space-y-4">
                 <MaterialSection 
-                  title="Leads/Electrodes" 
+                  title={t('procedures.leadsElectrodes')} 
                   items={leads} 
                   type="leads"
                   icon={<Heart className="h-4 w-4" />}
                 />
                 
                 <MaterialSection 
-                  title="Materials" 
+                  title={t('procedures.materials')} 
                   items={materials} 
                   type="materials"
                   icon={<Building2 className="h-4 w-4" />}
                 />
                 
                 <MaterialSection 
-                  title="Other Items" 
+                  title={t('procedures.otherItems')} 
                   items={otherMaterials} 
                   type="others"
                   icon={<Plus className="h-4 w-4" />}
@@ -761,10 +763,10 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Procedure Notes</FormLabel>
+                    <FormLabel>{t('procedures.procedureNotes')}</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Additional notes about the procedure..."
+                        placeholder={t('procedures.procedureNotesPlaceholder')}
                         rows={4}
                         {...field} 
                         data-testid="input-procedure-notes"
@@ -784,7 +786,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                     disabled={createProcedureMutation.isPending}
                     data-testid="button-cancel-report"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 )}
                 <Button 
@@ -792,7 +794,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   disabled={createProcedureMutation.isPending}
                   data-testid="button-save-report"
                 >
-                  {createProcedureMutation.isPending ? "Saving..." : "Save Implant Report"}
+                  {createProcedureMutation.isPending ? t('common.saving') : t('procedures.saveImplantReport')}
                 </Button>
               </div>
             </form>
@@ -807,13 +809,13 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
           setScanningItem(null);
         }}
         onScanComplete={handleScanComplete}
-        title="Scan Product Barcode"
+        title={t('procedures.scanProductBarcode')}
       />
 
       <Dialog open={isAddHospitalDialogOpen} onOpenChange={setIsAddHospitalDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add New Hospital</DialogTitle>
+            <DialogTitle>{t('procedures.addNewHospital')}</DialogTitle>
           </DialogHeader>
           <HospitalFormInline
             onSubmit={(data) => createHospitalMutation.mutate(data)}
@@ -833,6 +835,7 @@ interface HospitalFormInlineProps {
 }
 
 function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormInlineProps) {
+  const { t } = useTranslation();
   const form = useForm<z.infer<typeof clientInsertHospitalSchema>>({
     resolver: zodResolver(clientInsertHospitalSchema),
     defaultValues: {
@@ -854,10 +857,10 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Hospital Name</FormLabel>
+              <FormLabel>{t('procedures.hospitalName')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., St. Mary's Medical Center"
+                  placeholder={t('procedures.hospitalNamePlaceholder')}
                   {...field}
                   data-testid="input-inline-hospital-name"
                 />
@@ -872,10 +875,10 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <FormLabel>{t('procedures.address')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., 123 Healthcare Blvd"
+                  placeholder={t('procedures.addressPlaceholder')}
                   {...field}
                   data-testid="input-inline-hospital-address"
                 />
@@ -891,10 +894,10 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
             name="zipCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Zip Code</FormLabel>
+                <FormLabel>{t('procedures.zipCode')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., 10115"
+                    placeholder={t('procedures.zipCodePlaceholder')}
                     {...field}
                     data-testid="input-inline-hospital-zipcode"
                   />
@@ -909,10 +912,10 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>City</FormLabel>
+                <FormLabel>{t('procedures.city')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., Berlin"
+                    placeholder={t('procedures.cityPlaceholder')}
                     {...field}
                     data-testid="input-inline-hospital-city"
                   />
@@ -929,10 +932,10 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
             name="primaryPhysician"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Primary Physician (Optional)</FormLabel>
+                <FormLabel>{t('procedures.primaryPhysicianOptional')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., Dr. Sarah Johnson"
+                    placeholder={t('procedures.physicianPlaceholder')}
                     {...field}
                     value={field.value || ""}
                     data-testid="input-inline-hospital-physician"
@@ -948,10 +951,10 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
             name="contactPhone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contact Phone (Optional)</FormLabel>
+                <FormLabel>{t('procedures.contactPhoneOptional')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., (555) 123-4567"
+                    placeholder={t('procedures.phonePlaceholder')}
                     {...field}
                     value={field.value || ""}
                     data-testid="input-inline-hospital-phone"
@@ -968,10 +971,10 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes (Optional)</FormLabel>
+              <FormLabel>{t('procedures.notesOptional')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Additional notes about this facility..."
+                  placeholder={t('procedures.hospitalNotesPlaceholder')}
                   {...field}
                   value={field.value || ""}
                   data-testid="input-inline-hospital-notes"
@@ -990,14 +993,14 @@ function HospitalFormInline({ onSubmit, onCancel, isSubmitting }: HospitalFormIn
             disabled={isSubmitting}
             data-testid="button-cancel-inline-hospital"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
             data-testid="button-save-inline-hospital"
           >
-            {isSubmitting ? "Saving..." : "Add Hospital"}
+            {isSubmitting ? t('common.saving') : t('procedures.addHospital')}
           </Button>
         </div>
       </form>

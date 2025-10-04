@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Package, Scan } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,7 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
@@ -46,8 +48,8 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     setShowBarcodeScanner(false);
     
     toast({
-      title: "Barcode scanned",
-      description: `GTIN: ${gtin}`,
+      title: t("products.barcodeScanned"),
+      description: `${t("products.gtin")}: ${gtin}`,
     });
   };
 
@@ -59,15 +61,15 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
-        title: "Success",
-        description: "Product created successfully",
+        title: t("common.success"),
+        description: t("products.createSuccess"),
       });
       if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create product",
+        title: t("common.error"),
+        description: error.message || t("products.createFailed"),
         variant: "destructive",
       });
     },
@@ -75,22 +77,22 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
   const updateMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
-      if (!product?.id) throw new Error("Product ID is required for updates");
+      if (!product?.id) throw new Error(t("products.productIdRequired"));
       const res = await apiRequest("PATCH", `/api/products/${product.id}`, data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
-        title: "Success",
-        description: "Product updated successfully",
+        title: t("common.success"),
+        description: t("products.updateSuccess"),
       });
       if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update product",
+        title: t("common.error"),
+        description: error.message || t("products.updateFailed"),
         variant: "destructive",
       });
     },
@@ -111,7 +113,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Package className="h-5 w-5" />
-          {product ? 'Edit Product' : 'Add New Product'}
+          {product ? t("products.editProduct") : t("products.addNewProduct")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -122,11 +124,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               name="gtin"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>GTIN</FormLabel>
+                  <FormLabel>{t("products.gtin")}</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
                       <Input 
-                        placeholder="e.g., 05414734218320" 
+                        placeholder={t("products.gtinPlaceholder")} 
                         {...field} 
                         data-testid="input-gtin"
                         disabled={isSubmitting}
@@ -153,10 +155,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               name="modelNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Model Number</FormLabel>
+                  <FormLabel>{t("products.modelNumber")}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g., XT1234" 
+                      placeholder={t("products.modelNumberPlaceholder")} 
                       {...field} 
                       data-testid="input-model-number"
                       disabled={isSubmitting}
@@ -172,10 +174,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Name</FormLabel>
+                  <FormLabel>{t("products.productName")}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g., Medtronic Azure Pacemaker" 
+                      placeholder={t("products.productNamePlaceholder")} 
                       {...field} 
                       data-testid="input-product-name"
                       disabled={isSubmitting}
@@ -195,7 +197,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                   data-testid="button-cancel"
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               )}
               <Button 
@@ -203,7 +205,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                 data-testid="button-save-product"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : (product ? 'Update Product' : 'Add Product')}
+                {isSubmitting ? t("products.saving") : (product ? t("products.updateProduct") : t("products.addProduct"))}
               </Button>
             </div>
           </form>
@@ -214,7 +216,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         isOpen={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
         onScanComplete={handleScanComplete}
-        title="Scan Product Barcode (GTIN)"
+        title={t("products.scanBarcodeTitle")}
       />
     </Card>
   );

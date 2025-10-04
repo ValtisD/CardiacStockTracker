@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslation } from 'react-i18next';
 import { Building2, Phone, MapPin, Plus, Edit, Search, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,7 @@ interface HospitalWithProcedures extends Hospital {
 }
 
 export default function HospitalManager() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
@@ -100,15 +102,15 @@ export default function HospitalManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/hospitals"] });
       toast({
-        title: "Success",
-        description: "Hospital added successfully",
+        title: t('common.success'),
+        description: t('hospitals.addedSuccess'),
       });
       setIsAddDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to add hospital",
+        title: t('common.error'),
+        description: error.message || t('hospitals.addFailed'),
         variant: "destructive",
       });
     },
@@ -123,15 +125,15 @@ export default function HospitalManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/hospitals"] });
       toast({
-        title: "Success",
-        description: "Hospital updated successfully",
+        title: t('common.success'),
+        description: t('hospitals.updatedSuccess'),
       });
       setEditingHospital(null);
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update hospital",
+        title: t('common.error'),
+        description: error.message || t('hospitals.updateFailed'),
         variant: "destructive",
       });
     },
@@ -145,15 +147,15 @@ export default function HospitalManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/hospitals"] });
       toast({
-        title: "Success",
-        description: "Hospital deleted successfully",
+        title: t('common.success'),
+        description: t('hospitals.deletedSuccess'),
       });
       setDeletingHospitalId(null);
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete hospital",
+        title: t('common.error'),
+        description: error.message || t('hospitals.deleteFailed'),
         variant: "destructive",
       });
       setDeletingHospitalId(null);
@@ -181,19 +183,19 @@ export default function HospitalManager() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
-              Hospital & Customer Management
-              <Badge variant="secondary">{filteredHospitals.length} facilities</Badge>
+              {t('hospitals.title')}
+              <Badge variant="secondary">{filteredHospitals.length} {t('hospitals.facilities')}</Badge>
             </CardTitle>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button data-testid="button-add-hospital">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Hospital
+                  {t('hospitals.addHospital')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Add New Hospital</DialogTitle>
+                  <DialogTitle>{t('hospitals.addNewHospital')}</DialogTitle>
                 </DialogHeader>
                 <HospitalForm
                   onSubmit={(data) => createMutation.mutate(data)}
@@ -210,7 +212,7 @@ export default function HospitalManager() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search hospitals, cities, or physicians..."
+                placeholder={t('hospitals.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -224,12 +226,12 @@ export default function HospitalManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Hospital</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Primary Physician</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead className="text-center">Recent Procedures</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('hospitals.hospital')}</TableHead>
+                  <TableHead>{t('hospitals.location')}</TableHead>
+                  <TableHead>{t('hospitals.primaryPhysician')}</TableHead>
+                  <TableHead>{t('hospitals.contact')}</TableHead>
+                  <TableHead className="text-center">{t('hospitals.recentProcedures')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,7 +303,7 @@ export default function HospitalManager() {
 
           {filteredHospitals.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              No hospitals found matching your search criteria.
+              {t('hospitals.noHospitalsFound')}
             </div>
           )}
 
@@ -310,7 +312,7 @@ export default function HospitalManager() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">{hospitalsWithProcedures.length}</div>
-                <p className="text-xs text-muted-foreground">Total Hospitals</p>
+                <p className="text-xs text-muted-foreground">{t('hospitals.totalHospitals')}</p>
               </CardContent>
             </Card>
             <Card>
@@ -318,7 +320,7 @@ export default function HospitalManager() {
                 <div className="text-2xl font-bold">
                   {hospitalsWithProcedures.reduce((sum, h) => sum + h.recentProcedures, 0)}
                 </div>
-                <p className="text-xs text-muted-foreground">Total Procedures (30 days)</p>
+                <p className="text-xs text-muted-foreground">{t('hospitals.totalProcedures30Days')}</p>
               </CardContent>
             </Card>
             <Card>
@@ -326,7 +328,7 @@ export default function HospitalManager() {
                 <div className="text-2xl font-bold">
                   {hospitalsWithProcedures.filter(h => h.recentProcedures > 0).length}
                 </div>
-                <p className="text-xs text-muted-foreground">Active Facilities</p>
+                <p className="text-xs text-muted-foreground">{t('hospitals.activeFacilities')}</p>
               </CardContent>
             </Card>
           </div>
@@ -338,7 +340,7 @@ export default function HospitalManager() {
         <Dialog open={!!editingHospital} onOpenChange={() => setEditingHospital(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Hospital</DialogTitle>
+              <DialogTitle>{t('hospitals.editHospital')}</DialogTitle>
             </DialogHeader>
             <HospitalForm
               initialData={editingHospital}
@@ -354,18 +356,18 @@ export default function HospitalManager() {
       <AlertDialog open={!!deletingHospitalId} onOpenChange={() => setDeletingHospitalId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('hospitals.deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this hospital. This action cannot be undone.
+              {t('hospitals.deleteConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deletingHospitalId && handleDelete(deletingHospitalId)}
               data-testid="button-confirm-delete"
             >
-              Delete
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -382,6 +384,7 @@ interface HospitalFormProps {
 }
 
 function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: HospitalFormProps) {
+  const { t } = useTranslation();
   const form = useForm<HospitalFormData>({
     resolver: zodResolver(clientInsertHospitalSchema),
     defaultValues: {
@@ -403,10 +406,10 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Hospital Name</FormLabel>
+              <FormLabel>{t('hospitals.hospitalName')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., St. Mary's Medical Center"
+                  placeholder={t('hospitals.hospitalNamePlaceholder')}
                   {...field}
                   data-testid="input-hospital-name"
                 />
@@ -421,10 +424,10 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <FormLabel>{t('hospitals.address')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., 123 Healthcare Blvd"
+                  placeholder={t('hospitals.addressPlaceholder')}
                   {...field}
                   data-testid="input-hospital-address"
                 />
@@ -440,10 +443,10 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
             name="zipCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Zip Code</FormLabel>
+                <FormLabel>{t('hospitals.zipCode')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., 10115"
+                    placeholder={t('hospitals.zipCodePlaceholder')}
                     {...field}
                     data-testid="input-hospital-zipcode"
                   />
@@ -458,10 +461,10 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>City</FormLabel>
+                <FormLabel>{t('hospitals.city')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., Berlin"
+                    placeholder={t('hospitals.cityPlaceholder')}
                     {...field}
                     data-testid="input-hospital-city"
                   />
@@ -478,10 +481,10 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
             name="primaryPhysician"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Primary Physician (Optional)</FormLabel>
+                <FormLabel>{t('hospitals.primaryPhysicianOptional')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., Dr. Sarah Johnson"
+                    placeholder={t('hospitals.physicianPlaceholder')}
                     {...field}
                     value={field.value || ""}
                     data-testid="input-hospital-physician"
@@ -497,10 +500,10 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
             name="contactPhone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contact Phone (Optional)</FormLabel>
+                <FormLabel>{t('hospitals.contactPhoneOptional')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="e.g., (555) 123-4567"
+                    placeholder={t('hospitals.phonePlaceholder')}
                     {...field}
                     value={field.value || ""}
                     data-testid="input-hospital-phone"
@@ -517,10 +520,10 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes (Optional)</FormLabel>
+              <FormLabel>{t('hospitals.notesOptional')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Additional notes about this facility..."
+                  placeholder={t('hospitals.notesPlaceholder')}
                   {...field}
                   value={field.value || ""}
                   data-testid="input-hospital-notes"
@@ -539,14 +542,14 @@ function HospitalForm({ initialData, onSubmit, onCancel, isSubmitting }: Hospita
             disabled={isSubmitting}
             data-testid="button-cancel-form"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
             data-testid="button-save-hospital"
           >
-            {isSubmitting ? "Saving..." : initialData ? "Update Hospital" : "Add Hospital"}
+            {isSubmitting ? t('hospitals.saving') : initialData ? t('hospitals.updateHospital') : t('hospitals.addHospital')}
           </Button>
         </div>
       </form>

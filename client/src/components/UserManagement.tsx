@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Users, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -24,6 +25,7 @@ interface UserStats {
 }
 
 export default function UserManagement() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   
   const { data: users, isLoading } = useQuery<UserStats[]>({
@@ -43,7 +45,7 @@ export default function UserManagement() {
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to toggle admin status");
+        throw new Error(error.error || t("users.toggleAdminFailed"));
       }
       
       return response.json();
@@ -51,14 +53,14 @@ export default function UserManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "Success",
-        description: "Admin status updated successfully",
+        title: t("common.success"),
+        description: t("users.adminStatusUpdated"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update admin status",
+        title: t("common.error"),
+        description: error.message || t("users.updateAdminFailed"),
         variant: "destructive",
       });
     },
@@ -67,7 +69,7 @@ export default function UserManagement() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading users...</p>
+        <p className="text-muted-foreground">{t("users.loading")}</p>
       </div>
     );
   }
@@ -76,7 +78,7 @@ export default function UserManagement() {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-        <p>No users found in the system.</p>
+        <p>{t("users.noUsers")}</p>
       </div>
     );
   }
@@ -84,8 +86,8 @@ export default function UserManagement() {
   const handleToggleAdmin = (user: UserStats) => {
     if (user.isPrimeAdmin) {
       toast({
-        title: "Cannot modify",
-        description: "Prime admin status cannot be changed",
+        title: t("users.cannotModify"),
+        description: t("users.primeAdminCannotChange"),
         variant: "destructive",
       });
       return;
@@ -101,24 +103,24 @@ export default function UserManagement() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">User Management</h2>
+        <h2 className="text-2xl font-semibold">{t("users.title")}</h2>
         <Badge variant="outline" data-testid="badge-user-count">
-          {users.length} {users.length === 1 ? 'User' : 'Users'}
+          {users.length} {users.length === 1 ? t("users.userSingular") : t("users.userPlural")}
         </Badge>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>System Users</CardTitle>
+          <CardTitle>{t("users.systemUsers")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Admin</TableHead>
-                <TableHead className="text-right">Inventory Items</TableHead>
-                <TableHead className="text-right">Recent Procedures (90d)</TableHead>
+                <TableHead>{t("users.email")}</TableHead>
+                <TableHead>{t("users.admin")}</TableHead>
+                <TableHead className="text-right">{t("users.inventoryItems")}</TableHead>
+                <TableHead className="text-right">{t("users.recentProcedures")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -134,7 +136,7 @@ export default function UserManagement() {
                         {user.isPrimeAdmin && (
                           <Badge variant="default" className="text-xs" data-testid={`badge-prime-admin-${user.userId}`}>
                             <Shield className="h-3 w-3 mr-1" />
-                            Prime Admin
+                            {t("users.primeAdmin")}
                           </Badge>
                         )}
                       </div>
@@ -149,7 +151,7 @@ export default function UserManagement() {
                         />
                         {user.isAdmin && !user.isPrimeAdmin && (
                           <Badge variant="secondary" className="text-xs" data-testid={`badge-admin-${user.userId}`}>
-                            Admin
+                            {t("users.admin")}
                           </Badge>
                         )}
                       </div>

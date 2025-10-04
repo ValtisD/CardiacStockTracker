@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from 'react-i18next';
 import { Plus, Scan, X, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,6 +59,7 @@ interface AddInventoryDialogProps {
 }
 
 export default function AddInventoryDialog({ open, onOpenChange, location }: AddInventoryDialogProps) {
+  const { t } = useTranslation();
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [gs1Data, setGs1Data] = useState<GS1Data | null>(null);
@@ -91,8 +93,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
         predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
       });
       toast({
-        title: "Item added",
-        description: "Inventory item has been added successfully.",
+        title: t('inventory.itemAdded'),
+        description: t('inventory.itemAddedSuccess'),
       });
       handleClose();
     },
@@ -106,8 +108,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
           const errorBody = JSON.parse(errorMessage.substring(4).trim());
           if (errorBody.field === "serialNumber") {
             toast({
-              title: "Duplicate Serial Number",
-              description: "This serial number already exists in your inventory. Each serial number must be unique.",
+              title: t('inventory.duplicateSerialNumber'),
+              description: t('inventory.duplicateSerialDescription'),
               variant: "destructive",
             });
             return;
@@ -118,8 +120,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       }
       
       toast({
-        title: "Failed to add item",
-        description: error.message || "An error occurred while adding the item.",
+        title: t('inventory.addFailed'),
+        description: error.message || t('inventory.addError'),
         variant: "destructive",
       });
     },
@@ -137,8 +139,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const handleManualGtinLookup = async () => {
     if (!manualGtin.trim()) {
       toast({
-        title: "Search required",
-        description: "Please enter a GTIN, model number, or serial number to search.",
+        title: t('inventory.searchRequired'),
+        description: t('inventory.searchRequiredDescription'),
         variant: "destructive",
       });
       return;
@@ -151,8 +153,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       
       if (products.length === 0) {
         toast({
-          title: "Product not found",
-          description: `No product found matching: ${manualGtin}`,
+          title: t('inventory.productNotFound'),
+          description: t('inventory.noProductMatching', { search: manualGtin }),
           variant: "destructive",
         });
         setIsLoadingProduct(false);
@@ -164,13 +166,13 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       form.setValue("productId", product.id);
       
       toast({
-        title: "Product found",
+        title: t('inventory.productFound'),
         description: `${product.name} (${product.modelNumber})`,
       });
     } catch (error) {
       toast({
-        title: "Lookup failed",
-        description: error instanceof Error ? error.message : "Failed to search for product",
+        title: t('inventory.lookupFailed'),
+        description: error instanceof Error ? error.message : t('inventory.searchFailed'),
         variant: "destructive",
       });
     } finally {
@@ -200,7 +202,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       form.setValue("productId", productInfo.id);
       
       toast({
-        title: "Product Found",
+        title: t('inventory.productFound'),
         description: `${productInfo.name} - ${productInfo.modelNumber}`,
       });
     } else {
@@ -217,27 +219,27 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
             form.setValue("productId", product.id);
             
             toast({
-              title: "Product Found by GTIN",
+              title: t('inventory.productFoundByGtin'),
               description: `${product.name} - ${product.modelNumber}`,
             });
           } else {
             toast({
-              title: "Product Not Found",
-              description: "No product found with this GTIN. Please add the product first.",
+              title: t('inventory.productNotFound'),
+              description: t('inventory.noProductGtin'),
               variant: "destructive",
             });
           }
         } catch (error) {
           toast({
-            title: "Error",
-            description: "Failed to lookup product by GTIN.",
+            title: t('common.error'),
+            description: t('inventory.gtinLookupFailed'),
             variant: "destructive",
           });
         }
       } else {
         toast({
-          title: "Product Not Found",
-          description: "Product not found in database. Please add the product first.",
+          title: t('inventory.productNotFound'),
+          description: t('inventory.productNotInDatabase'),
           variant: "destructive",
         });
       }
@@ -264,8 +266,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
     // Validation
     if (!data.trackingMode) {
       toast({
-        title: "Tracking mode required",
-        description: "Please select whether this item is tracked by serial number or lot number.",
+        title: t('inventory.trackingModeRequired'),
+        description: t('inventory.trackingModeRequiredDescription'),
         variant: "destructive",
       });
       return;
@@ -273,8 +275,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
 
     if (data.trackingMode === "serial" && !data.serialNumber) {
       toast({
-        title: "Serial number required",
-        description: "Please enter a serial number for this item.",
+        title: t('inventory.serialNumberRequired'),
+        description: t('inventory.serialNumberRequiredDescription'),
         variant: "destructive",
       });
       return;
@@ -282,8 +284,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
 
     if (data.trackingMode === "lot" && !data.lotNumber) {
       toast({
-        title: "Lot number required",
-        description: "Please enter a lot number for this item.",
+        title: t('inventory.lotNumberRequired'),
+        description: t('inventory.lotNumberRequiredDescription'),
         variant: "destructive",
       });
       return;
@@ -304,10 +306,10 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
-              Add Inventory Item
+              {t('inventory.addInventoryItem')}
             </DialogTitle>
             <DialogDescription>
-              Scan a barcode or manually enter item details to add to {location} stock
+              {t('inventory.addInventoryDescription', { location: t(`inventory.${location}Location`) })}
             </DialogDescription>
           </DialogHeader>
 
@@ -323,14 +325,14 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                   className="w-full md:w-auto"
                 >
                   <Scan className="h-4 w-4 mr-2" />
-                  Scan Barcode
+                  {t('inventory.scanBarcode')}
                 </Button>
               </div>
 
               {/* Manual Product Search */}
               <div className="flex gap-2">
                 <Input
-                  placeholder="Or search by GTIN, Model #, or Serial #..."
+                  placeholder={t('inventory.searchPlaceholder')}
                   value={manualGtin}
                   onChange={(e) => setManualGtin(e.target.value)}
                   onKeyDown={(e) => {
@@ -349,7 +351,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                   disabled={!manualGtin.trim() || isLoadingProduct || addInventoryMutation.isPending}
                   data-testid="button-search-product"
                 >
-                  {isLoadingProduct ? "Searching..." : "Search"}
+                  {isLoadingProduct ? t('inventory.searching') : t('common.search')}
                 </Button>
               </div>
 
@@ -362,10 +364,10 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                       <div>
                         <div className="font-medium">{selectedProduct.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          Model: {selectedProduct.modelNumber}
+                          {t('inventory.model')}: {selectedProduct.modelNumber}
                         </div>
                         {selectedProduct.gtin && (
-                          <div className="text-xs text-muted-foreground">GTIN: {selectedProduct.gtin}</div>
+                          <div className="text-xs text-muted-foreground">{t('inventory.gtin')}: {selectedProduct.gtin}</div>
                         )}
                       </div>
                     </div>
@@ -388,12 +390,12 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
               {gs1Data && (gs1Data.serialNumber || gs1Data.lotNumber || gs1Data.expirationDate) && (
                 <Card className="p-3 bg-primary/5 border-primary/20">
                   <div className="text-sm">
-                    <div className="font-medium text-primary mb-1">GS1 Data Extracted:</div>
+                    <div className="font-medium text-primary mb-1">{t('inventory.gs1DataExtracted')}</div>
                     <div className="space-y-1 text-xs text-muted-foreground">
-                      {gs1Data.gtin && <div>GTIN (01): {gs1Data.gtin}</div>}
-                      {gs1Data.expirationDate && <div>Expiration (17): {gs1Data.expirationDate}</div>}
-                      {gs1Data.serialNumber && <div>Serial (21): {gs1Data.serialNumber}</div>}
-                      {gs1Data.lotNumber && <div>Lot (10): {gs1Data.lotNumber}</div>}
+                      {gs1Data.gtin && <div>{t('inventory.gs1Gtin')}: {gs1Data.gtin}</div>}
+                      {gs1Data.expirationDate && <div>{t('inventory.gs1Expiration')}: {gs1Data.expirationDate}</div>}
+                      {gs1Data.serialNumber && <div>{t('inventory.gs1Serial')}: {gs1Data.serialNumber}</div>}
+                      {gs1Data.lotNumber && <div>{t('inventory.gs1Lot')}: {gs1Data.lotNumber}</div>}
                     </div>
                   </div>
                 </Card>
@@ -405,7 +407,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                 name="trackingMode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tracking Mode *</FormLabel>
+                    <FormLabel>{t('inventory.trackingMode')} *</FormLabel>
                     <Select
                       value={field.value || ""}
                       onValueChange={field.onChange}
@@ -413,12 +415,12 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                     >
                       <FormControl>
                         <SelectTrigger data-testid="select-tracking-mode">
-                          <SelectValue placeholder="Select tracking mode" />
+                          <SelectValue placeholder={t('inventory.selectTrackingMode')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="serial">Serial Number (Unique Item)</SelectItem>
-                        <SelectItem value="lot">Lot Number (Batch)</SelectItem>
+                        <SelectItem value="serial">{t('inventory.serialNumberUnique')}</SelectItem>
+                        <SelectItem value="lot">{t('inventory.lotNumberBatch')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -434,10 +436,10 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                     name="serialNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Serial Number *</FormLabel>
+                        <FormLabel>{t('inventory.serial')} *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., SN123456"
+                            placeholder={t('inventory.serialPlaceholder')}
                             {...field}
                             data-testid="input-serial-number"
                             disabled={addInventoryMutation.isPending}
@@ -456,10 +458,10 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                     name="lotNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Lot Number *</FormLabel>
+                        <FormLabel>{t('inventory.lot')} *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., LOT123"
+                            placeholder={t('inventory.lotPlaceholder')}
                             {...field}
                             data-testid="input-lot-number"
                             disabled={addInventoryMutation.isPending}
@@ -478,7 +480,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                     name="quantity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Quantity</FormLabel>
+                        <FormLabel>{t('inventory.quantity')}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -510,7 +512,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
 
                     return (
                       <FormItem className={trackingMode === "serial" ? "md:col-span-2" : ""}>
-                        <FormLabel>Expiration Date (Optional)</FormLabel>
+                        <FormLabel>{t('inventory.expirationDateOptional')}</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -521,7 +523,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                                 disabled={addInventoryMutation.isPending}
                               >
                                 <CalendarDays className="mr-2 h-4 w-4" />
-                                {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                                {selectedDate ? format(selectedDate, "PPP") : t('inventory.pickDate')}
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
@@ -555,7 +557,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
               {/* Note about serial vs lot */}
               {trackingMode === "serial" && (
                 <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                  Note: Serial-tracked items have a fixed quantity of 1
+                  {t('inventory.serialQuantityNote')}
                 </div>
               )}
 
@@ -568,14 +570,14 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                   disabled={addInventoryMutation.isPending}
                   data-testid="button-cancel"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={addInventoryMutation.isPending || !selectedProduct}
                   data-testid="button-submit"
                 >
-                  {addInventoryMutation.isPending ? "Adding..." : "Add to Stock"}
+                  {addInventoryMutation.isPending ? t('inventory.adding') : t('inventory.addToStock')}
                 </Button>
               </div>
             </form>
@@ -589,7 +591,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
           isOpen={showBarcodeScanner}
           onClose={() => setShowBarcodeScanner(false)}
           onScanComplete={handleScanComplete}
-          title="Scan Product Barcode"
+          title={t('inventory.scanProductBarcode')}
         />
       )}
     </>

@@ -68,7 +68,7 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Package className="h-4 w-4" />
-            Stock by Model Number
+            {t('inventory.stockByModel')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -84,12 +84,12 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Package className="h-4 w-4" />
-            Stock by Model Number
+            {t('inventory.stockByModel')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-8">
-            No items in stock
+            {t('inventory.noItems')}
           </p>
         </CardContent>
       </Card>
@@ -108,11 +108,11 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Model Number</TableHead>
-              <TableHead>Product Name</TableHead>
-              <TableHead className="text-right">Current</TableHead>
-              <TableHead className="text-right">Minimum</TableHead>
-              <TableHead className="text-right">Status</TableHead>
+              <TableHead>{t('inventory.modelNumber')}</TableHead>
+              <TableHead>{t('inventory.productName')}</TableHead>
+              <TableHead className="text-right">{t('inventory.current')}</TableHead>
+              <TableHead className="text-right">{t('common.minimum')}</TableHead>
+              <TableHead className="text-right">{t('inventory.status')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -134,11 +134,11 @@ export default function InventorySummary({ location }: InventorySummaryProps) {
                   {isLowStock(item.product.id) ? (
                     <Badge variant="destructive" className="gap-1" data-testid={`badge-low-stock-${item.product.id}`}>
                       <AlertTriangle className="h-3 w-3" />
-                      Low Stock
+                      {t('inventory.lowStock')}
                     </Badge>
                   ) : (
                     <Badge variant="secondary" data-testid={`badge-in-stock-${item.product.id}`}>
-                      In Stock
+                      {t('inventory.inStock')}
                     </Badge>
                   )}
                 </TableCell>

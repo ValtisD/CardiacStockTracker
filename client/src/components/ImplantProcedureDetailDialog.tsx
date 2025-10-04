@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { FileText, Calendar, Building2, Package, MapPin, Download } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ export default function ImplantProcedureDetailDialog({
   isOpen,
   onClose,
 }: ImplantProcedureDetailDialogProps) {
+  const { t } = useTranslation();
   const { data: procedure, isLoading: isProcedureLoading } = useQuery<ImplantProcedureWithHospital>({
     queryKey: ["/api/implant-procedures", procedureId],
     enabled: !!procedureId && isOpen,
@@ -61,46 +63,46 @@ export default function ImplantProcedureDetailDialog({
     
     // Title
     doc.setFontSize(18);
-    doc.text("Implant Procedure Report", 14, 20);
+    doc.text(t('procedures.implantProcedureReport'), 14, 20);
     
     // Procedure Information
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("Procedure Information", 14, 35);
+    doc.text(t('procedures.procedureInformation'), 14, 35);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     
     let yPos = 45;
-    doc.text(`Date: ${format(new Date(procedure.implantDate), "MMMM dd, yyyy")}`, 14, yPos);
+    doc.text(`${t('procedures.date')}: ${format(new Date(procedure.implantDate), "MMMM dd, yyyy")}`, 14, yPos);
     yPos += 7;
-    doc.text(`Hospital: ${procedure.hospital.name}`, 14, yPos);
+    doc.text(`${t('procedures.hospital')}: ${procedure.hospital.name}`, 14, yPos);
     yPos += 7;
     if (procedure.hospital.address) {
-      doc.text(`Address: ${procedure.hospital.address}, ${procedure.hospital.zipCode} ${procedure.hospital.city}`, 14, yPos);
+      doc.text(`${t('procedures.address')}: ${procedure.hospital.address}, ${procedure.hospital.zipCode} ${procedure.hospital.city}`, 14, yPos);
       yPos += 7;
     }
-    doc.text(`Procedure Type: ${procedure.procedureType}`, 14, yPos);
+    doc.text(`${t('procedures.procedureType')}: ${procedure.procedureType}`, 14, yPos);
     yPos += 7;
     
     // Device Information
     if (procedure.deviceUsed) {
       yPos += 3;
       doc.setFont("helvetica", "bold");
-      doc.text("Device Information", 14, yPos);
+      doc.text(t('procedures.deviceInformation'), 14, yPos);
       yPos += 7;
       doc.setFont("helvetica", "normal");
       
       if (procedure.deviceProduct?.name) {
-        doc.text(`Device: ${procedure.deviceProduct.name}`, 14, yPos);
+        doc.text(`${t('procedures.device')}: ${procedure.deviceProduct.name}`, 14, yPos);
         yPos += 7;
       }
       if (procedure.deviceProduct?.modelNumber) {
-        doc.text(`Model Number: ${procedure.deviceProduct.modelNumber}`, 14, yPos);
+        doc.text(`${t('procedures.modelNumber')}: ${procedure.deviceProduct.modelNumber}`, 14, yPos);
         yPos += 7;
       }
       if (procedure.deviceSerialNumber) {
-        doc.text(`Serial Number: ${procedure.deviceSerialNumber}`, 14, yPos);
+        doc.text(`${t('procedures.serialNumber')}: ${procedure.deviceSerialNumber}`, 14, yPos);
         yPos += 7;
       }
     }
@@ -109,7 +111,7 @@ export default function ImplantProcedureDetailDialog({
     if (procedure.notes) {
       yPos += 3;
       doc.setFont("helvetica", "bold");
-      doc.text("Notes", 14, yPos);
+      doc.text(t('procedures.notes'), 14, yPos);
       yPos += 7;
       doc.setFont("helvetica", "normal");
       
@@ -123,7 +125,7 @@ export default function ImplantProcedureDetailDialog({
       yPos += 10;
       
       const tableData = materials.map(material => [
-        material.product?.name || material.materialName || "External Material",
+        material.product?.name || material.materialName || t('procedures.externalMaterial'),
         material.product?.modelNumber || "-",
         material.serialNumber || "-",
         material.lotNumber || "-",
@@ -133,7 +135,7 @@ export default function ImplantProcedureDetailDialog({
       
       autoTable(doc, {
         startY: yPos,
-        head: [["Product", "Model Number", "Serial Number", "Lot Number", "Qty", "Source"]],
+        head: [[t('procedures.product'), t('procedures.modelNumber'), t('procedures.serialNumber'), t('procedures.lotNumber'), t('procedures.qty'), t('procedures.source')]],
         body: tableData,
         theme: "striped",
         headStyles: { fillColor: [66, 66, 66] },
@@ -156,7 +158,7 @@ export default function ImplantProcedureDetailDialog({
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Implant Procedure Details
+              {t('procedures.implantProcedureDetails')}
             </DialogTitle>
             {procedure && (
               <Button
@@ -167,7 +169,7 @@ export default function ImplantProcedureDetailDialog({
                 data-testid="button-export-pdf"
               >
                 <Download className="h-4 w-4" />
-                Export PDF
+                {t('common.export')} {t('procedures.pdf')}
               </Button>
             )}
           </div>
@@ -175,24 +177,24 @@ export default function ImplantProcedureDetailDialog({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Loading procedure details...</p>
+            <p className="text-muted-foreground">{t('procedures.loadingProcedureDetails')}</p>
           </div>
         ) : !procedure ? (
           <div className="text-center py-12 text-muted-foreground">
-            <p>Procedure not found.</p>
+            <p>{t('procedures.procedureNotFound')}</p>
           </div>
         ) : (
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Procedure Information</CardTitle>
+                <CardTitle className="text-lg">{t('procedures.procedureInformation')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-start gap-3">
                     <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Date</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('procedures.date')}</p>
                       <p className="text-base" data-testid="text-procedure-date">
                         {format(new Date(procedure.implantDate), "MMMM dd, yyyy")}
                       </p>
@@ -202,7 +204,7 @@ export default function ImplantProcedureDetailDialog({
                   <div className="flex items-start gap-3">
                     <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Hospital</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('procedures.hospital')}</p>
                       <p className="text-base" data-testid="text-procedure-hospital">
                         {procedure.hospital.name}
                       </p>
@@ -215,7 +217,7 @@ export default function ImplantProcedureDetailDialog({
                   <div className="flex items-start gap-3">
                     <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Procedure Type</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('procedures.procedureType')}</p>
                       <Badge variant="outline" data-testid="badge-procedure-type">
                         {procedure.procedureType}
                       </Badge>
@@ -227,18 +229,18 @@ export default function ImplantProcedureDetailDialog({
                   <div className="flex items-start gap-3">
                     <Package className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Device Used</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('procedures.deviceUsed')}</p>
                       <p className="text-base" data-testid="text-procedure-device">
                         {procedure.deviceProduct?.name || procedure.deviceUsed}
                       </p>
                       {procedure.deviceProduct?.modelNumber && (
                         <p className="text-sm text-muted-foreground">
-                          Model: {procedure.deviceProduct.modelNumber}
+                          {t('procedures.model')}: {procedure.deviceProduct.modelNumber}
                         </p>
                       )}
                       {procedure.deviceSerialNumber && (
                         <p className="text-sm text-muted-foreground">
-                          Serial: {procedure.deviceSerialNumber}
+                          {t('procedures.serial')}: {procedure.deviceSerialNumber}
                         </p>
                       )}
                     </div>
@@ -248,7 +250,7 @@ export default function ImplantProcedureDetailDialog({
 
                 {procedure.notes && (
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Notes</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">{t('procedures.notes')}</p>
                     <p className="text-sm" data-testid="text-procedure-notes">
                       {procedure.notes}
                     </p>
@@ -261,30 +263,30 @@ export default function ImplantProcedureDetailDialog({
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Materials Used
+                  {t('procedures.materialsUsed')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {!materials || materials.length === 0 ? (
                   <p className="text-center py-6 text-muted-foreground">
-                    No materials recorded for this procedure.
+                    {t('procedures.noMaterialsRecorded')}
                   </p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Model Number</TableHead>
-                        <TableHead>Serial / Lot</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Source</TableHead>
+                        <TableHead>{t('procedures.product')}</TableHead>
+                        <TableHead>{t('procedures.modelNumber')}</TableHead>
+                        <TableHead>{t('procedures.serialLot')}</TableHead>
+                        <TableHead>{t('procedures.quantity')}</TableHead>
+                        <TableHead>{t('procedures.source')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {materials.map((material, index) => (
                         <TableRow key={material.id} data-testid={`row-material-${index}`}>
                           <TableCell className="font-medium" data-testid={`text-material-name-${index}`}>
-                            {material.product?.name || material.materialName || "External Material"}
+                            {material.product?.name || material.materialName || t('procedures.externalMaterial')}
                           </TableCell>
                           <TableCell data-testid={`text-material-model-${index}`}>
                             {material.product?.modelNumber || <span className="text-muted-foreground">-</span>}
@@ -292,12 +294,12 @@ export default function ImplantProcedureDetailDialog({
                           <TableCell data-testid={`text-material-serial-${index}`}>
                             {material.serialNumber ? (
                               <div className="flex flex-col gap-0.5">
-                                <span className="text-xs text-muted-foreground">Serial:</span>
+                                <span className="text-xs text-muted-foreground">{t('procedures.serial')}:</span>
                                 <span className="font-mono text-sm">{material.serialNumber}</span>
                               </div>
                             ) : material.lotNumber ? (
                               <div className="flex flex-col gap-0.5">
-                                <span className="text-xs text-muted-foreground">Lot:</span>
+                                <span className="text-xs text-muted-foreground">{t('procedures.lot')}:</span>
                                 <span className="font-mono text-sm">{material.lotNumber}</span>
                               </div>
                             ) : (

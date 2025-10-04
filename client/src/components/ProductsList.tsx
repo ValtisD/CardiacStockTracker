@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Edit, Trash2, Package } from "lucide-react";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -18,6 +19,7 @@ import type { Product } from "@shared/schema";
 import ProductForm from "@/components/ProductForm";
 
 export default function ProductsList() {
+  const { t } = useTranslation();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
   const { user } = useAuth0();
@@ -36,21 +38,21 @@ export default function ProductsList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
-        title: "Success",
-        description: "Product deleted successfully",
+        title: t("common.success"),
+        description: t("products.deleteSuccess"),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete product",
+        title: t("common.error"),
+        description: error.message || t("products.deleteFailed"),
         variant: "destructive",
       });
     },
   });
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
+    if (confirm(t("products.confirmDelete"))) {
       deleteMutation.mutate(id);
     }
   };
@@ -74,7 +76,7 @@ export default function ProductsList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading products...</p>
+        <p className="text-muted-foreground">{t("products.loading")}</p>
       </div>
     );
   }
@@ -83,8 +85,8 @@ export default function ProductsList() {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-        <p>No products found.</p>
-        <p className="text-sm mt-2">Click "Add Product" to add your first product reference.</p>
+        <p>{t("products.noProductsFound")}</p>
+        <p className="text-sm mt-2">{t("products.addFirstProduct")}</p>
       </div>
     );
   }
@@ -95,10 +97,10 @@ export default function ProductsList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>GTIN</TableHead>
-              <TableHead>Model Number</TableHead>
-              <TableHead>Product Name</TableHead>
-              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+              <TableHead>{t("products.gtin")}</TableHead>
+              <TableHead>{t("products.modelNumber")}</TableHead>
+              <TableHead>{t("products.productName")}</TableHead>
+              {isAdmin && <TableHead className="text-right">{t("common.actions")}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>

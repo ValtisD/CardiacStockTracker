@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { FileText, Pencil, Trash2, Search } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
@@ -36,6 +37,7 @@ interface ImplantProcedureWithHospital extends ImplantProcedure {
 }
 
 export default function ImplantProceduresList() {
+  const { t } = useTranslation();
   const [selectedProcedureId, setSelectedProcedureId] = useState<string | null>(null);
   const [editProcedureId, setEditProcedureId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -78,16 +80,16 @@ export default function ImplantProceduresList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/implant-procedures"] });
       toast({
-        title: "Success",
-        description: "Implant procedure deleted successfully",
+        title: t('common.success'),
+        description: t('procedures.deleteSuccess'),
       });
       setDeleteDialogOpen(false);
       setProcedureToDelete(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete procedure",
+        title: t('common.error'),
+        description: error.message || t('procedures.deleteFailed'),
         variant: "destructive",
       });
     },
@@ -113,7 +115,7 @@ export default function ImplantProceduresList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading procedures...</p>
+        <p className="text-muted-foreground">{t('procedures.loadingProcedures')}</p>
       </div>
     );
   }
@@ -122,8 +124,8 @@ export default function ImplantProceduresList() {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-        <p>No implant procedures found.</p>
-        <p className="text-sm mt-2">Click "New Report" to record your first implant procedure.</p>
+        <p>{t('procedures.noProceduresFound')}</p>
+        <p className="text-sm mt-2">{t('procedures.clickNewReportHint')}</p>
       </div>
     );
   }
@@ -135,7 +137,7 @@ export default function ImplantProceduresList() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by serial number, lot number, device name, or model..."
+              placeholder={t('procedures.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -147,21 +149,21 @@ export default function ImplantProceduresList() {
           {filteredProcedures.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-              <p>No procedures match your search.</p>
-              <p className="text-sm mt-2">Try a different search term.</p>
+              <p>{t('procedures.noMatchingProcedures')}</p>
+              <p className="text-sm mt-2">{t('procedures.tryDifferentSearch')}</p>
             </div>
           ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Hospital</TableHead>
-                <TableHead>Procedure Type</TableHead>
-                <TableHead>Device Name</TableHead>
-                <TableHead>Model Number</TableHead>
-                <TableHead>Serial/Lot Number</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('procedures.date')}</TableHead>
+                <TableHead>{t('procedures.hospital')}</TableHead>
+                <TableHead>{t('procedures.procedureType')}</TableHead>
+                <TableHead>{t('procedures.deviceName')}</TableHead>
+                <TableHead>{t('procedures.modelNumber')}</TableHead>
+                <TableHead>{t('procedures.serialLotNumber')}</TableHead>
+                <TableHead>{t('procedures.notes')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -250,19 +252,19 @@ export default function ImplantProceduresList() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Implant Procedure</AlertDialogTitle>
+            <AlertDialogTitle>{t('procedures.deleteDialogTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this implant procedure? This action cannot be undone and will also delete all associated materials.
+              {t('procedures.deleteDialogDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               data-testid="button-confirm-delete"
               className="bg-destructive text-destructive-foreground hover-elevate"
             >
-              Delete
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
