@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "CRM Inventar",
-    "description": "Medizinprodukte-Inventarverwaltung für Außendienstingenieure im Bereich Herzrhythmusmanagement",
+    "title": "CRM",
+    "description": "Dein Helfer im Implantationsalltag",
     "loginButton": "Anmelden um fortzufahren"
   },
   "analytics": {

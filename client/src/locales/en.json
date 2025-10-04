@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "CRM Inventory",
-    "description": "Medical device inventory management for cardiac rhythm management field engineers",
+    "title": "CRM",
+    "description": "Your helper in everyday implantation",
     "loginButton": "Login to Continue"
   },
   "analytics": {
