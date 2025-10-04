@@ -1,4 +1,4 @@
-import { eq, and, sql, desc, isNull, gt } from "drizzle-orm";
+import { eq, and, sql, desc, isNull, gt, ilike, or } from "drizzle-orm";
 import { db } from "./db";
 import {
   products,
@@ -108,16 +108,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchProductsByMultipleFields(userId: string, query: string): Promise<Product[]> {
-    // First, search in products table by GTIN or model number
+    // Search in products table by GTIN, model number, or product name (case-insensitive partial match)
+    const searchPattern = `%${query}%`;
     const productResults = await db.select().from(products).where(
-      sql`${products.modelNumber} = ${query} OR ${products.gtin} = ${query}`
+      or(
+        ilike(products.modelNumber, searchPattern),
+        ilike(products.gtin, searchPattern),
+        ilike(products.name, searchPattern)
+      )
     );
     
     if (productResults.length > 0) {
       return productResults;
     }
     
-    // If not found in products, search by serial number in user's inventory
+    // If not found in products, search by serial number in user's inventory (exact match)
     const inventoryResults = await db
       .select({
         product: products
