@@ -20,8 +20,6 @@ const apiLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   // Skip rate limiting for non-API routes
   skip: (req) => !req.path.startsWith('/api'),
-  // Validate that we're behind exactly 1 proxy (Replit's infrastructure)
-  validate: { trustProxy: false },
 });
 
 // More strict rate limiting for authentication-related endpoints
@@ -31,8 +29,6 @@ const authLimiter = rateLimit({
   message: "Too many authentication attempts, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
-  // Validate that we're behind exactly 1 proxy (Replit's infrastructure)
-  validate: { trustProxy: false },
 });
 
 app.use('/api', apiLimiter);
