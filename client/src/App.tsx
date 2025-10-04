@@ -235,18 +235,33 @@ function Router() {
 
 function AppContent() {
   const { isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const [tokenReady, setTokenReady] = useState(false);
 
-  // Set up token provider for API requests
+  // Set up token provider for API requests and verify it works
   useEffect(() => {
     if (isAuthenticated) {
-      setTokenProvider(async () => {
+      const setupToken = async () => {
         try {
-          return await getAccessTokenSilently();
+          // First, get the token to ensure Auth0 is ready
+          await getAccessTokenSilently();
+          
+          // Then set up the token provider
+          setTokenProvider(async () => {
+            try {
+              return await getAccessTokenSilently();
+            } catch (error) {
+              console.error("Failed to get access token:", error);
+              throw error;
+            }
+          });
+          
+          setTokenReady(true);
         } catch (error) {
-          console.error("Failed to get access token:", error);
-          throw error;
+          console.error("Failed to initialize token:", error);
         }
-      });
+      };
+      
+      setupToken();
     }
   }, [isAuthenticated, getAccessTokenSilently]);
 
@@ -263,6 +278,17 @@ function AppContent() {
 
   if (!isAuthenticated) {
     return <LoginPage />;
+  }
+
+  if (!tokenReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Setting up authentication...</p>
+        </div>
+      </div>
+    );
   }
 
   return <AuthenticatedApp />;
