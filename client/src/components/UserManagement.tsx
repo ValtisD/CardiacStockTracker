@@ -32,10 +32,21 @@ export default function UserManagement() {
 
   const toggleAdminMutation = useMutation({
     mutationFn: async ({ userId, email, isAdmin }: { userId: string; email: string; isAdmin: boolean }) => {
-      return apiRequest(`/api/users/${userId}/toggle-admin`, {
+      const response = await fetch(`/api/users/${userId}/toggle-admin`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
         body: JSON.stringify({ email, isAdmin }),
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to toggle admin status");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
