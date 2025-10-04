@@ -21,6 +21,7 @@ import ProductsList from "@/components/ProductsList";
 import HospitalManager from "@/components/HospitalManager";
 import ImplantReportForm from "@/components/ImplantReportForm";
 import ImplantProceduresList from "@/components/ImplantProceduresList";
+import UserProductSettings from "@/components/UserProductSettings";
 import NotFound from "@/pages/not-found";
 
 // Theme toggle component
@@ -211,10 +212,7 @@ function SettingsPage() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-6">Settings</h2>
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Application settings will be displayed here.</p>
-        <p className="text-sm mt-2">Configure preferences, notifications, and system settings.</p>
-      </div>
+      <UserProductSettings />
     </div>
   );
 }
