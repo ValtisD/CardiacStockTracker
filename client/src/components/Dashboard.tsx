@@ -421,13 +421,14 @@ export default function Dashboard() {
               doc.text("Items to transfer from home stock to car", 14, 34);
               
               const tableData = carLowStock.map(item => {
-                const reorderQty = Math.max(0, (item.product?.minCarStock || 0) - item.quantity);
+                const minCarStock = (item as any).userSettings?.minCarStock || 0;
+                const reorderQty = Math.max(0, minCarStock - item.quantity);
                 return [
                   item.product?.name || '',
                   item.product?.modelNumber || '',
                   item.product?.gtin || '-',
                   item.quantity.toString(),
-                  (item.product?.minCarStock || 0).toString(),
+                  minCarStock.toString(),
                   reorderQty.toString()
                 ];
               });
@@ -475,13 +476,14 @@ export default function Dashboard() {
               doc.text("Items to reorder from suppliers", 14, 34);
               
               const tableData = homeLowStock.map(item => {
-                const reorderQty = Math.max(0, (item.product?.minTotalStock || 0) - item.quantity);
+                const minTotalStock = (item as any).userSettings?.minTotalStock || 0;
+                const reorderQty = Math.max(0, minTotalStock - item.quantity);
                 return [
                   item.product?.name || '',
                   item.product?.modelNumber || '',
                   item.product?.gtin || '-',
                   item.quantity.toString(),
-                  (item.product?.minTotalStock || 0).toString(),
+                  minTotalStock.toString(),
                   reorderQty.toString()
                 ];
               });
@@ -507,7 +509,8 @@ export default function Dashboard() {
               
               // Generate email text in German
               const itemsList = homeLowStock.map(item => {
-                const reorderQty = Math.max(0, (item.product?.minTotalStock || 0) - item.quantity);
+                const minTotalStock = (item as any).userSettings?.minTotalStock || 0;
+                const reorderQty = Math.max(0, minTotalStock - item.quantity);
                 return `${item.product?.modelNumber || 'N/A'} - ${reorderQty} Stück`;
               }).join('\n');
               
