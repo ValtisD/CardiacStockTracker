@@ -47,7 +47,6 @@ export const hospitals = pgTable("hospitals", {
   name: text("name").notNull(),
   address: text("address").notNull(),
   city: text("city").notNull(),
-  state: text("state").notNull(),
   zipCode: text("zip_code").notNull(),
   primaryPhysician: text("primary_physician"),
   contactPhone: text("contact_phone"),
