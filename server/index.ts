@@ -32,7 +32,8 @@ const authLimiter = rateLimit({
 });
 
 app.use('/api', apiLimiter);
-app.use('/api/users/*/toggle-admin', authLimiter);
+// Temporarily disabled rate limiter for toggle-admin to debug
+// app.use('/api/users/*/toggle-admin', authLimiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
