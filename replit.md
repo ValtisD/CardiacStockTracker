@@ -47,7 +47,7 @@ The frontend is a React 18 SPA with TypeScript, built using Vite. It utilizes Sh
 - Separate inventory views (home/car)
 - Product and hospital management
 - Implant procedure reporting
-- Stock transfer functionality (both item-level and bulk transfers with audit trail)
+- Stock transfer functionality (both item-level and bulk transfers)
 - Global search
 - Low stock alerts
 - PDF exports for expiring products and stock reports
@@ -67,7 +67,6 @@ PostgreSQL (Neon serverless) is the primary database, using Drizzle ORM for sche
 - **Hospitals**: Manages customer details (global - shared across all users).
 - **Implant Procedures**: Records surgical procedure details.
 - **Procedure Materials**: Tracks material usage for procedures.
-- **Stock Transfers**: Logs inventory movements.
 
 **Low Stock Alerts**: The system tracks low stock by product type (GTIN), not by individual serial numbers. It aggregates all inventory items for each product across serial/lot numbers, sums their quantities, and compares against minimum thresholds to generate alerts.
 
