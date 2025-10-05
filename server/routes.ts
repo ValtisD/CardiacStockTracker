@@ -7,7 +7,6 @@ import {
   insertHospitalSchema,
   insertImplantProcedureSchema,
   insertProcedureMaterialSchema,
-  insertStockTransferSchema,
   insertUserProductSettingsSchema,
   updateProductSchema,
   updateHospitalSchema,
@@ -471,44 +470,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting implant procedure:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to delete implant procedure" });
-    }
-  });
-
-  // Stock Transfers (user-specific)
-  app.get("/api/stock-transfers", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      const userId = req.userId!;
-      const transfers = await storage.getStockTransfers(userId);
-      res.json(transfers);
-    } catch (error) {
-      console.error("Error fetching stock transfers:", error instanceof Error ? error.message : 'Unknown error');
-      res.status(500).json({ error: "Failed to fetch stock transfers" });
-    }
-  });
-
-  app.post("/api/stock-transfers", requireAuth, async (req: AuthRequest, res: Response) => {
-    try {
-      const userId = req.userId!;
-      const validatedData = insertStockTransferSchema.parse({
-        ...req.body,
-        userId
-      });
-      const transfer = await storage.createStockTransfer(validatedData);
-      res.status(201).json(transfer);
-    } catch (error: any) {
-      console.error("Error creating stock transfer:", error instanceof Error ? error.message : 'Unknown error');
-      if (error.message) {
-        if (error.message.includes("Insufficient stock") || error.message.includes("not found in")) {
-          return res.status(400).json({ error: error.message });
-        }
-        if (error.message.includes("Database operation failed")) {
-          return res.status(500).json({ error: "Failed to create stock transfer due to database error" });
-        }
-      }
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: "Invalid data format" });
-      }
-      res.status(500).json({ error: "Failed to create stock transfer" });
     }
   });
 
