@@ -78,18 +78,6 @@ export const procedureMaterials = pgTable("procedure_materials", {
   lotNumber: text("lot_number"), // Lot number from GS1 scan
 });
 
-// Stock transfers - user-specific
-export const stockTransfers = pgTable("stock_transfers", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: text("user_id").notNull(), // Auth0 user ID
-  productId: varchar("product_id").notNull().references(() => products.id),
-  fromLocation: text("from_location").notNull(),
-  toLocation: text("to_location").notNull(),
-  quantity: integer("quantity").notNull(),
-  transferDate: timestamp("transfer_date").default(sql`now()`),
-  notes: text("notes"),
-});
-
 // Users table - stores basic user info from Auth0
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -135,11 +123,6 @@ export const insertProcedureMaterialSchema = createInsertSchema(procedureMateria
   procedureId: true,
 });
 
-export const insertStockTransferSchema = createInsertSchema(stockTransfers).omit({
-  id: true,
-  transferDate: true,
-});
-
 export const insertUserProductSettingsSchema = createInsertSchema(userProductSettings).omit({
   id: true,
   createdAt: true,
@@ -173,7 +156,6 @@ export const toggleAdminSchema = z.object({
 export const clientInsertInventorySchema = insertInventorySchema.omit({ userId: true });
 export const clientInsertHospitalSchema = insertHospitalSchema; // Hospitals are now global - no userId to omit
 export const clientInsertImplantProcedureSchema = insertImplantProcedureSchema.omit({ userId: true });
-export const clientInsertStockTransferSchema = insertStockTransferSchema.omit({ userId: true });
 export const clientInsertUserProductSettingsSchema = insertUserProductSettingsSchema.omit({ userId: true });
 
 // Types
@@ -191,9 +173,6 @@ export type InsertImplantProcedure = z.infer<typeof insertImplantProcedureSchema
 
 export type ProcedureMaterial = typeof procedureMaterials.$inferSelect;
 export type InsertProcedureMaterial = z.infer<typeof insertProcedureMaterialSchema>;
-
-export type StockTransfer = typeof stockTransfers.$inferSelect;
-export type InsertStockTransfer = z.infer<typeof insertStockTransferSchema>;
 
 export type UserProductSettings = typeof userProductSettings.$inferSelect;
 export type InsertUserProductSettings = z.infer<typeof insertUserProductSettingsSchema>;
