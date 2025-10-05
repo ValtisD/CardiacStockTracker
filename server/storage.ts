@@ -61,10 +61,6 @@ export interface IStorage {
   updateImplantProcedure(userId: string, id: string, procedureData: Partial<InsertImplantProcedure>): Promise<ImplantProcedure | null>;
   deleteImplantProcedure(userId: string, id: string): Promise<boolean>;
   getProcedureMaterials(procedureId: string): Promise<ProcedureMaterial[]>;
-
-  // Stock Transfers (user-specific)
-  getStockTransfers(userId: string): Promise<(StockTransfer & { product: Product })[]>;
-  createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer>;
   
   // Individual inventory item methods (for serial-tracked items)
   updateInventoryQuantityById(userId: string, id: string, quantity: number): Promise<Inventory | undefined>;
@@ -893,78 +889,6 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return result.length > 0;
-  }
-
-  // Stock Transfers
-  async getStockTransfers(userId: string): Promise<(StockTransfer & { product: Product })[]> {
-    return await db
-      .select({
-        id: stockTransfers.id,
-        userId: stockTransfers.userId,
-        productId: stockTransfers.productId,
-        fromLocation: stockTransfers.fromLocation,
-        toLocation: stockTransfers.toLocation,
-        quantity: stockTransfers.quantity,
-        transferDate: stockTransfers.transferDate,
-        notes: stockTransfers.notes,
-        product: products,
-      })
-      .from(stockTransfers)
-      .innerJoin(products, eq(stockTransfers.productId, products.id))
-      .where(eq(stockTransfers.userId, userId))
-      .orderBy(desc(stockTransfers.transferDate));
-  }
-
-  async createStockTransfer(transfer: InsertStockTransfer): Promise<StockTransfer> {
-    // Validate stock availability before proceeding
-    const fromInventory = await this.getInventoryItem(transfer.userId, transfer.productId, transfer.fromLocation);
-    
-    if (!fromInventory) {
-      throw new Error(
-        `Product ${transfer.productId} not found in ${transfer.fromLocation} inventory`
-      );
-    }
-    
-    if (fromInventory.quantity < transfer.quantity) {
-      throw new Error(
-        `Insufficient stock for transfer. Available: ${fromInventory.quantity}, Required: ${transfer.quantity}`
-      );
-    }
-
-    try {
-      // Create the transfer record
-      const result = await db.insert(stockTransfers).values(transfer).returning();
-      const createdTransfer = result[0];
-
-      // Update inventory quantities
-      const toInventory = await this.getInventoryItem(transfer.userId, transfer.productId, transfer.toLocation);
-
-      // Deduct from source
-      const newFromQuantity = fromInventory.quantity - transfer.quantity;
-      await this.updateInventoryQuantity(transfer.userId, transfer.productId, transfer.fromLocation, newFromQuantity);
-
-      // Add to destination
-      if (toInventory) {
-        const newToQuantity = toInventory.quantity + transfer.quantity;
-        await this.updateInventoryQuantity(transfer.userId, transfer.productId, transfer.toLocation, newToQuantity);
-      } else {
-        // Create inventory item if it doesn't exist at destination
-        await this.createInventoryItem({
-          userId: transfer.userId,
-          productId: transfer.productId,
-          location: transfer.toLocation,
-          quantity: transfer.quantity,
-        });
-      }
-
-      return createdTransfer;
-    } catch (error) {
-      // If any part fails, log error - note: neon-http doesn't support transactions
-      // In a production app, consider using a different driver or implementing compensating transactions
-      // SECURITY: Only log error type, not full error object to prevent sensitive data exposure
-      console.error('Failed to create stock transfer:', error instanceof Error ? error.message : 'Unknown error');
-      throw new Error('Failed to create stock transfer. Database operation failed.');
-    }
   }
 
   // User Product Settings
