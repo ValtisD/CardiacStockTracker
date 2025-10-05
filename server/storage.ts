@@ -161,6 +161,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: string): Promise<boolean> {
+    // Check if product is used in any inventory
+    const inventoryItems = await db.select().from(inventory).where(eq(inventory.productId, id)).limit(1);
+    if (inventoryItems.length > 0) {
+      throw new Error('Cannot delete product: it is currently in use in inventory');
+    }
+    
+    // Check if product is used in any stock transfers (historical records)
+    const transfers = await db.select().from(stockTransfers).where(eq(stockTransfers.productId, id)).limit(1);
+    if (transfers.length > 0) {
+      throw new Error('Cannot delete product: it has associated stock transfer history');
+    }
+    
+    // Safe to delete: first remove user product settings
+    await db.delete(userProductSettings).where(eq(userProductSettings.productId, id));
+    
+    // Then delete the product
     const result = await db.delete(products).where(eq(products.id, id)).returning();
     return result.length > 0;
   }
@@ -717,6 +733,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteHospital(id: string): Promise<boolean> {
+    // Check if hospital is used in any procedures across all users
+    const procedures = await db
+      .select()
+      .from(implantProcedures)
+      .where(eq(implantProcedures.hospitalId, id))
+      .limit(1);
+    
+    if (procedures.length > 0) {
+      throw new Error('Cannot delete hospital: it has associated implant procedures. Delete all procedures first.');
+    }
+    
+    // Safe to delete the hospital
     const result = await db.delete(hospitals).where(eq(hospitals.id, id)).returning();
     return result.length > 0;
   }

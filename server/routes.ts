@@ -111,6 +111,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting product:", error instanceof Error ? error.message : 'Unknown error');
+      if (error instanceof Error && error.message.includes('Cannot delete product')) {
+        return res.status(409).json({ error: error.message });
+      }
       res.status(500).json({ error: "Failed to delete product" });
     }
   });
@@ -360,6 +363,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting hospital:", error instanceof Error ? error.message : 'Unknown error');
+      if (error instanceof Error && error.message.includes('Cannot delete hospital')) {
+        return res.status(409).json({ error: error.message });
+      }
       res.status(500).json({ error: "Failed to delete hospital" });
     }
   });
