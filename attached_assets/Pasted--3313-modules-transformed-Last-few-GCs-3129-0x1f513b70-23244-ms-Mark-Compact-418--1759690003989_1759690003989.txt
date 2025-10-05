@@ -1,0 +1,32 @@
+ 3313 modules transformed.
+
+<--- Last few GCs --->
+
+[3129:0x1f513b70]    23244 ms: Mark-Compact 418.1 (438.7) -> 414.7 (438.9) MB, 592.76 / 0.00 ms  (average mu = 0.463, current mu = 0.054) allocation failure; scavenge might not succeed
+[3129:0x1f513b70]    24056 ms: Mark-Compact 418.9 (438.9) -> 416.5 (440.7) MB, 776.93 / 0.00 ms  (average mu = 0.284, current mu = 0.043) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xb76dc5 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+ 2: 0xee6020 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+ 3: 0xee6307 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+ 4: 0x10f7f55  [node]
+ 5: 0x110fdd8 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [node]
+ 6: 0x10e5ef1 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [node]
+ 7: 0x10e7085 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [node]
+ 8: 0x10c37a6 v8::internal::Factory::AllocateRaw(int, v8::internal::AllocationType, v8::internal::AllocationAlignment) [node]
+ 9: 0x10b4f1c v8::internal::FactoryBase<v8::internal::Factory>::AllocateRawArray(int, v8::internal::AllocationType) [node]
+10: 0x10b5084 v8::internal::FactoryBase<v8::internal::Factory>::NewFixedArrayWithFiller(v8::internal::Handle<v8::internal::Map>, int, v8::internal::Handle<v8::internal::Oddball>, v8::internal::AllocationType) [node]
+11: 0x1295baf  [node]
+12: 0x12a2be3  [node]
+13: 0x12c41dd  [node]
+14: 0x1338866 v8::internal::JSObject::AddDataElement(v8::internal::Handle<v8::internal::JSObject>, unsigned int, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes) [node]
+15: 0x13c0dd3 v8::internal::Object::AddDataProperty(v8::internal::LookupIterator*, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes, v8::Maybe<v8::internal::ShouldThrow>, v8::internal::StoreOrigin, v8::internal::EnforceDefineSemantics) [node]
+16: 0x1529be0 v8::internal::Runtime::SetObjectProperty(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, v8::internal::StoreOrigin, v8::Maybe<v8::internal::ShouldThrow>) [node]
+17: 0x152b3db v8::internal::Runtime_SetKeyedProperty(int, unsigned long*, v8::internal::Isolate*) [node]
+18: 0x1959ef6  [node]
+Aborted (core dumped)
