@@ -6,7 +6,6 @@ import {
   hospitals,
   implantProcedures,
   procedureMaterials,
-  stockTransfers,
   userProductSettings,
   users,
   adminUsers,
@@ -20,8 +19,6 @@ import {
   type InsertImplantProcedure,
   type ProcedureMaterial,
   type InsertProcedureMaterial,
-  type StockTransfer,
-  type InsertStockTransfer,
   type UserProductSettings,
   type InsertUserProductSettings,
 } from "@shared/schema";
@@ -165,12 +162,6 @@ export class DatabaseStorage implements IStorage {
     const inventoryItems = await db.select().from(inventory).where(eq(inventory.productId, id)).limit(1);
     if (inventoryItems.length > 0) {
       throw new Error('Cannot delete product: it is currently in use in inventory');
-    }
-    
-    // Check if product is used in any stock transfers (historical records)
-    const transfers = await db.select().from(stockTransfers).where(eq(stockTransfers.productId, id)).limit(1);
-    if (transfers.length > 0) {
-      throw new Error('Cannot delete product: it has associated stock transfer history');
     }
     
     // Safe to delete: first remove user product settings
