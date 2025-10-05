@@ -499,16 +499,6 @@ export class DatabaseStorage implements IStorage {
         .where(eq(inventory.id, id))
         .returning();
 
-      // Create audit trail
-      await db.insert(stockTransfers).values({
-        userId,
-        productId,
-        fromLocation,
-        toLocation,
-        quantity: quantityToTransfer,
-        notes: `Partial transfer from item ${id} (${quantityToTransfer} of ${sourceQuantity})`,
-      });
-
       return updatedSource[0];
     } else {
       // Full transfer: move the entire item
@@ -517,17 +507,6 @@ export class DatabaseStorage implements IStorage {
         .set({ location: toLocation, updatedAt: new Date() })
         .where(eq(inventory.id, id))
         .returning();
-
-      if (result && result.length > 0) {
-        await db.insert(stockTransfers).values({
-          userId,
-          productId,
-          fromLocation,
-          toLocation,
-          quantity: quantityToTransfer,
-          notes: `Full item transfer (ID: ${id})`,
-        });
-      }
 
       return result[0];
     }
