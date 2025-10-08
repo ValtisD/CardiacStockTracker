@@ -258,7 +258,20 @@
     "decreaseQuantity": "Menge verringern",
     "transferToHome": "Zu Zuhause verschieben",
     "increaseQuantity": "Menge erhöhen",
-    "transferFromHome": "Von Zuhause verschieben"
+    "transferFromHome": "Von Zuhause verschieben",
+    "addError": "Fehler beim Hinzufügen",
+    "adding": "Füge hinzu...",
+    "duplicateSerialNumber": "Doppelte Seriennummer",
+    "duplicateSerialDescription": "Diese Seriennummer existiert bereits im System",
+    "itemAddedSuccess": "Artikel erfolgreich hinzugefügt",
+    "deleteItem": "Artikel löschen",
+    "moveTo": "Verschieben zu",
+    "quantityAvailable": "Verfügbare Menge",
+    "stockByModel": "Bestand nach Modell",
+    "transfer": "Transfer",
+    "transferItem": "Artikel transferieren",
+    "transferItemDescription": "Artikel an einen anderen Standort verschieben",
+    "transferring": "Transferiere..."
   },
   "products": {
     "title": "Produkte",

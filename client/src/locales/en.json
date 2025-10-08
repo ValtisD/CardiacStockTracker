@@ -258,7 +258,20 @@
     "decreaseQuantity": "Decrease quantity",
     "transferToHome": "Transfer to home",
     "increaseQuantity": "Increase quantity",
-    "transferFromHome": "Transfer from home"
+    "transferFromHome": "Transfer from home",
+    "addError": "Error adding item",
+    "adding": "Adding...",
+    "duplicateSerialNumber": "Duplicate Serial Number",
+    "duplicateSerialDescription": "This serial number already exists in the system",
+    "itemAddedSuccess": "Item added successfully",
+    "deleteItem": "Delete item",
+    "moveTo": "Move to",
+    "quantityAvailable": "Available quantity",
+    "stockByModel": "Stock by model",
+    "transfer": "Transfer",
+    "transferItem": "Transfer item",
+    "transferItemDescription": "Move item to another location",
+    "transferring": "Transferring..."
   },
   "products": {
     "title": "Products",
