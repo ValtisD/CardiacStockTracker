@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,7 @@ export default function ImplantProcedureEditDialog({
   isOpen,
   onClose,
 }: ImplantProcedureEditDialogProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const { data: hospitals } = useQuery<Hospital[]>({
@@ -98,15 +100,15 @@ export default function ImplantProcedureEditDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/implant-procedures"] });
       queryClient.invalidateQueries({ queryKey: ["/api/implant-procedures", procedureId] });
       toast({
-        title: "Success",
-        description: "Implant procedure updated successfully",
+        title: t('procedures.updateSuccess'),
+        description: t('procedures.updateSuccessDescription'),
       });
       onClose();
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update procedure",
+        title: t('procedures.updateError'),
+        description: error.message || t('procedures.updateErrorDescription'),
         variant: "destructive",
       });
     },
@@ -124,7 +126,7 @@ export default function ImplantProcedureEditDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-edit-procedure">
         <DialogHeader>
-          <DialogTitle>Edit Implant Procedure</DialogTitle>
+          <DialogTitle>{t('procedures.editDialogTitle')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
