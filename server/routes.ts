@@ -44,21 +44,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/products/search/:query", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      console.log(`[Product Search] Query: "${req.params.query}", User: ${req.userId}`);
       const products = await storage.searchProducts(req.params.query);
-      console.log(`[Product Search] Found ${products.length} products`);
       if (products.length === 0) {
         return res.status(404).json({ error: "Product not found" });
       }
       res.json(products);
     } catch (error) {
-      console.error("Error searching products:", error);
-      console.error("Error details:", {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        status: (error as any).status,
-        statusCode: (error as any).statusCode
-      });
+      console.error("Error searching products:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to search products" });
     }
   });
