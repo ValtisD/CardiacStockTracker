@@ -553,6 +553,7 @@
     "productNotFound": "Product not found. Please check the barcode or try manual entry.",
     "searchFailed": "Failed to search for product. Please try again.",
     "connectionFailed": "Failed to connect to server. Please try again.",
+    "authenticationFailed": "Authentication failed. Please log in again.",
     "noCameraFound": "No camera found on this device.",
     "cameraAccessError": "Unable to access camera. Please use manual entry or check camera permissions in your browser settings.",
     "useManualEntry": "Please use manual entry to input barcode numbers.",

@@ -110,17 +110,7 @@ export default function BarcodeScanner({
     }
     
     try {
-      const response = await fetch(`/api/products/search/${encodeURIComponent(searchQuery)}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError(t('barcode.productNotFound'));
-          setProductInfo(null);
-        } else {
-          setError(t('barcode.searchFailed'));
-        }
-        return;
-      }
+      const response = await apiRequest('GET', `/api/products/search/${encodeURIComponent(searchQuery)}`);
       
       const products = await response.json();
       if (products && products.length > 0) {
@@ -131,7 +121,15 @@ export default function BarcodeScanner({
       }
     } catch (err) {
       console.error('Error searching for product:', err);
-      setError(t('barcode.connectionFailed'));
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      
+      if (errorMessage.includes('404')) {
+        setError(t('barcode.productNotFound'));
+      } else if (errorMessage.includes('401') || errorMessage.includes('403')) {
+        setError(t('barcode.authenticationFailed'));
+      } else {
+        setError(t('barcode.searchFailed'));
+      }
       setProductInfo(null);
     } finally {
       setIsSearching(false);

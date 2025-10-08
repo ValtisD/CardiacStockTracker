@@ -553,6 +553,7 @@
     "productNotFound": "Produkt nicht gefunden. Bitte überprüfen Sie den Barcode oder verwenden Sie die manuelle Eingabe.",
     "searchFailed": "Produktsuche fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "connectionFailed": "Verbindung zum Server fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "authenticationFailed": "Authentifizierung fehlgeschlagen. Bitte melden Sie sich erneut an.",
     "noCameraFound": "Keine Kamera auf diesem Gerät gefunden.",
     "cameraAccessError": "Kamerazugriff nicht möglich. Bitte verwenden Sie die manuelle Eingabe oder überprüfen Sie die Kameraberechtigungen in Ihren Browsereinstellungen.",
     "useManualEntry": "Bitte verwenden Sie die manuelle Eingabe für Barcode-Nummern.",
