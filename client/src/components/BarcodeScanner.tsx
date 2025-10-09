@@ -146,8 +146,11 @@ export default function BarcodeScanner({
   useEffect(() => {
     // Reset scanner state when dialog opens for a new scan session
     if (isOpen) {
-      // DO NOT clear lastConfirmedBarcodeRef here!
-      // It needs to persist across scans to prevent re-detection of previous barcodes
+      // Clear the last confirmed barcode when opening dialog for a fresh scan
+      // This allows the same barcode to be scanned again
+      lastConfirmedBarcodeRef.current = '';
+      console.log('[BARCODE] Dialog opened, cleared lastConfirmedBarcode');
+      
       // resetScanner now handles stopping the camera and clearing all state
       resetScanner();
     }
@@ -160,10 +163,6 @@ export default function BarcodeScanner({
     // Clear any previous barcode detection state
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
-    
-    // Clear the last confirmed barcode when starting a fresh camera session
-    // This allows the same barcode to be scanned again after moving away and coming back
-    lastConfirmedBarcodeRef.current = '';
     
     // Stop any existing stream before starting a new one
     if (videoRef.current && videoRef.current.srcObject) {
