@@ -578,6 +578,7 @@
     "authenticationFailed": "Authentication failed. Please log in again.",
     "noCameraFound": "No camera found on this device.",
     "cameraAccessError": "Unable to access camera. Please use manual entry or check camera permissions in your browser settings.",
+    "cameraPermissionDenied": "Camera permission was denied. Please allow camera access in your browser settings and try again.",
     "useManualEntry": "Please use manual entry to input barcode numbers.",
     "quantityBelowZero": "Cannot set quantity below zero",
     "searching": "Searching for product...",

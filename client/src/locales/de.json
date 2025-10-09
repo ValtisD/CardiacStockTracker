@@ -578,6 +578,7 @@
     "authenticationFailed": "Authentifizierung fehlgeschlagen. Bitte melden Sie sich erneut an.",
     "noCameraFound": "Keine Kamera auf diesem Gerät gefunden.",
     "cameraAccessError": "Kamerazugriff nicht möglich. Bitte verwenden Sie die manuelle Eingabe oder überprüfen Sie die Kameraberechtigungen in Ihren Browsereinstellungen.",
+    "cameraPermissionDenied": "Kameraberechtigung wurde verweigert. Bitte erlauben Sie den Kamerazugriff in Ihren Browsereinstellungen und versuchen Sie es erneut.",
     "useManualEntry": "Bitte verwenden Sie die manuelle Eingabe für Barcode-Nummern.",
     "quantityBelowZero": "Menge kann nicht unter null gesetzt werden",
     "searching": "Suche nach Produkt...",

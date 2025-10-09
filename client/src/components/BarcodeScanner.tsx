@@ -166,6 +166,25 @@ export default function BarcodeScanner({
     try {
       console.log('Starting camera for barcode scanning...');
       
+      // Check if camera permission is already granted (if Permissions API is supported)
+      // This provides a smoother experience by avoiding unnecessary permission prompts
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          // @ts-ignore - camera permission check may not be fully typed
+          const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+          console.log('Camera permission status:', permissionStatus.state);
+          
+          if (permissionStatus.state === 'denied') {
+            setError(t('barcode.cameraPermissionDenied'));
+            setIsScanning(false);
+            return;
+          }
+        } catch (e) {
+          // Permissions API not supported for camera or other error - continue anyway
+          console.log('Permissions API not available for camera, proceeding with getUserMedia');
+        }
+      }
+      
       // ALWAYS create a fresh barcode reader to prevent callback contamination from previous scans
       // First, clean up any existing reader
       if (codeReaderRef.current) {
