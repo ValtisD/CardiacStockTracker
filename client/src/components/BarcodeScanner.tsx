@@ -433,8 +433,8 @@ export default function BarcodeScanner({
     
     await searchProduct(barcode);
     
-    // Reset processing flag
-    isProcessingRef.current = false;
+    // DO NOT reset processing flag - camera is stopped, no more detections should happen
+    // The flag will be reset when resetScanner() is called for the next scan session
   };
 
   const handleManualEntry = () => {
