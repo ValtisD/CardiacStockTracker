@@ -132,7 +132,7 @@ export default function UserProductSettings() {
           {t("settings.description")}
         </p>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

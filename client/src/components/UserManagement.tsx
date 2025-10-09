@@ -99,7 +99,7 @@ export default function UserManagement() {
         <CardHeader>
           <CardTitle>{t("users.systemUsers")}</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

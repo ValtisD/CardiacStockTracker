@@ -145,7 +145,7 @@ export default function ImplantProceduresList() {
             />
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {filteredProcedures.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
