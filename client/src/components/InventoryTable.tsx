@@ -52,6 +52,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [transferItem, setTransferItem] = useState<InventoryWithProduct | null>(null);
   const [transferQuantity, setTransferQuantity] = useState<string>('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<InventoryWithProduct | null>(null);
+  const [deleteQuantity, setDeleteQuantity] = useState<string>('');
   const { toast } = useToast();
 
   const { data: inventoryData, isLoading, error } = useQuery<InventoryWithProduct[]>({
@@ -283,14 +286,75 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   };
 
   const handleDelete = (item: InventoryWithProduct) => {
-    const itemDescription = item.serialNumber 
-      ? `${item.product.name} (${t('inventory.serial')}: ${item.serialNumber})`
-      : `${item.product.name}`;
+    // For serial-tracked items (always qty 1), delete directly
+    if (item.trackingMode === 'serial') {
+      const itemDescription = item.serialNumber 
+        ? `${item.product.name} (${t('inventory.serial')}: ${item.serialNumber})`
+        : `${item.product.name}`;
+      
+      if (window.confirm(t('inventory.confirmDelete', { item: itemDescription, location }))) {
+        deleteMutation.mutate({
+          id: item.id,
+        });
+      }
+      return;
+    }
+
+    // For lot-tracked or untracked items, show quantity dialog
+    setDeleteItem(item);
+    setDeleteQuantity(item.quantity.toString());
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteItem) return;
+
+    const qtyToDelete = parseInt(deleteQuantity);
     
-    if (window.confirm(t('inventory.confirmDelete', { item: itemDescription, location }))) {
-      deleteMutation.mutate({
-        id: item.id,
+    if (isNaN(qtyToDelete) || qtyToDelete <= 0) {
+      toast({
+        title: t('inventory.invalidQuantity'),
+        description: t('inventory.invalidQuantityDescription'),
+        variant: "destructive",
       });
+      return;
+    }
+
+    if (qtyToDelete > deleteItem.quantity) {
+      toast({
+        title: t('inventory.invalidQuantity'),
+        description: t('inventory.invalidQuantityRange', { max: deleteItem.quantity }),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If deleting full quantity, delete the item
+    if (qtyToDelete === deleteItem.quantity) {
+      deleteMutation.mutate({ id: deleteItem.id });
+      setShowDeleteDialog(false);
+      setDeleteItem(null);
+      setDeleteQuantity('');
+    } else {
+      // If deleting partial quantity, update the quantity
+      const newQuantity = deleteItem.quantity - qtyToDelete;
+      updateQuantityMutation.mutate(
+        { id: deleteItem.id, quantity: newQuantity },
+        {
+          onSuccess: () => {
+            setShowDeleteDialog(false);
+            setDeleteItem(null);
+            setDeleteQuantity('');
+            toast({
+              title: t('inventory.quantityReduced'),
+              description: t('inventory.quantityReducedDescription', { 
+                removed: qtyToDelete, 
+                remaining: newQuantity 
+              }),
+            });
+          }
+        }
+      );
     }
   };
 
@@ -690,6 +754,62 @@ export default function InventoryTable({ location }: InventoryTableProps) {
               data-testid="button-confirm-transfer"
             >
               {transferItemMutation.isPending ? t('inventory.transferring') : t('inventory.transfer')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Quantity Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent data-testid="dialog-delete-quantity">
+          <DialogHeader>
+            <DialogTitle>{t('inventory.deleteItem')}</DialogTitle>
+            <DialogDescription>
+              {deleteItem && (
+                <>
+                  {deleteItem.product.name}
+                  {deleteItem.lotNumber && ` (${t('inventory.lot')}: ${deleteItem.lotNumber})`}
+                  <br />
+                  {t('inventory.deleteQuantityPrompt')}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="delete-quantity">
+                {t('inventory.quantityToDelete', { available: deleteItem?.quantity })}
+              </Label>
+              <Input
+                id="delete-quantity"
+                type="number"
+                min="1"
+                max={deleteItem?.quantity}
+                value={deleteQuantity}
+                onChange={(e) => setDeleteQuantity(e.target.value)}
+                data-testid="input-delete-quantity"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setDeleteItem(null);
+                setDeleteQuantity('');
+              }}
+              data-testid="button-cancel-delete"
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteMutation.isPending || updateQuantityMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {(deleteMutation.isPending || updateQuantityMutation.isPending) ? t('common.deleting') : t('common.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
