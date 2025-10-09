@@ -82,7 +82,6 @@ export default function BarcodeScanner({
   });
 
   const searchProduct = async (query: string) => {
-    console.error('[SEARCH] searchProduct called with:', query, 'Stack:', new Error().stack?.split('\n')[2]);
     setIsSearching(true);
     setError('');
     
@@ -147,11 +146,8 @@ export default function BarcodeScanner({
   useEffect(() => {
     // Reset scanner state when dialog opens for a new scan session
     if (isOpen) {
-      // Clear the last confirmed barcode when opening dialog for a fresh scan
-      // This allows the same barcode to be scanned again
-      lastConfirmedBarcodeRef.current = '';
-      console.log('[BARCODE] Dialog opened, cleared lastConfirmedBarcode');
-      
+      // DO NOT clear lastConfirmedBarcodeRef here!
+      // It needs to persist across scans to prevent re-detection of previous barcodes
       // resetScanner now handles stopping the camera and clearing all state
       resetScanner();
     }
@@ -165,6 +161,10 @@ export default function BarcodeScanner({
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
     
+    // Clear the last confirmed barcode when starting a fresh camera session
+    // This allows the same barcode to be scanned again after moving away and coming back
+    lastConfirmedBarcodeRef.current = '';
+    
     // Stop any existing stream before starting a new one
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
@@ -176,7 +176,7 @@ export default function BarcodeScanner({
       console.log('Starting camera for barcode scanning...');
       
       // ALWAYS create a fresh barcode reader to prevent callback contamination from previous scans
-      // First, clean up any existing reader completely
+      // First, clean up any existing reader
       if (codeReaderRef.current) {
         try {
           // @ts-ignore - reset method exists but isn't in types
@@ -184,14 +184,9 @@ export default function BarcodeScanner({
         } catch (e) {
           // Ignore errors
         }
-        // Null it out to ensure complete cleanup
-        codeReaderRef.current = null;
       }
       
-      // Wait a moment to ensure cleanup is complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Create completely new reader instance for this scan
+      // Create new reader instance for this scan
       codeReaderRef.current = new BrowserMultiFormatReader();
       // Set scan timing for better performance (300ms between scans)
       // @ts-ignore - timeBetweenScansMillis exists but isn't in types
@@ -281,12 +276,6 @@ export default function BarcodeScanner({
         await codeReaderRef.current.decodeFromVideoElement(
           videoRef.current,
           (result) => {
-            // CRITICAL: Check processing flag FIRST before any other checks
-            // Multiple callbacks can be queued before stopCamera() takes effect
-            if (isProcessingRef.current) {
-              return; // Already processing a barcode, ignore all subsequent callbacks
-            }
-            
             // Immediately check if scanning is still active
             if (!isScanningActiveRef.current) {
               return; // Camera was stopped, ignore this callback
@@ -394,39 +383,25 @@ export default function BarcodeScanner({
     setError(t('barcode.useManualEntry'));
   };
 
-  // Use useCallback to create a stable reference for the barcode detection handler
-  // This prevents closure issues when the ZXing callback is registered
-  const handleBarcodeDetectedRef = useRef<(barcode: string) => Promise<void>>();
-  
-  handleBarcodeDetectedRef.current = async (barcode: string) => {
+  const handleBarcodeDetected = async (barcode: string) => {
     const now = Date.now();
-    
-    console.log('[BARCODE] Detection attempt:', {
-      barcode,
-      isProcessing: isProcessingRef.current,
-      lastConfirmed: lastConfirmedBarcodeRef.current,
-      lastDetected: lastDetectedRef.current,
-      timeSinceLastDetection: now - lastDetectionTimeRef.current,
-      isScanningActive: isScanningActiveRef.current,
-      detectionEnabled: detectionEnabledRef.current
-    });
     
     // Prevent multiple rapid detections of the same barcode
     if (isProcessingRef.current) {
-      console.log('[BARCODE] Already processing, ignoring duplicate');
+      console.log('Already processing, ignoring duplicate');
       return;
     }
     
     // CRITICAL: Ignore if this is the same barcode that was just confirmed in the previous scan
     // This prevents the reader from re-detecting cached/lingering results from previous sessions
     if (lastConfirmedBarcodeRef.current === barcode) {
-      console.log('[BARCODE] Ignoring previously confirmed barcode:', barcode);
+      console.log('Ignoring previously confirmed barcode:', barcode);
       return;
     }
     
     // Ignore if same barcode detected within last 2 seconds
     if (lastDetectedRef.current === barcode && now - lastDetectionTimeRef.current < 2000) {
-      console.log('[BARCODE] Duplicate barcode within 2s, ignoring');
+      console.log('Duplicate barcode within 2s, ignoring');
       return;
     }
     
@@ -434,24 +409,16 @@ export default function BarcodeScanner({
     lastDetectedRef.current = barcode;
     lastDetectionTimeRef.current = now;
     
-    console.log('[BARCODE] Processing barcode:', barcode);
-    
     // Stop camera first to prevent more detections
     stopCamera();
     
     setScannedCode(barcode);
-    console.log('[BARCODE] Barcode accepted, searching for product');
+    console.log('Barcode detected:', barcode);
     
     await searchProduct(barcode);
     
-    // DO NOT reset processing flag - camera is stopped, no more detections should happen
-    // The flag will be reset when resetScanner() is called for the next scan session
-  };
-  
-  const handleBarcodeDetected = async (barcode: string) => {
-    if (handleBarcodeDetectedRef.current) {
-      await handleBarcodeDetectedRef.current(barcode);
-    }
+    // Reset processing flag
+    isProcessingRef.current = false;
   };
 
   const handleManualEntry = () => {
