@@ -458,22 +458,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleQuantityChange(item, 'decrease')}
-                            disabled={transferMutation.isPending || updateQuantityMutation.isPending || item.quantity < 1 || item.trackingMode === 'serial'}
-                            data-testid={`menu-decrease-${item.id}`}
-                          >
-                            <Minus className="h-4 w-4 mr-2" />
-                            {location === 'home' ? t('inventory.decreaseQty') : t('inventory.transferToHome')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleQuantityChange(item, 'increase')}
-                            disabled={transferMutation.isPending || updateQuantityMutation.isPending || item.trackingMode === 'serial'}
-                            data-testid={`menu-increase-${item.id}`}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            {location === 'home' ? t('inventory.increaseQty') : t('inventory.transferFromHome')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
                             onClick={() => handleTransfer(item)}
                             disabled={transferItemMutation.isPending}
                             data-testid={`menu-transfer-${item.id}`}
@@ -615,49 +599,12 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => handleQuantityChange(item, 'decrease')}
-                          disabled={
-                            transferMutation.isPending || 
-                            updateQuantityMutation.isPending || 
-                            item.quantity < 1 ||
-                            item.trackingMode === 'serial'
-                          }
-                          data-testid={`button-decrease-${item.id}`}
-                          title={
-                            item.trackingMode === 'serial' 
-                              ? t('inventory.cannotModifySerial') 
-                              : (location === 'home' ? t('inventory.decreaseQuantity') : t('inventory.transferToHome'))
-                          }
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleQuantityChange(item, 'increase')}
-                          disabled={
-                            transferMutation.isPending || 
-                            updateQuantityMutation.isPending ||
-                            item.trackingMode === 'serial'
-                          }
-                          data-testid={`button-increase-${item.id}`}
-                          title={
-                            item.trackingMode === 'serial'
-                              ? t('inventory.cannotModifySerial')
-                              : (location === 'home' ? t('inventory.increaseQuantity') : t('inventory.transferFromHome'))
-                          }
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
                           onClick={() => handleTransfer(item)}
                           disabled={transferItemMutation.isPending}
                           data-testid={`button-transfer-${item.id}`}
                           title={t('inventory.moveTo', { location: location === 'home' ? t('inventory.car') : t('inventory.home') })}
                         >
-                          <ArrowLeftRight className="h-3 w-3" />
+                          <ArrowLeftRight className="h-4 w-4" />
                         </Button>
                         <Button
                           size="icon"
@@ -667,7 +614,7 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                           data-testid={`button-delete-${item.id}`}
                           title={t('inventory.deleteItem')}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
