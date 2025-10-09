@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
-import { Search, Package, AlertTriangle, ArrowUpDown, Plus, Minus, Eye, Trash2, ArrowLeftRight } from "lucide-react";
+import { Search, Package, AlertTriangle, ArrowUpDown, Plus, Minus, Eye, Trash2, ArrowLeftRight, MoreVertical, Barcode, Calendar } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -419,8 +421,122 @@ export default function InventoryTable({ location }: InventoryTableProps) {
             </div>
           )}
 
-          {/* Table */}
-          <div className="border rounded-md overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-3" />
+                    <Skeleton className="h-8 w-full" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              filteredItems.map((item) => (
+                <Card key={item.id} data-testid={`card-item-${item.id}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <h3 className="font-semibold truncate">{item.product.name}</h3>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{item.product.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <p className="text-sm text-muted-foreground">{item.product.modelNumber}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" data-testid={`button-menu-${item.id}`}>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleQuantityChange(item, 'decrease')}
+                            disabled={transferMutation.isPending || updateQuantityMutation.isPending || item.quantity < 1 || item.trackingMode === 'serial'}
+                            data-testid={`menu-decrease-${item.id}`}
+                          >
+                            <Minus className="h-4 w-4 mr-2" />
+                            {location === 'home' ? t('inventory.decreaseQty') : t('inventory.transferToHome')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleQuantityChange(item, 'increase')}
+                            disabled={transferMutation.isPending || updateQuantityMutation.isPending || item.trackingMode === 'serial'}
+                            data-testid={`menu-increase-${item.id}`}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            {location === 'home' ? t('inventory.increaseQty') : t('inventory.transferFromHome')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleTransfer(item)}
+                            disabled={transferItemMutation.isPending}
+                            data-testid={`menu-transfer-${item.id}`}
+                          >
+                            <ArrowLeftRight className="h-4 w-4 mr-2" />
+                            {t('inventory.moveTo', { location: location === 'home' ? t('inventory.car') : t('inventory.home') })}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(item)}
+                            disabled={deleteMutation.isPending}
+                            className="text-destructive"
+                            data-testid={`menu-delete-${item.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t('common.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">{t('inventory.quantity')}:</span>
+                        <div className="flex items-center gap-2">
+                          <span className={isLowStock(item) ? 'text-destructive font-medium' : 'font-medium'}>
+                            {item.quantity}
+                          </span>
+                          {isLowStock(item) && <AlertTriangle className="h-3 w-3 text-destructive" />}
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t('inventory.total')}: {productAggregates.get(item.productId)?.totalQty || item.quantity} | 
+                        {t('inventory.min')}: {getMinQuantity(item.productId)}
+                      </div>
+                      
+                      {item.expirationDate && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">{t('inventory.expiration')}:</span>
+                          <span className={isExpiringSoon(item.expirationDate) ? 'text-destructive text-xs' : 'text-xs'}>
+                            {new Date(item.expirationDate).toLocaleDateString()}
+                            {isExpiringSoon(item.expirationDate) && ` (${t('inventory.expiringSoon')})`}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {(item.serialNumber || item.lotNumber) && (
+                        <div className="flex items-center gap-2 pt-1 border-t">
+                          <Barcode className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          <span className="text-xs text-muted-foreground">
+                            {item.trackingMode === 'serial' && item.serialNumber && `${t('inventory.serialPrefix')}: ${item.serialNumber}`}
+                            {item.trackingMode === 'lot' && item.lotNumber && `${t('inventory.lotPrefix')}: ${item.lotNumber}`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block border rounded-md overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -445,11 +561,18 @@ export default function InventoryTable({ location }: InventoryTableProps) {
                   ))
                 ) : filteredItems.map((item) => (
                   <TableRow key={item.id} data-testid={`row-item-${item.id}`}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{item.product.name}</div>
-                        <div className="text-sm text-muted-foreground">{item.product.modelNumber}</div>
-                      </div>
+                    <TableCell className="max-w-xs">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <div className="font-medium truncate">{item.product.name}</div>
+                            <div className="text-sm text-muted-foreground">{item.product.modelNumber}</div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{item.product.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
