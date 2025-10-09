@@ -2,7 +2,20 @@
   "app": {
     "title": "CRM",
     "description": "Your helper in everyday implantation",
-    "loginButton": "Login to Continue"
+    "loginButton": "Login to Continue",
+    "signupButton": "Sign Up"
+  },
+  "registration": {
+    "title": "Registration",
+    "description": "Enter the security word to create your account",
+    "secretWordLabel": "Security Word",
+    "secretWordPlaceholder": "Enter security word",
+    "secretWordRequired": "Security word is required",
+    "invalidSecretWord": "Invalid security word. Please try again.",
+    "validationFailed": "Validation failed. Please try again.",
+    "validating": "Validating...",
+    "continue": "Continue to Sign Up",
+    "backToLogin": "Back to Login"
   },
   "analytics": {
     "title": "Analytics & Reports",

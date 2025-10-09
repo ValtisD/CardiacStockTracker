@@ -2,7 +2,20 @@
   "app": {
     "title": "CRM",
     "description": "Dein Helfer im Implantationsalltag",
-    "loginButton": "Anmelden um fortzufahren"
+    "loginButton": "Anmelden um fortzufahren",
+    "signupButton": "Registrieren"
+  },
+  "registration": {
+    "title": "Registrierung",
+    "description": "Geben Sie das Sicherheitswort ein, um Ihr Konto zu erstellen",
+    "secretWordLabel": "Sicherheitswort",
+    "secretWordPlaceholder": "Sicherheitswort eingeben",
+    "secretWordRequired": "Sicherheitswort ist erforderlich",
+    "invalidSecretWord": "Ungültiges Sicherheitswort. Bitte versuchen Sie es erneut.",
+    "validationFailed": "Validierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "validating": "Wird validiert...",
+    "continue": "Weiter zur Registrierung",
+    "backToLogin": "Zurück zur Anmeldung"
   },
   "analytics": {
     "title": "Analytics & Berichte",

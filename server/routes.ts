@@ -17,7 +17,112 @@ import {
 } from "@shared/schema";
 import { requireAuth, requireAdmin, type AuthRequest } from "./middleware/auth";
 
+// In-memory storage for validation tokens (expires after 5 minutes)
+const validationTokens = new Map<string, { timestamp: number }>();
+
+// Clean up expired tokens every minute
+setInterval(() => {
+  const now = Date.now();
+  const FIVE_MINUTES = 5 * 60 * 1000;
+  const tokensToDelete: string[] = [];
+  
+  validationTokens.forEach((data, token) => {
+    if (now - data.timestamp > FIVE_MINUTES) {
+      tokensToDelete.push(token);
+    }
+  });
+  
+  tokensToDelete.forEach(token => validationTokens.delete(token));
+}, 60 * 1000);
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Registration gate - validate secret word (public endpoint, no auth required)
+  app.post("/api/auth/validate-secret-word", async (req, res) => {
+    try {
+      const { secretWord } = req.body;
+      
+      if (!secretWord || typeof secretWord !== 'string') {
+        return res.status(400).json({ valid: false, error: "Secret word is required" });
+      }
+
+      const expectedSecretWord = process.env.SIGNUP_SECRET_WORD;
+      
+      if (!expectedSecretWord) {
+        console.error('SIGNUP_SECRET_WORD environment variable is not set');
+        return res.status(500).json({ valid: false, error: "Server configuration error" });
+      }
+
+      const isValid = secretWord.trim() === expectedSecretWord.trim();
+      
+      if (isValid) {
+        // Generate cryptographically strong token
+        const crypto = await import('crypto');
+        const validationToken = crypto.randomBytes(32).toString('hex');
+        
+        // Store token with timestamp (expires in 5 minutes)
+        validationTokens.set(validationToken, { timestamp: Date.now() });
+        
+        res.json({ valid: true, validationToken });
+      } else {
+        res.json({ valid: false });
+      }
+    } catch (error) {
+      console.error("Error validating secret word:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ valid: false, error: "Validation failed" });
+    }
+  });
+
+  // Verify registration token (public endpoint, called on Auth0 callback)
+  app.post("/api/auth/verify-registration-token", async (req, res) => {
+    try {
+      const { token, userId } = req.body;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ valid: false, error: "Token is required" });
+      }
+
+      const tokenData = validationTokens.get(token);
+      
+      if (!tokenData) {
+        return res.json({ valid: false, error: "Invalid or expired token" });
+      }
+
+      // Check if token is expired (5 minutes)
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      if (Date.now() - tokenData.timestamp > FIVE_MINUTES) {
+        validationTokens.delete(token);
+        return res.json({ valid: false, error: "Token expired" });
+      }
+
+      // Token is valid - delete it (one-time use)
+      validationTokens.delete(token);
+      
+      // If userId provided, mark user as validated in database
+      if (userId && typeof userId === 'string') {
+        try {
+          const { db } = await import('./db');
+          const { users } = await import('@shared/schema');
+          const { eq } = await import('drizzle-orm');
+          
+          await db
+            .update(users)
+            .set({ validated: true })
+            .where(eq(users.userId, userId));
+          
+          console.log(`User ${userId} marked as validated`);
+        } catch (dbError) {
+          console.error('Error marking user as validated:', dbError);
+          // Don't fail the request if database update fails
+        }
+      }
+      
+      res.json({ valid: true });
+    } catch (error) {
+      console.error("Error verifying registration token:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ valid: false, error: "Verification failed" });
+    }
+  });
+
   // Products (read operations are public, mutations require admin)
   app.get("/api/products", requireAuth, async (req: AuthRequest, res: Response) => {
     try {

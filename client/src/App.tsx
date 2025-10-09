@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation, Link } from "wouter";
 import { queryClient, setTokenProvider } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,6 +26,7 @@ import ImplantProceduresList from "@/components/ImplantProceduresList";
 import UserProductSettings from "@/components/UserProductSettings";
 import UserManagement from "@/components/UserManagement";
 import Settings from "@/pages/Settings";
+import RegistrationGate from "@/pages/RegistrationGate";
 import NotFound from "@/pages/not-found";
 
 // Theme toggle component
@@ -85,13 +86,25 @@ function LoginPage() {
         <p className="text-muted-foreground">
           {t('app.description')}
         </p>
-        <Button
-          onClick={() => loginWithRedirect()}
-          size="lg"
-          data-testid="button-login"
-        >
-          {t('app.loginButton')}
-        </Button>
+        <div className="flex flex-col gap-3">
+          <Button
+            onClick={() => loginWithRedirect()}
+            size="lg"
+            data-testid="button-login"
+          >
+            {t('app.loginButton')}
+          </Button>
+          <Link href="/register">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full"
+              data-testid="button-signup"
+            >
+              {t('app.signupButton')}
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -246,12 +259,79 @@ function Router() {
 }
 
 function AppContent() {
-  const { isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isLoading, isAuthenticated, getAccessTokenSilently, logout, user } = useAuth0();
   const [tokenReady, setTokenReady] = useState(false);
+  const [location] = useLocation();
+  const [validatingRegistration, setValidatingRegistration] = useState(false);
+
+  // Verify registration token for new signups
+  useEffect(() => {
+    const verifyRegistration = async () => {
+      // Check URL for registration completion
+      const params = new URLSearchParams(window.location.search);
+      const hasAuthCode = params.has('code');
+      const validationToken = sessionStorage.getItem('registration_validation_token');
+      
+      // If we just came back from Auth0 with a code and have a validation token, verify it
+      if (hasAuthCode && validationToken && isAuthenticated) {
+        setValidatingRegistration(true);
+        
+        try {
+          const response = await fetch('/api/auth/verify-registration-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              token: validationToken,
+              userId: user?.sub  // Pass Auth0 user ID to mark as validated
+            }),
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok || !data.valid) {
+            console.error('Invalid registration - token verification failed:', data.error);
+            // Clear session storage
+            sessionStorage.clear();
+            // Logout and redirect
+            await logout({ 
+              logoutParams: { 
+                returnTo: `${window.location.origin}/?error=invalid_registration` 
+              } 
+            });
+            return;
+          }
+          
+          // Validation successful - clear the token
+          sessionStorage.removeItem('registration_validation_token');
+          console.log('Registration validated successfully');
+          
+          // Clear the code parameter from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (error) {
+          console.error('Error verifying registration token:', error);
+          sessionStorage.clear();
+          await logout({ 
+            logoutParams: { 
+              returnTo: `${window.location.origin}/?error=registration_verification_failed` 
+            } 
+          });
+          return;
+        } finally {
+          setValidatingRegistration(false);
+        }
+      }
+    };
+    
+    if (isAuthenticated) {
+      verifyRegistration();
+    }
+  }, [isAuthenticated, logout]);
 
   // Set up token provider for API requests and verify it works
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !validatingRegistration) {
       const setupToken = async () => {
         try {
           // First, get the token to ensure Auth0 is ready
@@ -275,20 +355,26 @@ function AppContent() {
       
       setupToken();
     }
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated, getAccessTokenSilently, validatingRegistration]);
 
-  if (isLoading) {
+  if (isLoading || validatingRegistration) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">
+            {validatingRegistration ? 'Verifying registration...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
+    // Allow access to registration gate without authentication
+    if (location === '/register') {
+      return <RegistrationGate />;
+    }
     return <LoginPage />;
   }
 

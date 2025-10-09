@@ -84,6 +84,7 @@ export const users = pgTable("users", {
   userId: text("user_id").notNull().unique(), // Auth0 user ID (sub claim)
   email: text("email").notNull(), // Email from Auth0 token
   language: text("language").notNull().default('de'), // User's preferred language: 'de' (German) or 'en' (English)
+  validated: boolean("validated").notNull().default(false), // Whether user completed registration gate
   lastSeen: timestamp("last_seen").default(sql`now()`),
   createdAt: timestamp("created_at").default(sql`now()`),
 });

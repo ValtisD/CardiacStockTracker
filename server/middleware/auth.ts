@@ -31,13 +31,19 @@ export async function extractUserInfo(req: AuthRequest, res: Response, next: Nex
   req.userId = auth.payload.sub;
   req.userEmail = auth.payload.email;
 
+  // Check if user is prime admin based on email
+  const adminEmail = process.env.AUTH0_ADMIN_EMAIL;
+  req.isPrimeAdmin = req.userEmail === adminEmail;
+
   // Upsert user info (record user activity and email)
+  // Prime admin is auto-validated
   if (req.userId && req.userEmail) {
-    await db
+    const userRecord = await db
       .insert(users)
       .values({
         userId: req.userId,
         email: req.userEmail,
+        validated: req.isPrimeAdmin, // Prime admin is automatically validated
         lastSeen: sql`now()`,
       })
       .onConflictDoUpdate({
@@ -45,13 +51,27 @@ export async function extractUserInfo(req: AuthRequest, res: Response, next: Nex
         set: {
           email: req.userEmail,
           lastSeen: sql`now()`,
+          // Update validated to true if prime admin
+          ...(req.isPrimeAdmin ? { validated: true } : {}),
         },
-      });
-  }
+      })
+      .returning();
 
-  // Check if user is prime admin based on email
-  const adminEmail = process.env.AUTH0_ADMIN_EMAIL;
-  req.isPrimeAdmin = req.userEmail === adminEmail;
+    // Check if user is validated (required for non-admin users)
+    const user = userRecord[0] || await db
+      .select()
+      .from(users)
+      .where(eq(users.userId, req.userId))
+      .limit(1)
+      .then(rows => rows[0]);
+
+    if (!req.isPrimeAdmin && user && !user.validated) {
+      return res.status(403).json({ 
+        error: 'Account not validated. Please complete registration through the proper channel.',
+        code: 'UNVALIDATED_USER'
+      });
+    }
+  }
 
   // Check if user is admin (either prime admin or in admin_users table)
   if (req.isPrimeAdmin) {
