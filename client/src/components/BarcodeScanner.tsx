@@ -386,22 +386,32 @@ export default function BarcodeScanner({
   const handleBarcodeDetected = async (barcode: string) => {
     const now = Date.now();
     
+    console.log('[BARCODE] Detection attempt:', {
+      barcode,
+      isProcessing: isProcessingRef.current,
+      lastConfirmed: lastConfirmedBarcodeRef.current,
+      lastDetected: lastDetectedRef.current,
+      timeSinceLastDetection: now - lastDetectionTimeRef.current,
+      isScanningActive: isScanningActiveRef.current,
+      detectionEnabled: detectionEnabledRef.current
+    });
+    
     // Prevent multiple rapid detections of the same barcode
     if (isProcessingRef.current) {
-      console.log('Already processing, ignoring duplicate');
+      console.log('[BARCODE] Already processing, ignoring duplicate');
       return;
     }
     
     // CRITICAL: Ignore if this is the same barcode that was just confirmed in the previous scan
     // This prevents the reader from re-detecting cached/lingering results from previous sessions
     if (lastConfirmedBarcodeRef.current === barcode) {
-      console.log('Ignoring previously confirmed barcode:', barcode);
+      console.log('[BARCODE] Ignoring previously confirmed barcode:', barcode);
       return;
     }
     
     // Ignore if same barcode detected within last 2 seconds
     if (lastDetectedRef.current === barcode && now - lastDetectionTimeRef.current < 2000) {
-      console.log('Duplicate barcode within 2s, ignoring');
+      console.log('[BARCODE] Duplicate barcode within 2s, ignoring');
       return;
     }
     
@@ -409,11 +419,13 @@ export default function BarcodeScanner({
     lastDetectedRef.current = barcode;
     lastDetectionTimeRef.current = now;
     
+    console.log('[BARCODE] Processing barcode:', barcode);
+    
     // Stop camera first to prevent more detections
     stopCamera();
     
     setScannedCode(barcode);
-    console.log('Barcode detected:', barcode);
+    console.log('[BARCODE] Barcode accepted, searching for product');
     
     await searchProduct(barcode);
     
