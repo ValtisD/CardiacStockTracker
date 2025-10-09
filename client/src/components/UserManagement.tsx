@@ -1,7 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Users, Shield } from "lucide-react";
+import { Users, Shield, Mail, Package, FileText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -95,7 +96,73 @@ export default function UserManagement() {
         </Badge>
       </div>
 
-      <Card>
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {users.map((user) => (
+          <Card key={user.userId} data-testid={`card-user-${user.userId}`}>
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="font-medium text-sm truncate block" data-testid={`text-email-${user.userId}`}>
+                            {user.email}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{user.email}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    {user.isPrimeAdmin && (
+                      <Badge variant="default" className="text-xs" data-testid={`badge-prime-admin-${user.userId}`}>
+                        <Shield className="h-3 w-3 mr-1" />
+                        {t("users.primeAdmin")}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 py-2 border-t">
+                  <span className="text-sm text-muted-foreground">{t("users.admin")}</span>
+                  <div className="flex items-center gap-2" data-testid={`cell-admin-toggle-${user.userId}`}>
+                    <Switch
+                      checked={user.isAdmin}
+                      onCheckedChange={() => handleToggleAdmin(user)}
+                      disabled={user.isPrimeAdmin || toggleAdminMutation.isPending}
+                      data-testid={`switch-admin-${user.userId}`}
+                    />
+                    {user.isAdmin && !user.isPrimeAdmin && (
+                      <Badge variant="secondary" className="text-xs" data-testid={`badge-admin-${user.userId}`}>
+                        {t("users.admin")}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{t("users.inventory")}:</span>
+                    <span className="font-medium" data-testid={`text-inventory-${user.userId}`}>{user.inventoryCount}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{t("users.procedures")}:</span>
+                    <span className="font-medium" data-testid={`text-procedures-${user.userId}`}>{user.recentProcedureCount}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>{t("users.systemUsers")}</CardTitle>
         </CardHeader>
@@ -116,16 +183,25 @@ export default function UserManagement() {
                     key={user.userId}
                     data-testid={`row-user-${user.userId}`}
                   >
-                    <TableCell className="font-medium" data-testid={`text-email-${user.userId}`}>
-                      <div className="flex items-center gap-2">
-                        {user.email}
-                        {user.isPrimeAdmin && (
-                          <Badge variant="default" className="text-xs" data-testid={`badge-prime-admin-${user.userId}`}>
-                            <Shield className="h-3 w-3 mr-1" />
-                            {t("users.primeAdmin")}
-                          </Badge>
-                        )}
-                      </div>
+                    <TableCell className="font-medium max-w-xs">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2">
+                            <span className="truncate" data-testid={`text-email-${user.userId}`}>
+                              {user.email}
+                            </span>
+                            {user.isPrimeAdmin && (
+                              <Badge variant="default" className="text-xs flex-shrink-0" data-testid={`badge-prime-admin-${user.userId}`}>
+                                <Shield className="h-3 w-3 mr-1" />
+                                {t("users.primeAdmin")}
+                              </Badge>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{user.email}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                     <TableCell data-testid={`cell-admin-toggle-${user.userId}`}>
                       <div className="flex items-center gap-2">
