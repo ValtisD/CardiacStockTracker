@@ -3,13 +3,15 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from 'react-i18next';
-import { Building2, Phone, MapPin, Plus, Edit, Search, User, Trash2 } from "lucide-react";
+import { Building2, Phone, MapPin, Plus, Edit, Search, User, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -221,8 +223,76 @@ export default function HospitalManager() {
             </div>
           </div>
 
-          {/* Hospital Table */}
-          <div className="border rounded-md overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {filteredHospitals.map((hospital) => (
+              <Card key={hospital.id} className="hover-elevate" data-testid={`card-hospital-${hospital.id}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <h3 className="font-semibold text-base truncate" data-testid={`text-hospital-name-${hospital.id}`}>
+                            {hospital.name}
+                          </h3>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{hospital.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      {hospital.notes && (
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-1">{hospital.notes}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Badge variant={hospital.recentProcedures > 5 ? 'default' : 'secondary'} className="text-xs">
+                        {hospital.recentProcedures}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" data-testid={`button-menu-${hospital.id}`}>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingHospital(hospital)} data-testid={`menu-edit-${hospital.id}`}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            {t('common.edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeletingHospitalId(hospital.id)} className="text-destructive" data-testid={`menu-delete-${hospital.id}`}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t('common.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-muted-foreground truncate">{hospital.address}, {hospital.zipCode} {hospital.city}</span>
+                    </div>
+                    {hospital.primaryPhysician && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <span className="text-muted-foreground truncate">{hospital.primaryPhysician}</span>
+                      </div>
+                    )}
+                    {hospital.contactPhone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <span className="text-muted-foreground">{hospital.contactPhone}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block border rounded-md overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -237,19 +307,29 @@ export default function HospitalManager() {
               <TableBody>
                 {filteredHospitals.map((hospital) => (
                   <TableRow key={hospital.id} data-testid={`row-hospital-${hospital.id}`}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{hospital.name}</div>
-                        {hospital.notes && (
-                          <div className="text-sm text-muted-foreground">{hospital.notes}</div>
-                        )}
-                      </div>
+                    <TableCell className="max-w-xs">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <div className="font-medium truncate">{hospital.name}</div>
+                            {hospital.notes && (
+                              <div className="text-sm text-muted-foreground truncate">{hospital.notes}</div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm">
+                          <div>
+                            <p className="font-medium">{hospital.name}</p>
+                            {hospital.notes && <p className="text-sm mt-1">{hospital.notes}</p>}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-start gap-1">
-                        <MapPin className="h-3 w-3 mt-1 text-muted-foreground" />
-                        <div className="text-sm">
-                          <div>{hospital.address}</div>
+                        <MapPin className="h-3 w-3 mt-1 text-muted-foreground flex-shrink-0" />
+                        <div className="text-sm min-w-0">
+                          <div className="truncate">{hospital.address}</div>
                           <div>{hospital.zipCode} {hospital.city}</div>
                         </div>
                       </div>
@@ -257,15 +337,15 @@ export default function HospitalManager() {
                     <TableCell>
                       {hospital.primaryPhysician && (
                         <div className="flex items-center gap-1">
-                          <User className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm">{hospital.primaryPhysician}</span>
+                          <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm truncate">{hospital.primaryPhysician}</span>
                         </div>
                       )}
                     </TableCell>
                     <TableCell>
                       {hospital.contactPhone && (
                         <div className="flex items-center gap-1">
-                          <Phone className="h-3 w-3 text-muted-foreground" />
+                          <Phone className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                           <span className="text-sm">{hospital.contactPhone}</span>
                         </div>
                       )}
