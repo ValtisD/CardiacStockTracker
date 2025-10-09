@@ -87,10 +87,10 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">{t("users.title")}</h2>
-        <Badge variant="outline" data-testid="badge-user-count">
+    <div className="p-3 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl font-semibold">{t("users.title")}</h2>
+        <Badge variant="outline" data-testid="badge-user-count" className="w-fit">
           {users.length} {users.length === 1 ? t("users.userSingular") : t("users.userPlural")}
         </Badge>
       </div>

@@ -154,10 +154,10 @@ function ImplantReportsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">{t('procedures.title')}</h2>
-        <Button onClick={() => setShowNewReport(true)} data-testid="button-new-report">
+    <div className="p-3 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl font-semibold">{t('procedures.title')}</h2>
+        <Button onClick={() => setShowNewReport(true)} data-testid="button-new-report" className="w-full sm:w-auto">
           {t('procedures.addProcedure')}
         </Button>
       </div>
@@ -192,11 +192,11 @@ function ProductsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">{t('products.title')}</h2>
+    <div className="p-3 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl font-semibold">{t('products.title')}</h2>
         {isAdmin && (
-          <Button onClick={() => setShowAddForm(true)} data-testid="button-add-product">
+          <Button onClick={() => setShowAddForm(true)} data-testid="button-add-product" className="w-full sm:w-auto">
             {t('products.addProduct')}
           </Button>
         )}
@@ -210,8 +210,8 @@ function AnalyticsPage() {
   const { t } = useTranslation();
   
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">{t('analytics.title')}</h2>
+    <div className="p-3 md:p-6">
+      <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">{t('analytics.title')}</h2>
       <div className="text-center py-12 text-muted-foreground">
         <p>{t('analytics.comingSoon')}</p>
         <p className="text-sm mt-2">{t('analytics.description')}</p>

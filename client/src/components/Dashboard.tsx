@@ -112,10 +112,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">{t('dashboard.title')}</h2>
-        <Badge variant="secondary" data-testid="text-last-updated">
+    <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h2 className="text-xl md:text-2xl font-semibold">{t('dashboard.title')}</h2>
+        <Badge variant="secondary" data-testid="text-last-updated" className="w-fit">
           {t('dashboard.lastUpdated')} {new Date().toLocaleDateString()}
         </Badge>
       </div>
