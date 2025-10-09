@@ -180,20 +180,20 @@ export default function HospitalManager() {
     <div className="p-3 md:p-6 space-y-4">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 flex-wrap">
               <Building2 className="h-5 w-5" />
-              {t('hospitals.title')}
-              <Badge variant="secondary">{filteredHospitals.length} {t('hospitals.facilities')}</Badge>
+              <span>{t('hospitals.title')}</span>
+              <Badge variant="secondary" className="w-fit">{filteredHospitals.length} {t('hospitals.facilities')}</Badge>
             </CardTitle>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button data-testid="button-add-hospital">
+                <Button data-testid="button-add-hospital" className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   {t('hospitals.addHospital')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{t('hospitals.addNewHospital')}</DialogTitle>
                 </DialogHeader>
@@ -338,7 +338,7 @@ export default function HospitalManager() {
       {/* Edit Dialog */}
       {editingHospital && (
         <Dialog open={!!editingHospital} onOpenChange={() => setEditingHospital(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t('hospitals.editHospital')}</DialogTitle>
             </DialogHeader>
