@@ -82,6 +82,7 @@ export default function BarcodeScanner({
   });
 
   const searchProduct = async (query: string) => {
+    console.error('[SEARCH] searchProduct called with:', query, 'Stack:', new Error().stack?.split('\n')[2]);
     setIsSearching(true);
     setError('');
     
