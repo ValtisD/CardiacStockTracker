@@ -364,22 +364,23 @@ export default function InventoryTable({ location }: InventoryTableProps) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              {location === 'home' ? t('inventory.homeStock') : t('inventory.carStock')} {t('inventory.inventory')}
+              <CardTitle>
+                {location === 'home' ? t('inventory.homeStock') : t('inventory.carStock')}
+              </CardTitle>
               <Badge variant={lowStockItems.length > 0 ? 'destructive' : 'secondary'}>
-                {filteredItems.length} {t('inventory.items')}
+                {filteredItems.length}
               </Badge>
-            </CardTitle>
+            </div>
             <Button
               onClick={() => setShowAddDialog(true)}
-              size="sm"
               data-testid="button-add-to-stock"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {t('inventory.addToStock')}
+              {location === 'home' ? t('inventory.addToHome') : t('inventory.addToCar')}
             </Button>
           </div>
         </CardHeader>
