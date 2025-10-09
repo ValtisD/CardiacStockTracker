@@ -280,6 +280,12 @@ export default function BarcodeScanner({
         await codeReaderRef.current.decodeFromVideoElement(
           videoRef.current,
           (result) => {
+            // CRITICAL: Check processing flag FIRST before any other checks
+            // Multiple callbacks can be queued before stopCamera() takes effect
+            if (isProcessingRef.current) {
+              return; // Already processing a barcode, ignore all subsequent callbacks
+            }
+            
             // Immediately check if scanning is still active
             if (!isScanningActiveRef.current) {
               return; // Camera was stopped, ignore this callback
