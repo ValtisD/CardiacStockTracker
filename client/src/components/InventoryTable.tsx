@@ -331,30 +331,42 @@ export default function InventoryTable({ location }: InventoryTableProps) {
 
     // If deleting full quantity, delete the item
     if (qtyToDelete === deleteItem.quantity) {
-      deleteMutation.mutate({ id: deleteItem.id });
-      setShowDeleteDialog(false);
-      setDeleteItem(null);
-      setDeleteQuantity('');
-    } else {
-      // If deleting partial quantity, update the quantity
-      const newQuantity = deleteItem.quantity - qtyToDelete;
-      updateQuantityMutation.mutate(
-        { id: deleteItem.id, quantity: newQuantity },
+      deleteMutation.mutate(
+        { id: deleteItem.id },
         {
           onSuccess: () => {
             setShowDeleteDialog(false);
             setDeleteItem(null);
             setDeleteQuantity('');
-            toast({
-              title: t('inventory.quantityReduced'),
-              description: t('inventory.quantityReducedDescription', { 
-                removed: qtyToDelete, 
-                remaining: newQuantity 
-              }),
-            });
           }
         }
       );
+    } else {
+      // If deleting partial quantity, update the quantity manually
+      const newQuantity = deleteItem.quantity - qtyToDelete;
+      apiRequest('PATCH', `/api/inventory/item/${deleteItem.id}`, { quantity: newQuantity })
+        .then(() => {
+          queryClient.invalidateQueries({ 
+            predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+          });
+          setShowDeleteDialog(false);
+          setDeleteItem(null);
+          setDeleteQuantity('');
+          toast({
+            title: t('inventory.quantityReduced'),
+            description: t('inventory.quantityReducedDescription', { 
+              removed: qtyToDelete, 
+              remaining: newQuantity 
+            }),
+          });
+        })
+        .catch((error: Error) => {
+          toast({
+            title: t('inventory.updateFailed'),
+            description: error.message || t('inventory.updateFailedDescription'),
+            variant: "destructive",
+          });
+        });
     }
   };
 
