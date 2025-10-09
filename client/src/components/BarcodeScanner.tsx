@@ -151,9 +151,10 @@ export default function BarcodeScanner({
     setIsScanning(true);
     setError('');
     
-    // Clear any previous barcode detection state
+    // Clear any previous barcode detection state - this allows fresh scanning
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
+    isProcessingRef.current = false; // Reset processing flag for new scan session
     
     // Stop any existing stream before starting a new one
     if (videoRef.current && videoRef.current.srcObject) {
@@ -379,8 +380,8 @@ export default function BarcodeScanner({
     
     await searchProduct(barcode);
     
-    // Reset processing flag
-    isProcessingRef.current = false;
+    // DO NOT reset processing flag here - it will be reset when starting a new camera session
+    // This prevents queued callbacks from ZXing from processing the same barcode multiple times
   };
 
   const handleManualEntry = () => {
