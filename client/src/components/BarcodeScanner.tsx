@@ -161,6 +161,10 @@ export default function BarcodeScanner({
     lastDetectedRef.current = '';
     lastDetectionTimeRef.current = 0;
     
+    // Clear the last confirmed barcode when starting a fresh camera session
+    // This allows the same barcode to be scanned again after moving away and coming back
+    lastConfirmedBarcodeRef.current = '';
+    
     // Stop any existing stream before starting a new one
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
