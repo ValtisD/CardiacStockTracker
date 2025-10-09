@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { FileText, Pencil, Trash2, Search } from "lucide-react";
+import { FileText, Pencil, Trash2, Search, MoreVertical, Calendar, Building2 } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -14,6 +14,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -145,7 +147,7 @@ export default function ImplantProceduresList() {
             />
           </div>
         </CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
+        <CardContent className="p-0">
           {filteredProcedures.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
@@ -153,86 +155,187 @@ export default function ImplantProceduresList() {
               <p className="text-sm mt-2">{t('procedures.tryDifferentSearch')}</p>
             </div>
           ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('procedures.date')}</TableHead>
-                <TableHead>{t('procedures.hospital')}</TableHead>
-                <TableHead>{t('procedures.procedureType')}</TableHead>
-                <TableHead>{t('procedures.deviceName')}</TableHead>
-                <TableHead>{t('procedures.modelNumber')}</TableHead>
-                <TableHead>{t('procedures.serialLotNumber')}</TableHead>
-                <TableHead>{t('procedures.notes')}</TableHead>
-                <TableHead className="text-right">{t('common.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProcedures.map((procedure) => (
-                <TableRow 
-                  key={procedure.id} 
-                  data-testid={`row-procedure-${procedure.id}`}
-                  className="cursor-pointer hover-elevate"
-                  onClick={() => setSelectedProcedureId(procedure.id)}
-                >
-                  <TableCell className="font-medium" data-testid={`text-date-${procedure.id}`}>
-                    {format(new Date(procedure.implantDate), "MMM dd, yyyy")}
-                  </TableCell>
-                  <TableCell data-testid={`text-hospital-${procedure.id}`}>
-                    {procedure.hospital.name}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" data-testid={`badge-type-${procedure.id}`}>
-                      {procedure.procedureType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell data-testid={`text-device-name-${procedure.id}`}>
-                    {procedure.deviceProduct?.name || (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell data-testid={`text-model-number-${procedure.id}`}>
-                    {procedure.deviceProduct?.modelNumber || (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell data-testid={`text-serial-lot-${procedure.id}`}>
-                    {procedure.deviceSerialNumber || (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell data-testid={`text-notes-${procedure.id}`}>
-                    {procedure.notes ? (
-                      <span className="text-sm truncate max-w-xs block">
-                        {procedure.notes}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => handleEditClick(procedure.id, e)}
-                        data-testid={`button-edit-${procedure.id}`}
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden p-3 space-y-3">
+                {filteredProcedures.map((procedure) => (
+                  <Card 
+                    key={procedure.id} 
+                    className="hover-elevate cursor-pointer" 
+                    onClick={() => setSelectedProcedureId(procedure.id)}
+                    data-testid={`card-procedure-${procedure.id}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm font-medium">{format(new Date(procedure.implantDate), "MMM dd, yyyy")}</span>
+                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="font-semibold truncate">{procedure.deviceProduct?.name || t('procedures.externalDevice')}</p>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{procedure.deviceProduct?.name || t('procedures.externalDevice')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Badge variant="outline" className="text-xs">
+                            {procedure.procedureType}
+                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" data-testid={`button-menu-${procedure.id}`}>
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditClick(procedure.id, e); }} data-testid={`menu-edit-${procedure.id}`}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                {t('common.edit')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDeleteClick(procedure.id, e); }} className="text-destructive" data-testid={`menu-delete-${procedure.id}`}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {t('common.delete')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          <span className="text-muted-foreground truncate">{procedure.hospital.name}</span>
+                        </div>
+                        {procedure.deviceProduct?.modelNumber && (
+                          <div className="text-xs text-muted-foreground">
+                            <span className="font-medium">{t('procedures.model')}:</span> {procedure.deviceProduct.modelNumber}
+                          </div>
+                        )}
+                        {procedure.deviceSerialNumber && (
+                          <div className="text-xs text-muted-foreground">
+                            <span className="font-medium">{t('procedures.serial')}:</span> {procedure.deviceSerialNumber}
+                          </div>
+                        )}
+                        {procedure.notes && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{procedure.notes}</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('procedures.date')}</TableHead>
+                      <TableHead>{t('procedures.hospital')}</TableHead>
+                      <TableHead>{t('procedures.procedureType')}</TableHead>
+                      <TableHead>{t('procedures.deviceName')}</TableHead>
+                      <TableHead>{t('procedures.modelNumber')}</TableHead>
+                      <TableHead>{t('procedures.serialLotNumber')}</TableHead>
+                      <TableHead>{t('procedures.notes')}</TableHead>
+                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProcedures.map((procedure) => (
+                      <TableRow 
+                        key={procedure.id} 
+                        data-testid={`row-procedure-${procedure.id}`}
+                        className="cursor-pointer hover-elevate"
+                        onClick={() => setSelectedProcedureId(procedure.id)}
                       >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => handleDeleteClick(procedure.id, e)}
-                        data-testid={`button-delete-${procedure.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                        <TableCell className="font-medium" data-testid={`text-date-${procedure.id}`}>
+                          {format(new Date(procedure.implantDate), "MMM dd, yyyy")}
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="truncate block" data-testid={`text-hospital-${procedure.id}`}>
+                                {procedure.hospital.name}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{procedure.hospital.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" data-testid={`badge-type-${procedure.id}`}>
+                            {procedure.procedureType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="truncate block" data-testid={`text-device-name-${procedure.id}`}>
+                                {procedure.deviceProduct?.name || <span className="text-muted-foreground">-</span>}
+                              </span>
+                            </TooltipTrigger>
+                            {procedure.deviceProduct?.name && (
+                              <TooltipContent>
+                                <p>{procedure.deviceProduct.name}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell data-testid={`text-model-number-${procedure.id}`}>
+                          {procedure.deviceProduct?.modelNumber || (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell data-testid={`text-serial-lot-${procedure.id}`}>
+                          {procedure.deviceSerialNumber || (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-sm truncate block" data-testid={`text-notes-${procedure.id}`}>
+                                {procedure.notes || <span className="text-muted-foreground">-</span>}
+                              </span>
+                            </TooltipTrigger>
+                            {procedure.notes && (
+                              <TooltipContent className="max-w-sm">
+                                <p>{procedure.notes}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={(e) => handleEditClick(procedure.id, e)}
+                              data-testid={`button-edit-${procedure.id}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={(e) => handleDeleteClick(procedure.id, e)}
+                              data-testid={`button-delete-${procedure.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
