@@ -380,8 +380,8 @@ export default function BarcodeScanner({
     
     await searchProduct(barcode);
     
-    // DO NOT reset processing flag here - it will be reset when starting a new camera session
-    // This prevents queued callbacks from ZXing from processing the same barcode multiple times
+    // Reset processing flag after search completes so user can scan again or use manual entry
+    isProcessingRef.current = false;
   };
 
   const handleManualEntry = () => {
