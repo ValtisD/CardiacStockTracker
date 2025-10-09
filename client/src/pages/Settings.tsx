@@ -73,13 +73,13 @@ export default function Settings() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <SettingsIcon className="h-6 w-6" />
-        <h2 className="text-2xl font-semibold">{t('settings.title')}</h2>
+    <div className="p-3 md:p-6">
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <SettingsIcon className="h-5 md:h-6 w-5 md:w-6" />
+        <h2 className="text-xl md:text-2xl font-semibold">{t('settings.title')}</h2>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
         <TabsList>
           <TabsTrigger value="language" data-testid="tab-language">
             <Globe className="h-4 w-4 mr-2" />

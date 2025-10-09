@@ -177,7 +177,7 @@ export default function HospitalManager() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="p-3 md:p-6 space-y-4">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
