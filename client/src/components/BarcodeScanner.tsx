@@ -394,7 +394,11 @@ export default function BarcodeScanner({
     setError(t('barcode.useManualEntry'));
   };
 
-  const handleBarcodeDetected = async (barcode: string) => {
+  // Use useCallback to create a stable reference for the barcode detection handler
+  // This prevents closure issues when the ZXing callback is registered
+  const handleBarcodeDetectedRef = useRef<(barcode: string) => Promise<void>>();
+  
+  handleBarcodeDetectedRef.current = async (barcode: string) => {
     const now = Date.now();
     
     console.log('[BARCODE] Detection attempt:', {
@@ -442,6 +446,12 @@ export default function BarcodeScanner({
     
     // DO NOT reset processing flag - camera is stopped, no more detections should happen
     // The flag will be reset when resetScanner() is called for the next scan session
+  };
+  
+  const handleBarcodeDetected = async (barcode: string) => {
+    if (handleBarcodeDetectedRef.current) {
+      await handleBarcodeDetectedRef.current(barcode);
+    }
   };
 
   const handleManualEntry = () => {
