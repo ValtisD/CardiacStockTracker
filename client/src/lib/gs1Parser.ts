@@ -106,34 +106,9 @@ export function parseGS1Barcode(barcode: string): GS1Data {
             foundValidAI = true;
           }
         }
-        // Check for variable-length AIs - handle ambiguity without FNC1 separator
-        // The challenge: "10ABC10..." could be lot "ABC10..." OR lot "ABC" + lot "..."
-        // Strategy: Look for patterns that strongly suggest an AI boundary
-        else if ((next2 === '21' || next2 === '10')) {
-          const currentDataLength = dataEnd - dataStart;
-          
-          if (currentDataLength > 0 && ai !== next2) {
-            // Check what comes after the potential AI
-            const dataAfterAI = barcode.substring(dataEnd + 2, Math.min(dataEnd + 22, barcode.length));
-            
-            // Look for a fixed-length AI within the next field (strong signal)
-            let hasFixedAIAfter = false;
-            for (let i = 0; i < Math.min(20, dataAfterAI.length - 1); i++) {
-              const peek2 = dataAfterAI.substring(i, i + 2);
-              if (FIXED_LENGTH_AIS[peek2]) {
-                hasFixedAIAfter = true;
-                break;
-              }
-            }
-            
-            // Decision logic:
-            // - If there's a fixed AI after: definitely a new variable AI
-            // - If current data is 1 char: ambiguous, continue reading (favor longer fields)
-            // - If current data is 2+ chars: likely a new AI (most medical device fields are longer)
-            if (hasFixedAIAfter || currentDataLength >= 2) {
-              foundValidAI = true;
-            }
-          }
+        // Check for variable-length AIs (need at least AI + some data)
+        else if ((next2 === '21' || next2 === '10') && dataEnd + 3 <= barcode.length) {
+          foundValidAI = true;
         }
         
         if (foundValidAI) {
