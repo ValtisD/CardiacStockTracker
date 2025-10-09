@@ -106,8 +106,10 @@ export function parseGS1Barcode(barcode: string): GS1Data {
             foundValidAI = true;
           }
         }
-        // Check for variable-length AIs (need at least AI + some data)
-        else if ((next2 === '21' || next2 === '10') && dataEnd + 3 <= barcode.length) {
+        // Check for variable-length AIs
+        // Only treat as new AI if it's a DIFFERENT AI than the current one
+        // This prevents "10" within lot data (AI 10) from being treated as a new AI
+        else if ((next2 === '21' || next2 === '10') && ai !== next2 && dataEnd + 3 <= barcode.length) {
           foundValidAI = true;
         }
         

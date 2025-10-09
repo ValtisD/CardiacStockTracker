@@ -175,7 +175,7 @@ export default function BarcodeScanner({
       console.log('Starting camera for barcode scanning...');
       
       // ALWAYS create a fresh barcode reader to prevent callback contamination from previous scans
-      // First, clean up any existing reader
+      // First, clean up any existing reader completely
       if (codeReaderRef.current) {
         try {
           // @ts-ignore - reset method exists but isn't in types
@@ -183,9 +183,14 @@ export default function BarcodeScanner({
         } catch (e) {
           // Ignore errors
         }
+        // Null it out to ensure complete cleanup
+        codeReaderRef.current = null;
       }
       
-      // Create new reader instance for this scan
+      // Wait a moment to ensure cleanup is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Create completely new reader instance for this scan
       codeReaderRef.current = new BrowserMultiFormatReader();
       // Set scan timing for better performance (300ms between scans)
       // @ts-ignore - timeBetweenScansMillis exists but isn't in types
