@@ -57,7 +57,7 @@ function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-muted-foreground" data-testid="text-user-email">
+      <span className="text-sm text-muted-foreground hidden md:block" data-testid="text-user-email">
         {user?.email}
       </span>
       <Button
@@ -66,8 +66,8 @@ function UserMenu() {
         onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
         data-testid="button-logout"
       >
-        <LogOut className="h-4 w-4 mr-2" />
-        {t('common.logout')}
+        <LogOut className="h-4 w-4 md:mr-2" />
+        <span className="hidden md:inline">{t('common.logout')}</span>
       </Button>
     </div>
   );
@@ -363,15 +363,15 @@ function AuthenticatedApp() {
             isAdmin={isAdmin}
           />
           <div className="flex flex-col flex-1">
-            <header className="flex items-center justify-between p-4 border-b border-card-border bg-card">
-              <div className="flex items-center gap-4">
+            <header className="flex items-center justify-between p-2 md:p-4 border-b border-card-border bg-card">
+              <div className="flex items-center gap-2 md:gap-4">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-semibold">CRM Inventory</h1>
+                  <h1 className="text-lg md:text-xl font-semibold">CRM Inventory</h1>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 md:gap-2">
                 <UserMenu />
                 <ThemeToggle />
               </div>
