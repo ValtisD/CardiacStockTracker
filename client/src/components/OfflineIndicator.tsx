@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { syncManager, type SyncStatus } from '@/lib/syncManager';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +14,7 @@ import {
 
 export default function OfflineIndicator() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [pendingCount, setPendingCount] = useState(0);
@@ -27,6 +29,15 @@ export default function OfflineIndicator() {
     const unsubscribe = syncManager.onStatusChange((status, pending) => {
       setSyncStatus(status);
       setPendingCount(pending);
+    });
+
+    // Register error callback for sync failures
+    syncManager.onSyncError((title, description) => {
+      toast({
+        variant: 'destructive',
+        title,
+        description,
+      });
     });
 
     // Initial pending count
@@ -47,7 +58,7 @@ export default function OfflineIndicator() {
       unsubscribe();
       clearInterval(pollInterval);
     };
-  }, [isOnline]);
+  }, [isOnline, toast]);
 
   const handleSync = () => {
     syncManager.sync();

@@ -7,6 +7,7 @@ class SyncManager {
   private syncStatus: SyncStatus = 'idle';
   private listeners: Set<(status: SyncStatus, pending: number) => void> = new Set();
   private syncInProgress = false;
+  private errorCallback: ((error: string, details?: string) => void) | null = null;
   
   // In-memory cache to prevent concurrent duplicate mutations
   private recentMutations: Map<string, number> = new Map();
@@ -51,6 +52,11 @@ class SyncManager {
   onStatusChange(callback: (status: SyncStatus, pending: number) => void) {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
+  }
+
+  // Register a callback for sync errors (used to show toast notifications)
+  onSyncError(callback: (error: string, details?: string) => void) {
+    this.errorCallback = callback;
   }
 
   async getPendingCount(): Promise<number> {
@@ -214,6 +220,15 @@ class SyncManager {
             // Client errors (validation, not found, etc.) - don't retry, just remove
             console.error('❌ Client error (permanent failure), removing from queue:', errorMessage);
             await offlineStorage.removeSyncQueueItem(item.id);
+            
+            // Notify user of sync failure
+            if (this.errorCallback) {
+              // Extract the error message (after "400: " or similar status code)
+              const userMessage = errorMessage.replace(/^4\d{2}:\s*/, '');
+              const actionType = item.method === 'POST' ? 'create' : 
+                                item.method === 'PATCH' || item.method === 'PUT' ? 'update' : 'delete';
+              this.errorCallback(`Failed to ${actionType} ${item.entity}`, userMessage);
+            }
           } else {
             // Network or server errors - increment retry count
             item.retryCount++;
@@ -222,6 +237,14 @@ class SyncManager {
             if (item.retryCount >= 5) {
               console.error('❌ Max retries reached, removing item:', item);
               await offlineStorage.removeSyncQueueItem(item.id);
+              
+              // Notify user of sync failure after max retries
+              if (this.errorCallback) {
+                this.errorCallback(
+                  `Failed to sync ${item.entity} after 5 attempts`,
+                  'Please check your connection and try again'
+                );
+              }
             } else {
               console.log(`⚠️ Will retry (attempt ${item.retryCount}/5)`);
               await offlineStorage.updateSyncQueueItem(item);
