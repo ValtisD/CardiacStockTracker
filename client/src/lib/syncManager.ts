@@ -139,16 +139,18 @@ class SyncManager {
   }
 
   // Force a full data refresh from server
-  async refreshData() {
+  async refreshData(getAuthHeaders?: () => Promise<HeadersInit>) {
     if (!this.isOnline) return;
 
     try {
+      const headers = getAuthHeaders ? await getAuthHeaders() : {};
+      
       // Fetch and cache fresh data from server
       const [products, inventory, hospitals, procedures] = await Promise.all([
-        fetch('/api/products').then(r => r.json()),
-        fetch('/api/inventory').then(r => r.json()),
-        fetch('/api/hospitals').then(r => r.json()),
-        fetch('/api/implant-procedures').then(r => r.json()),
+        fetch('/api/products', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
+        fetch('/api/inventory', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
+        fetch('/api/hospitals', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
+        fetch('/api/implant-procedures', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
       ]);
 
       await Promise.all([
@@ -157,6 +159,8 @@ class SyncManager {
         offlineStorage.cacheHospitals(hospitals),
         offlineStorage.cacheProcedures(procedures),
       ]);
+      
+      console.log('Offline data preloaded successfully');
     } catch (error) {
       console.error('Failed to refresh offline data:', error);
     }

@@ -3,6 +3,7 @@ import App from "./App";
 import "./index.css";
 import "./i18n";
 import { offlineStorage } from "./lib/offlineStorage";
+import { syncManager } from "./lib/syncManager";
 
 // Register service worker for PWA and offline support
 if ('serviceWorker' in navigator) {
@@ -10,6 +11,15 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
         console.log('Service Worker registered:', registration.scope);
+        
+        // Preload critical data when online after service worker is ready
+        if (navigator.onLine) {
+          setTimeout(() => {
+            syncManager.refreshData().catch(err => {
+              console.error('Failed to preload offline data:', err);
+            });
+          }, 2000);
+        }
       })
       .catch(error => {
         console.error('Service Worker registration failed:', error);

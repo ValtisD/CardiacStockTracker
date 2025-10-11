@@ -40,6 +40,29 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers = await getAuthHeaders();
   
+  // If offline and this is a mutation, queue it and return a mock success response
+  if (!navigator.onLine && method !== 'GET') {
+    console.log('Offline: Queueing mutation', method, url);
+    
+    // Queue the mutation for later sync
+    await syncManager.addToQueue(
+      data ? 'create' : 'delete',
+      getEntityFromUrl(url),
+      url,
+      method,
+      data
+    );
+    
+    // Update local cache optimistically
+    await updateLocalCache(url, method, data);
+    
+    // Return mock success response
+    return new Response(JSON.stringify(data || {}), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
   const res = await fetch(url, {
     method,
     headers,
@@ -49,6 +72,65 @@ export async function apiRequest(
 
   await throwIfResNotOk(res);
   return res;
+}
+
+// Helper to extract entity type from URL
+function getEntityFromUrl(url: string): string {
+  if (url.includes('/products')) return 'products';
+  if (url.includes('/inventory')) return 'inventory';
+  if (url.includes('/hospitals')) return 'hospitals';
+  if (url.includes('/implant-procedures')) return 'procedures';
+  return 'unknown';
+}
+
+// Helper to update local cache optimistically
+async function updateLocalCache(url: string, method: string, data: any) {
+  try {
+    if (method === 'POST') {
+      // Add new item to cache with temporary ID
+      const tempId = `temp-${Date.now()}`;
+      const itemWithId = { ...data, id: tempId };
+      
+      if (url.includes('/inventory')) {
+        const existing = await offlineStorage.getInventory();
+        await offlineStorage.cacheInventory([...existing, itemWithId]);
+      } else if (url.includes('/implant-procedures')) {
+        const existing = await offlineStorage.getProcedures();
+        await offlineStorage.cacheProcedures([...existing, itemWithId]);
+      } else if (url.includes('/hospitals')) {
+        const existing = await offlineStorage.getHospitals();
+        await offlineStorage.cacheHospitals([...existing, itemWithId]);
+      } else if (url.includes('/products')) {
+        const existing = await offlineStorage.getProducts();
+        await offlineStorage.cacheProducts([...existing, itemWithId]);
+      }
+    } else if (method === 'PATCH' || method === 'PUT') {
+      // Update existing item in cache
+      if (url.includes('/inventory')) {
+        const existing = await offlineStorage.getInventory();
+        const id = url.split('/').pop();
+        const updated = existing.map(item => item.id === id ? { ...item, ...data } : item);
+        await offlineStorage.cacheInventory(updated);
+      } else if (url.includes('/implant-procedures')) {
+        const existing = await offlineStorage.getProcedures();
+        const id = url.split('/').pop();
+        const updated = existing.map(item => item.id === id ? { ...item, ...data } : item);
+        await offlineStorage.cacheProcedures(updated);
+      }
+    } else if (method === 'DELETE') {
+      // Remove item from cache
+      const id = url.split('/').pop();
+      if (url.includes('/inventory')) {
+        const existing = await offlineStorage.getInventory();
+        await offlineStorage.cacheInventory(existing.filter(item => item.id !== id));
+      } else if (url.includes('/implant-procedures')) {
+        const existing = await offlineStorage.getProcedures();
+        await offlineStorage.cacheProcedures(existing.filter(item => item.id !== id));
+      }
+    }
+  } catch (error) {
+    console.error('Failed to update local cache:', error);
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
