@@ -27,7 +27,7 @@ export default function QuickSearch({ onProcedureSelect }: QuickSearchProps) {
   const [activeSearch, setActiveSearch] = useState<string>("");
 
   const { data: searchResults, isLoading, error } = useQuery<SearchResult>({
-    queryKey: ['/api/quick-search', activeSearch],
+    queryKey: [`/api/quick-search/${encodeURIComponent(activeSearch)}`],
     enabled: activeSearch.length > 0,
   });
 
