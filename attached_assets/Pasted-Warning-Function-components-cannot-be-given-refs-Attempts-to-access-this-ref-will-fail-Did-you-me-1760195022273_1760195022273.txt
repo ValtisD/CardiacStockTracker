@@ -1,0 +1,37 @@
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:196:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:112:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx?t=1760194895681:32:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?t=1760194895681&v=c6kNoNtRDsbhUiX6v_SRk:672:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?t=1760194895681&v=c6kNoNtRDsbhUiX6v_SRk:526:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c725b5b5:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=c725b5b5:1546:18
+App react-dom.development.js:86:30
+✅ ONLINE: Processing sync queue (1 items)... syncManager.ts:113:15
+✅ Syncing mutation 1/1: POST /api/implant-procedures
