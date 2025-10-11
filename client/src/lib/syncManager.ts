@@ -137,7 +137,13 @@ class SyncManager {
 
     try {
       // Clean up any leftover temp IDs before syncing
-      await offlineStorage.cleanupTempIds();
+      const cleanup = await offlineStorage.cleanupTempIds();
+      
+      // If cleanup removed temp IDs, invalidate React Query cache to refresh UI
+      if (cleanup.needsRefresh) {
+        console.log('🔄 Invalidating React Query cache after temp ID cleanup');
+        await queryClient.invalidateQueries();
+      }
       
       const queue = await offlineStorage.getSyncQueue();
       

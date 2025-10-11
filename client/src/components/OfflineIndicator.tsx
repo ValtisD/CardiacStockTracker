@@ -24,7 +24,19 @@ export default function OfflineIndicator() {
       setIsOnline(true);
       // Clean up any leftover temp IDs from previous offline sessions
       const { offlineStorage } = await import('@/lib/offlineStorage');
-      await offlineStorage.cleanupTempIds();
+      const { queryClient } = await import('@/lib/queryClient');
+      
+      // ALWAYS invalidate all queries when going online to refresh stale data
+      console.log('🔄 Going online - invalidating all queries to refresh data');
+      await queryClient.invalidateQueries();
+      
+      const cleanup = await offlineStorage.cleanupTempIds();
+      
+      // If cleanup removed temp IDs, invalidate again to ensure UI is clean
+      if (cleanup.needsRefresh) {
+        console.log('🔄 Cleanup removed temp IDs - invalidating queries again');
+        await queryClient.invalidateQueries();
+      }
     };
     const handleOffline = () => setIsOnline(false);
 

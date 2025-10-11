@@ -289,8 +289,9 @@ class OfflineStorage {
   }
 
   // Cleanup method to remove all temp IDs from cache
-  async cleanupTempIds(): Promise<void> {
+  async cleanupTempIds(): Promise<{ needsRefresh: boolean }> {
     console.log('🧹 Cleaning up temp IDs from cache...');
+    let needsRefresh = false;
     
     try {
       // Clean procedures
@@ -299,6 +300,7 @@ class OfflineStorage {
       if (cleanProcedures.length < procedures.length) {
         await this.cacheProcedures(cleanProcedures);
         console.log(`🧹 Removed ${procedures.length - cleanProcedures.length} temp procedures`);
+        needsRefresh = true;
       }
       
       // Clean inventory
@@ -307,6 +309,7 @@ class OfflineStorage {
       if (cleanInventory.length < inventory.length) {
         await this.cacheInventory(cleanInventory);
         console.log(`🧹 Removed ${inventory.length - cleanInventory.length} temp inventory items`);
+        needsRefresh = true;
       }
       
       // Clean hospitals
@@ -315,6 +318,7 @@ class OfflineStorage {
       if (cleanHospitals.length < hospitals.length) {
         await this.cacheHospitals(cleanHospitals);
         console.log(`🧹 Removed ${hospitals.length - cleanHospitals.length} temp hospitals`);
+        needsRefresh = true;
       }
       
       // Clean products
@@ -323,11 +327,14 @@ class OfflineStorage {
       if (cleanProducts.length < products.length) {
         await this.cacheProducts(cleanProducts);
         console.log(`🧹 Removed ${products.length - cleanProducts.length} temp products`);
+        needsRefresh = true;
       }
       
       console.log('✅ Temp ID cleanup complete');
+      return { needsRefresh };
     } catch (error) {
       console.error('❌ Failed to cleanup temp IDs:', error);
+      return { needsRefresh: false };
     }
   }
 }
