@@ -413,6 +413,8 @@ function AuthenticatedApp() {
     const preloadData = async () => {
       if (navigator.onLine && currentUser) {
         try {
+          console.log('🚀 Auto-caching data for offline use...');
+          
           const getAuthHeaders = async () => {
             const token = await getAccessTokenSilently();
             return {
@@ -423,8 +425,10 @@ function AuthenticatedApp() {
           
           const { syncManager } = await import('./lib/syncManager');
           await syncManager.refreshData(getAuthHeaders);
+          
+          console.log('✅ All data cached! You can now work offline.');
         } catch (error) {
-          console.error('Failed to preload offline data:', error);
+          console.error('❌ Failed to preload offline data:', error);
         }
       }
     };

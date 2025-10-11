@@ -167,6 +167,8 @@ class SyncManager {
     try {
       const headers = getAuthHeaders ? await getAuthHeaders() : {};
       
+      console.log('📦 Fetching data from server...');
+      
       // Fetch and cache fresh data from server
       const [products, inventory, hospitals, procedures] = await Promise.all([
         fetch('/api/products', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
@@ -175,6 +177,8 @@ class SyncManager {
         fetch('/api/implant-procedures', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
       ]);
 
+      console.log(`📦 Caching: ${products.length} products, ${inventory.length} inventory items, ${hospitals.length} hospitals, ${procedures.length} procedures`);
+
       await Promise.all([
         offlineStorage.cacheProducts(products),
         offlineStorage.cacheInventory(inventory),
@@ -182,9 +186,9 @@ class SyncManager {
         offlineStorage.cacheProcedures(procedures),
       ]);
       
-      console.log('Offline data preloaded successfully');
+      console.log('✅ Offline cache ready! You can now work offline.');
     } catch (error) {
-      console.error('Failed to refresh offline data:', error);
+      console.error('❌ Failed to refresh offline data:', error);
     }
   }
 }
