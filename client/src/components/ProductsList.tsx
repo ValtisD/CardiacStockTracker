@@ -42,10 +42,6 @@ export default function ProductsList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({
-        title: t("common.success"),
-        description: t("products.deleteSuccess"),
-      });
     },
     onError: (error: Error) => {
       toast({
