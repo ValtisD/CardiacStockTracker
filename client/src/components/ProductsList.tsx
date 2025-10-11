@@ -96,16 +96,18 @@ export default function ProductsList() {
     );
   }
 
-  // Filter products based on search query
-  const filteredProducts = products.filter(product => {
-    if (!searchQuery.trim()) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      product.modelNumber.toLowerCase().includes(query) ||
-      product.name.toLowerCase().includes(query)
-    );
-  });
+  // Filter and sort products alphabetically by name
+  const filteredProducts = products
+    .filter(product => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      return (
+        product.modelNumber.toLowerCase().includes(query) ||
+        product.name.toLowerCase().includes(query)
+      );
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-4">
