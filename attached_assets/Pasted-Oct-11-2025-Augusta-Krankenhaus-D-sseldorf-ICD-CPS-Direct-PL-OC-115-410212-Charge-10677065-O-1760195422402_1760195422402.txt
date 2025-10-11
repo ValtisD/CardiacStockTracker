@@ -1,0 +1,72 @@
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	CPS Direct PL (OC-115)	410212	Charge: 10677065	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	Ellipse DR DF1	CD2377-36C	9018713	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	9018713	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	9018713	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	Charge: 10677065	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	Charge: 10677065	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	Charge: 10677065	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Helios Klinikum Krefeld	ICD
+	-	-	9018713	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Helios Klinikum Krefeld	ICD
+	-	-	9018713	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	-	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	EEM357112	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	EEM357112	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	9013111	-	
+Oct 11, 2025	Augusta Krankenhaus Düsseldorf	ICD
+	-	-	9013111	-	
+Oct 11, 2025	Helios Klinikum Krefeld	Pacemaker
+	-	-	9018713	-	
+Oct 11, 2025	Helios Klinikum Krefeld	Pacemaker
+	-	-	9018713	-	
+Oct 11, 2025	Helios Klinikum Krefeld	CRT
+	-	-	9018713	-	
+Oct 11, 2025	Helios Klinikum Krefeld	CRT
+	-	-	9018713	-	
