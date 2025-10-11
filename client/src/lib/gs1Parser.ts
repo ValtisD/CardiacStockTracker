@@ -74,43 +74,38 @@ export function parseGS1Barcode(barcode: string): GS1Data {
       data = barcode.substring(dataStart, dataStart + fixedLength);
       position = dataStart + fixedLength;
     } else {
-      // Variable length AI - read until next AI (starts with known pattern) or end
+      // Variable length AI - read until next AI or end of barcode
+      // For variable-length fields (10, 21), read to end unless we find a valid next AI
       let dataEnd = dataStart;
+      
+      // For variable-length fields, we need to be careful not to misinterpret data as AIs
+      // The safest approach: only stop if we find a FIXED-length AI (more reliable detection)
+      // or if we're certain we've found a variable AI at the right position
       while (dataEnd < barcode.length) {
-        // Check if we've hit another AI
         const next2 = barcode.substring(dataEnd, dataEnd + 2);
         const next3 = barcode.substring(dataEnd, dataEnd + 3);
         const next4 = barcode.substring(dataEnd, dataEnd + 4);
         
-        // Check if this looks like a valid AI with enough data remaining
         let foundValidAI = false;
         
-        // Check 4-digit AI
+        // Prioritize fixed-length AIs - these are most reliable
         if (FIXED_LENGTH_AIS[next4]) {
           const requiredLength = 4 + FIXED_LENGTH_AIS[next4];
           if (dataEnd + requiredLength <= barcode.length) {
             foundValidAI = true;
           }
         }
-        // Check 3-digit AI
         else if (FIXED_LENGTH_AIS[next3]) {
           const requiredLength = 3 + FIXED_LENGTH_AIS[next3];
           if (dataEnd + requiredLength <= barcode.length) {
             foundValidAI = true;
           }
         }
-        // Check 2-digit AI
         else if (FIXED_LENGTH_AIS[next2]) {
           const requiredLength = 2 + FIXED_LENGTH_AIS[next2];
           if (dataEnd + requiredLength <= barcode.length) {
             foundValidAI = true;
           }
-        }
-        // Check for variable-length AIs
-        // Only treat as new AI if it's a DIFFERENT AI than the current one
-        // This prevents "10" within lot data (AI 10) from being treated as a new AI
-        else if ((next2 === '21' || next2 === '10') && ai !== next2 && dataEnd + 3 <= barcode.length) {
-          foundValidAI = true;
         }
         
         if (foundValidAI) {
@@ -118,6 +113,7 @@ export function parseGS1Barcode(barcode: string): GS1Data {
         }
         dataEnd++;
       }
+      
       data = barcode.substring(dataStart, dataEnd);
       position = dataEnd;
     }
