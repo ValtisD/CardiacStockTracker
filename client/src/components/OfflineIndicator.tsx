@@ -32,12 +32,22 @@ export default function OfflineIndicator() {
     // Initial pending count
     syncManager.getPendingCount().then(setPendingCount);
 
+    // Poll navigator.onLine every second to catch changes that don't fire events
+    // (DevTools offline mode doesn't always fire events reliably)
+    const pollInterval = setInterval(() => {
+      const currentStatus = navigator.onLine;
+      if (currentStatus !== isOnline) {
+        setIsOnline(currentStatus);
+      }
+    }, 1000);
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       unsubscribe();
+      clearInterval(pollInterval);
     };
-  }, []);
+  }, [isOnline]);
 
   const handleSync = () => {
     syncManager.sync();

@@ -6,7 +6,6 @@ export type SyncStatus = 'idle' | 'syncing' | 'error';
 class SyncManager {
   private syncStatus: SyncStatus = 'idle';
   private listeners: Set<(status: SyncStatus, pending: number) => void> = new Set();
-  private isOnline = navigator.onLine;
   private syncInProgress = false;
   
   // In-memory cache to prevent concurrent duplicate mutations
@@ -15,12 +14,10 @@ class SyncManager {
   constructor() {
     // Listen for online/offline events
     window.addEventListener('online', () => {
-      this.isOnline = true;
       this.sync();
     });
 
     window.addEventListener('offline', () => {
-      this.isOnline = false;
       this.updateStatus('idle');
     });
 
@@ -34,9 +31,14 @@ class SyncManager {
     }
 
     // Initial sync if online
-    if (this.isOnline) {
+    if (navigator.onLine) {
       setTimeout(() => this.sync(), 1000);
     }
+  }
+  
+  // Always check current online status (don't cache it)
+  private get isOnline(): boolean {
+    return navigator.onLine;
   }
 
   private updateStatus(status: SyncStatus) {

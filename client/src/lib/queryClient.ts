@@ -203,6 +203,11 @@ export const getQueryFn: <T>(options: {
           const data = await offlineStorage.getProducts();
           console.log('Offline: Loaded', data?.length, 'products from cache');
           return data;
+        } else if (url.includes('/api/inventory/low-stock')) {
+          // Low stock queries are NOT cached - return empty array offline
+          // The frontend will calculate from cached inventory
+          console.log('Offline: Low stock queries not available offline, returning []');
+          return [];
         } else if (url.includes('/api/inventory/home')) {
           return await offlineStorage.getInventoryByLocation('home');
         } else if (url.includes('/api/inventory/car')) {
