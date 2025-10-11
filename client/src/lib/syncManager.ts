@@ -146,8 +146,8 @@ class SyncManager {
         try {
           console.log(`✅ Syncing mutation ${i + 1}/${sortedQueue.length}: ${item.method} ${item.endpoint}`);
           
-          // Execute the sync request
-          const response = await apiRequest(item.method as any, item.endpoint, item.data);
+          // Execute the sync request with bypass flag to prevent re-queueing
+          const response = await apiRequest(item.method as any, item.endpoint, item.data, { bypassOfflineCheck: true });
           
           // Remove from queue on success
           await offlineStorage.removeSyncQueueItem(item.id);

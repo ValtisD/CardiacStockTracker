@@ -37,13 +37,15 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: { bypassOfflineCheck?: boolean }
 ): Promise<Response> {
-  console.log('apiRequest called:', method, url, 'Online:', navigator.onLine);
+  console.log('apiRequest called:', method, url, 'Online:', navigator.onLine, 'Bypass:', options?.bypassOfflineCheck);
   
   const headers = await getAuthHeaders();
   
   // If offline and this is a mutation, queue it and return a mock success response
-  if (!navigator.onLine && method !== 'GET') {
+  // BUT: Skip offline check if this is called from sync manager (it already verified we're online)
+  if (!navigator.onLine && method !== 'GET' && !options?.bypassOfflineCheck) {
     console.log('🔴 OFFLINE MODE: Queueing mutation', method, url, data);
     
     try {

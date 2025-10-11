@@ -1,0 +1,113 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools react-dom.development.js:29895:17
+IndexedDB initialized successfully offlineStorage.ts:40:17
+Service Worker registration failed: DOMException: The operation is insecure. main.tsx:16:17
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:196:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:112:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx:32:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=dQ3qyLI5x-TYX0LesrUnO:672:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=dQ3qyLI5x-TYX0LesrUnO:526:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c725b5b5:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=c725b5b5:1546:18
+App react-dom.development.js:86:30
+IndexedDB initialized successfully offlineStorage.ts:40:17
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:242:19
+🚀 Auto-caching data for offline use... App.tsx:416:19
+📦 Fetching data from server... syncManager.ts:207:15
+📦 Caching: 43 products, 45 inventory items, 3 hospitals, 1 procedures syncManager.ts:217:15
+✅ Offline cache ready! You can now work offline. syncManager.ts:226:15
+✅ All data cached! You can now work offline. App.tsx:429:19
+Navigating to: /inventory/home AppSidebar.tsx:33:13
+Navigated to: /inventory/home App.tsx:458:13
+Navigating to: /inventory/car AppSidebar.tsx:33:13
+Navigated to: /inventory/car App.tsx:458:13
+Filtered out 43 inventory items without valid IDs 2 offlineStorage.ts:221:15
+Navigating to: /products AppSidebar.tsx:33:13
+Navigated to: /products App.tsx:458:13
+Cached 43 products for offline use queryClient.ts:245:19
+Navigating to: / AppSidebar.tsx:33:13
+Navigated to: / App.tsx:458:13
+Navigating to: /inventory/home AppSidebar.tsx:33:13
+Navigated to: /inventory/home App.tsx:458:13
+Navigating to: / AppSidebar.tsx:33:13
+Navigated to: / App.tsx:458:13
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:458:13
+Offline: Loading from cache: /api/hospitals queryClient.ts:194:15
+apiRequest called: POST /api/implant-procedures Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation POST /api/implant-procedures 
+Object { hospitalId: "312f6e43-3dac-49ac-8963-acf7433edffa", implantDate: "2025-10-11", procedureType: "ICD", deviceUsed: "dccda4b4-6356-4e4f-9e86-0f17d33e4ec0", deviceSerialNumber: "9013111", notes: "", materials: [] }
+queryClient.ts:47:13
+🔍 Checking mutation: 
+Object { method: "POST", endpoint: "/api/implant-procedures", signature: 'POST:/api/implant-procedures:{"hospitalId":"312f6e43-3dac-49ac-8963-acf7433edffa","implantDate":"202...' }
+syncManager.ts:70:13
+✅ Not a duplicate (in-memory check passed): POST /api/implant-procedures syncManager.ts:78:13
+✅ Mutation queued successfully queryClient.ts:65:15
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:196:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:112:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx:32:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=dQ3qyLI5x-TYX0LesrUnO:672:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=dQ3qyLI5x-TYX0LesrUnO:526:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c725b5b5:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=c725b5b5:1546:18
+App react-dom.development.js:86:30
+✅ ONLINE: Processing sync queue (1 items)... syncManager.ts:139:15
+✅ Syncing mutation 1/1: POST /api/implant-procedures syncManager.ts:147:19
+apiRequest called: POST /api/implant-procedures Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation POST /api/implant-procedures 
+Object { hospitalId: "312f6e43-3dac-49ac-8963-acf7433edffa", implantDate: "2025-10-11", procedureType: "ICD", deviceUsed: "dccda4b4-6356-4e4f-9e86-0f17d33e4ec0", deviceSerialNumber: "9013111", notes: "", materials: [] }
+queryClient.ts:47:13
+🔍 Checking mutation: 
