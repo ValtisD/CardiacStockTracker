@@ -222,7 +222,9 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     .filter(item => 
       item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.product.modelNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.product.gtin.toLowerCase().includes(searchTerm.toLowerCase())
+      item.product.gtin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.serialNumber && item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.lotNumber && item.lotNumber.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
       if (sortBy === 'quantity') return a.quantity - b.quantity;
