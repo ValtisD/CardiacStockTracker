@@ -295,6 +295,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quick search by serial or lot number
+  app.get("/api/quick-search/:query", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { query } = req.params;
+      
+      if (!query || query.trim().length === 0) {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+      
+      const results = await storage.quickSearchBySerialOrLot(userId, query);
+      res.json(results);
+    } catch (error) {
+      console.error("Error in quick search:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to perform search" });
+    }
+  });
+
   app.post("/api/inventory", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.userId!;

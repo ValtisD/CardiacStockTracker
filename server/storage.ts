@@ -72,6 +72,12 @@ export interface IStorage {
   grantAdminAccess(userId: string, userEmail: string, grantedBy: string): Promise<void>;
   revokeAdminAccess(userId: string): Promise<void>;
   
+  // Quick Search
+  quickSearchBySerialOrLot(userId: string, query: string): Promise<{
+    inventoryItems: (Inventory & { product: Product })[];
+    procedures: (ImplantProcedure & { hospital: Hospital; deviceProduct?: Product | null })[];
+  }>;
+  
   // User Preferences
   getUserLanguage(userId: string): Promise<string>;
   updateUserLanguage(userId: string, language: string): Promise<void>;
@@ -1021,6 +1027,90 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(adminUsers)
       .where(eq(adminUsers.userId, userId));
+  }
+
+  // Quick Search
+  async quickSearchBySerialOrLot(userId: string, query: string): Promise<{
+    inventoryItems: (Inventory & { product: Product })[];
+    procedures: (ImplantProcedure & { hospital: Hospital; deviceProduct?: Product | null })[];
+  }> {
+    const trimmedQuery = query.trim();
+    
+    // Search inventory items by serial number or lot number
+    const inventoryItems = await db
+      .select()
+      .from(inventory)
+      .innerJoin(products, eq(inventory.productId, products.id))
+      .where(
+        and(
+          eq(inventory.userId, userId),
+          or(
+            eq(inventory.serialNumber, trimmedQuery),
+            eq(inventory.lotNumber, trimmedQuery)
+          )
+        )
+      );
+    
+    // Search procedures by device serial number
+    const proceduresByDevice = await db
+      .select()
+      .from(implantProcedures)
+      .leftJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
+      .leftJoin(products, eq(implantProcedures.deviceUsed, products.id))
+      .where(
+        and(
+          eq(implantProcedures.userId, userId),
+          eq(implantProcedures.deviceSerialNumber, trimmedQuery)
+        )
+      );
+    
+    // Search procedures by materials serial/lot number
+    const proceduresByMaterials = await db
+      .select({
+        procedure: implantProcedures,
+        hospital: hospitals,
+        deviceProduct: products
+      })
+      .from(procedureMaterials)
+      .innerJoin(implantProcedures, eq(procedureMaterials.procedureId, implantProcedures.id))
+      .leftJoin(hospitals, eq(implantProcedures.hospitalId, hospitals.id))
+      .leftJoin(products, eq(implantProcedures.deviceUsed, products.id))
+      .where(
+        and(
+          eq(implantProcedures.userId, userId),
+          or(
+            eq(procedureMaterials.serialNumber, trimmedQuery),
+            eq(procedureMaterials.lotNumber, trimmedQuery)
+          )
+        )
+      );
+    
+    // Combine and deduplicate procedures
+    const allProcedures = [
+      ...proceduresByDevice.map(p => ({
+        ...p.implant_procedures,
+        hospital: p.hospitals!,
+        deviceProduct: p.products
+      })),
+      ...proceduresByMaterials.map(p => ({
+        ...p.procedure,
+        hospital: p.hospital!,
+        deviceProduct: p.deviceProduct
+      }))
+    ];
+    
+    // Deduplicate by procedure ID
+    const uniqueProcedures = allProcedures.filter((proc, index, self) => 
+      index === self.findIndex(p => p.id === proc.id)
+    );
+    
+    return {
+      inventoryItems: inventoryItems.map(item => ({
+        ...item.inventory,
+        product: item.products
+      })),
+      procedures: uniqueProcedures
+    };
   }
 
   // User Preferences
