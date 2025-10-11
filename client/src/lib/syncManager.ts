@@ -170,7 +170,9 @@ class SyncManager {
               if (item.endpoint.includes('/inventory')) {
                 return queryKey.startsWith('/api/inventory');
               } else if (item.endpoint.includes('/implant-procedures')) {
-                return queryKey.startsWith('/api/implant-procedures');
+                // When procedures are synced, also invalidate inventory (procedures consume inventory)
+                return queryKey.startsWith('/api/implant-procedures') || 
+                       queryKey.startsWith('/api/inventory');
               } else if (item.endpoint.includes('/hospitals')) {
                 return queryKey.startsWith('/api/hospitals');
               } else if (item.endpoint.includes('/products')) {
