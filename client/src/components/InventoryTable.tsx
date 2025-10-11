@@ -92,10 +92,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       queryClient.invalidateQueries({ 
         predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
       });
-      toast({
-        title: t('inventory.transferSuccess'),
-        description: t('inventory.transferSuccessDescription'),
-      });
     },
     onError: (error: Error) => {
       toast({
@@ -117,10 +113,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       queryClient.invalidateQueries({ 
         predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
       });
-      toast({
-        title: t('inventory.quantityUpdated'),
-        description: t('inventory.quantityUpdatedDescription'),
-      });
     },
     onError: (error: Error) => {
       toast({
@@ -140,10 +132,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ 
         predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
-      });
-      toast({
-        title: t('inventory.itemDeleted'),
-        description: t('inventory.itemDeletedDescription'),
       });
     },
     onError: (error: Error) => {
@@ -173,10 +161,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
       setShowTransferDialog(false);
       setTransferItem(null);
       setTransferQuantity('');
-      toast({
-        title: t('inventory.itemTransferred'),
-        description: t('inventory.itemTransferredDescription'),
-      });
     },
     onError: (error: Error) => {
       toast({
@@ -354,13 +338,6 @@ export default function InventoryTable({ location }: InventoryTableProps) {
           setShowDeleteDialog(false);
           setDeleteItem(null);
           setDeleteQuantity('');
-          toast({
-            title: t('inventory.quantityReduced'),
-            description: t('inventory.quantityReducedDescription', { 
-              removed: qtyToDelete, 
-              remaining: newQuantity 
-            }),
-          });
         })
         .catch((error: Error) => {
           toast({
