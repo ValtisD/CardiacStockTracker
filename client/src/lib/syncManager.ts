@@ -121,23 +121,34 @@ class SyncManager {
           console.log(`✅ Syncing mutation ${i + 1}/${sortedQueue.length}: ${item.method} ${item.endpoint}`);
           
           // Execute the sync request
-          await apiRequest(item.method as any, item.endpoint, item.data);
+          const response = await apiRequest(item.method as any, item.endpoint, item.data);
           
           // Remove from queue on success
           await offlineStorage.removeSyncQueueItem(item.id);
           console.log(`✅ Synced successfully: ${item.method} ${item.endpoint}`);
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ Sync failed for item:', item, error);
           
-          // Increment retry count
-          item.retryCount++;
+          // Check if this is a client error (400-499) - these are permanent failures
+          const errorMessage = error?.message || '';
+          const isClientError = /^4\d{2}:/.test(errorMessage); // Matches "400:", "404:", etc.
           
-          // Remove item if it has been retried too many times (5 attempts)
-          if (item.retryCount >= 5) {
-            console.error('❌ Max retries reached, removing item:', item);
+          if (isClientError) {
+            // Client errors (validation, not found, etc.) - don't retry, just remove
+            console.error('❌ Client error (permanent failure), removing from queue:', errorMessage);
             await offlineStorage.removeSyncQueueItem(item.id);
           } else {
-            await offlineStorage.updateSyncQueueItem(item);
+            // Network or server errors - increment retry count
+            item.retryCount++;
+            
+            // Remove item if it has been retried too many times (5 attempts)
+            if (item.retryCount >= 5) {
+              console.error('❌ Max retries reached, removing item:', item);
+              await offlineStorage.removeSyncQueueItem(item.id);
+            } else {
+              console.log(`⚠️ Will retry (attempt ${item.retryCount}/5)`);
+              await offlineStorage.updateSyncQueueItem(item);
+            }
           }
         }
       }

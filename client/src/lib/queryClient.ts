@@ -89,9 +89,14 @@ export async function apiRequest(
 
     await throwIfResNotOk(res);
     return res;
-  } catch (error) {
+  } catch (error: any) {
+    // Check if this is a client error (400-499) - these should not be queued
+    const errorMessage = error?.message || '';
+    const isClientError = /^4\d{2}:/.test(errorMessage);
+    
     // If network error and this is a mutation, try offline queue
-    if (method !== 'GET') {
+    // But DON'T queue client errors (validation failures, not found, etc.)
+    if (method !== 'GET' && !isClientError) {
       console.log('🔴 Network error on mutation, attempting offline queue:', method, url);
       try {
         await syncManager.addToQueue(
@@ -112,6 +117,8 @@ export async function apiRequest(
         console.error('❌ Failed to queue mutation after network error:', queueError);
       }
     }
+    
+    // For client errors or if queueing failed, throw the original error
     throw error;
   }
 }
