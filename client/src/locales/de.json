@@ -408,6 +408,7 @@
     "deleteProcedure": "Eingriff löschen",
     "searchPlaceholder": "Nach Krankenhaus, Arzt oder Gerät suchen...",
     "hospital": "Krankenhaus",
+    "unknownHospital": "Unbekanntes Krankenhaus",
     "physician": "Arzt",
     "implantDate": "Implantatdatum",
     "deviceType": "Gerätetyp",

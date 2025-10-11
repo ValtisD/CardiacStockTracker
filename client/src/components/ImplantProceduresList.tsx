@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { FileText, Pencil, Trash2, Search, MoreVertical, Calendar, Building2 } from "lucide-react";
 import { useTranslation } from 'react-i18next';
@@ -47,9 +47,42 @@ export default function ImplantProceduresList() {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   
-  const { data: procedures, isLoading } = useQuery<ImplantProcedureWithHospital[]>({
+  const { data: rawProcedures, isLoading: proceduresLoading } = useQuery<ImplantProcedure[]>({
     queryKey: ["/api/implant-procedures"],
   });
+
+  const { data: hospitals, isLoading: hospitalsLoading } = useQuery<Hospital[]>({
+    queryKey: ["/api/hospitals"],
+  });
+
+  // Join procedures with hospitals (for offline compatibility)
+  const procedures = useMemo(() => {
+    if (!rawProcedures) return [];
+    
+    return rawProcedures.map(procedure => {
+      // If hospital is already populated (online), use it
+      if ((procedure as any).hospital) {
+        return procedure as ImplantProcedureWithHospital;
+      }
+      
+      // Otherwise, join manually (offline) - work even if hospitals aren't cached
+      const hospital = hospitals?.find(h => h.id === procedure.hospitalId);
+      return {
+        ...procedure,
+        hospital: hospital || { 
+          id: procedure.hospitalId, 
+          name: t('procedures.unknownHospital', 'Unknown Hospital'),
+          address: '',
+          city: '',
+          zipCode: '',
+          primaryPhysician: null,
+          contactPhone: null,
+          notes: null,
+          createdAt: null,
+        } as Hospital,
+      } as ImplantProcedureWithHospital;
+    });
+  }, [rawProcedures, hospitals, t]);
 
   // Filter procedures based on search query
   const filteredProcedures = procedures?.filter((procedure) => {
@@ -114,7 +147,8 @@ export default function ImplantProceduresList() {
     }
   };
 
-  if (isLoading) {
+  // Only show loading if procedures aren't loaded yet (allow hospitals to load separately)
+  if (proceduresLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-muted-foreground">{t('procedures.loadingProcedures')}</p>

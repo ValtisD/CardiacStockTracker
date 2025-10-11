@@ -408,6 +408,7 @@
     "deleteProcedure": "Delete Procedure",
     "searchPlaceholder": "Search by hospital, physician, or device...",
     "hospital": "Hospital",
+    "unknownHospital": "Unknown Hospital",
     "physician": "Physician",
     "implantDate": "Implant Date",
     "deviceType": "Device Type",
