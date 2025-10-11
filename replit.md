@@ -54,6 +54,37 @@ The frontend is a React 18 SPA with TypeScript, built using Vite. It utilizes Sh
 - Barcode scanning with GS1 parsing for product lookup and auto-filling inventory details (serial, lot, expiration). It supports real-time camera-based scanning and manual GTIN entry, with comprehensive error handling and duplicate serial prevention.
 - PDF Export for Expiring Products Report, Car Stock Report, and Home Stock Reorder Report (with automatic German email text copy to clipboard).
 - Individual item transfer buttons ("Move to Car" / "Move to Home") in inventory tables for quick location changes.
+- **Progressive Web App (PWA)** with full offline capabilities for field use in hospitals with poor connectivity.
+
+### Offline Mode & PWA
+
+The application is a fully installable Progressive Web App with complete offline support, designed for field engineers working in hospitals with unreliable internet connectivity.
+
+**Offline Architecture**:
+- **Service Worker**: Caches all static assets (HTML, CSS, JS, fonts, images) for instant offline loading
+- **IndexedDB Storage**: Local database persists inventory, procedures, products, and hospitals data
+- **Sync Queue**: All mutations (add/edit/delete) are queued when offline and automatically synced when connection returns
+- **Offline Indicator**: Visual status indicator shows online/offline state and pending sync count
+
+**How It Works**:
+1. **Online First**: When online, data is fetched from server and cached locally in IndexedDB
+2. **Offline Fallback**: When offline, queries read from IndexedDB; mutations are queued
+3. **Automatic Sync**: When connection returns, queued changes sync automatically in order
+4. **Conflict Prevention**: Optimistic updates provide instant UI feedback while maintaining data integrity
+
+**Files**:
+- `client/src/lib/offlineStorage.ts`: IndexedDB wrapper for local data persistence
+- `client/src/lib/syncManager.ts`: Sync queue system for offline mutations
+- `client/src/components/OfflineIndicator.tsx`: Status indicator UI component
+- `public/sw.js`: Service worker for asset caching
+- `public/manifest.json`: PWA manifest for installability
+
+**User Experience**:
+- App works fully offline after first load
+- All features available (add inventory, record procedures, transfer stock)
+- Changes sync automatically when internet returns
+- Visual indicators show offline status and pending changes count
+- Toast notifications only for errors (all success toasts removed per user preference)
 
 ### Backend
 
