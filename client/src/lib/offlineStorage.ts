@@ -287,6 +287,49 @@ class OfflineStorage {
     const users = await this.getAll<any>(STORES.USER);
     return users[0]; // Return first user (single user app)
   }
+
+  // Cleanup method to remove all temp IDs from cache
+  async cleanupTempIds(): Promise<void> {
+    console.log('🧹 Cleaning up temp IDs from cache...');
+    
+    try {
+      // Clean procedures
+      const procedures = await this.getProcedures();
+      const cleanProcedures = procedures.filter(p => !p.id.startsWith('temp-'));
+      if (cleanProcedures.length < procedures.length) {
+        await this.cacheProcedures(cleanProcedures);
+        console.log(`🧹 Removed ${procedures.length - cleanProcedures.length} temp procedures`);
+      }
+      
+      // Clean inventory
+      const inventory = await this.getInventory();
+      const cleanInventory = inventory.filter(i => !i.id.startsWith('temp-'));
+      if (cleanInventory.length < inventory.length) {
+        await this.cacheInventory(cleanInventory);
+        console.log(`🧹 Removed ${inventory.length - cleanInventory.length} temp inventory items`);
+      }
+      
+      // Clean hospitals
+      const hospitals = await this.getHospitals();
+      const cleanHospitals = hospitals.filter(h => !h.id.startsWith('temp-'));
+      if (cleanHospitals.length < hospitals.length) {
+        await this.cacheHospitals(cleanHospitals);
+        console.log(`🧹 Removed ${hospitals.length - cleanHospitals.length} temp hospitals`);
+      }
+      
+      // Clean products
+      const products = await this.getProducts();
+      const cleanProducts = products.filter(p => !p.id.startsWith('temp-'));
+      if (cleanProducts.length < products.length) {
+        await this.cacheProducts(cleanProducts);
+        console.log(`🧹 Removed ${products.length - cleanProducts.length} temp products`);
+      }
+      
+      console.log('✅ Temp ID cleanup complete');
+    } catch (error) {
+      console.error('❌ Failed to cleanup temp IDs:', error);
+    }
+  }
 }
 
 export const offlineStorage = new OfflineStorage();

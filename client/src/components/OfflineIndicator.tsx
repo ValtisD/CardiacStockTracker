@@ -20,7 +20,12 @@ export default function OfflineIndicator() {
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = async () => {
+      setIsOnline(true);
+      // Clean up any leftover temp IDs from previous offline sessions
+      const { offlineStorage } = await import('@/lib/offlineStorage');
+      await offlineStorage.cleanupTempIds();
+    };
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);

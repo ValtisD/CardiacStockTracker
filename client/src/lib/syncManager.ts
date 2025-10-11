@@ -136,6 +136,9 @@ class SyncManager {
     this.updateStatus('syncing');
 
     try {
+      // Clean up any leftover temp IDs before syncing
+      await offlineStorage.cleanupTempIds();
+      
       const queue = await offlineStorage.getSyncQueue();
       
       if (queue.length === 0) {
