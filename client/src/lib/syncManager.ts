@@ -8,6 +8,9 @@ class SyncManager {
   private listeners: Set<(status: SyncStatus, pending: number) => void> = new Set();
   private isOnline = navigator.onLine;
   private syncInProgress = false;
+  
+  // In-memory cache to prevent concurrent duplicate mutations
+  private recentMutations: Map<string, number> = new Map();
 
   constructor() {
     // Listen for online/offline events
@@ -60,19 +63,39 @@ class SyncManager {
     method: string,
     data?: any
   ) {
-    // Check for duplicate entries to prevent the same mutation from being queued multiple times
+    // Create a signature for this mutation (without timestamps or temp IDs)
+    const signature = `${method}:${endpoint}:${JSON.stringify(data)}`;
+    const now = Date.now();
+    
+    // Check in-memory cache first (prevents concurrent race conditions)
+    const lastSeen = this.recentMutations.get(signature);
+    if (lastSeen && (now - lastSeen < 5000)) {
+      console.warn('⚠️ Duplicate mutation detected (in-memory), skipping:', method, endpoint);
+      return;
+    }
+    
+    // Also check IndexedDB for persistence across page loads
     const existingQueue = await offlineStorage.getSyncQueue();
     const isDuplicate = existingQueue.some(item => 
       item.endpoint === endpoint && 
       item.method === method && 
       JSON.stringify(item.data) === JSON.stringify(data) &&
-      // Only check duplicates added within last 5 seconds to allow intentional duplicates later
-      (Date.now() - item.timestamp < 5000)
+      (now - item.timestamp < 5000)
     );
     
     if (isDuplicate) {
-      console.warn('⚠️ Duplicate mutation detected, skipping queue addition:', method, endpoint);
+      console.warn('⚠️ Duplicate mutation detected (IndexedDB), skipping:', method, endpoint);
       return;
+    }
+    
+    // Add to in-memory cache immediately (before async IndexedDB write)
+    this.recentMutations.set(signature, now);
+    
+    // Clean up old entries from in-memory cache (older than 10 seconds)
+    for (const [sig, timestamp] of this.recentMutations.entries()) {
+      if (now - timestamp > 10000) {
+        this.recentMutations.delete(sig);
+      }
     }
     
     await offlineStorage.addToSyncQueue({
