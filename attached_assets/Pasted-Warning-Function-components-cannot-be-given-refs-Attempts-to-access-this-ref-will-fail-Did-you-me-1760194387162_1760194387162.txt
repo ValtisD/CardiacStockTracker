@@ -1,0 +1,92 @@
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:196:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:112:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx:32:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=Tla3zKUDffZO0PjIixA91:672:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=Tla3zKUDffZO0PjIixA91:526:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c725b5b5:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=c725b5b5:1546:18
+App react-dom.development.js:86:30
+apiRequest called: POST /api/implant-procedures Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation POST /api/implant-procedures 
+Object { hospitalId: "736b7795-3b0c-440a-ac1b-9fc90212ee83", implantDate: "2025-10-11", procedureType: "ICD", deviceUsed: "f23eac94-9636-4211-b242-6d14528674a2", notes: "", materials: [] }
+queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+✅ Local cache updated queryClient.ts:62:15
+Offline: Loading from cache: /api/inventory/low-stock?location=home queryClient.ts:181:15
+Offline: Loading from cache: /api/inventory/low-stock?location=car queryClient.ts:181:15
+Offline: Loading from cache: /api/inventory?location=car queryClient.ts:181:15
+Camera stopped BarcodeScanner.tsx:367:13
+Offline: Loading from cache: /api/implant-procedures queryClient.ts:181:15
+✅ Local cache updated queryClient.ts:62:15
+This site appears to use a scroll-linked positioning effect. This may not work well with asynchronous panning; see https://firefox-source-docs.mozilla.org/performance/scroll-linked_effects.html for further details and to join the discussion on related tools and features! reports
+apiRequest called: DELETE /api/implant-procedures/temp-1760193400267 Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation DELETE /api/implant-procedures/temp-1760193400267 undefined queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+apiRequest called: POST /api/implant-procedures Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation POST /api/implant-procedures 
+Object { hospitalId: "736b7795-3b0c-440a-ac1b-9fc90212ee83", implantDate: "2025-10-11", procedureType: "ICD", deviceUsed: "f23eac94-9636-4211-b242-6d14528674a2", notes: "", materials: [] }
+queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+✅ Local cache updated queryClient.ts:62:15
+Offline: Loading from cache: /api/implant-procedures queryClient.ts:181:15
+✅ Local cache updated queryClient.ts:62:15
+apiRequest called: DELETE /api/implant-procedures/temp-1760193400267 Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation DELETE /api/implant-procedures/temp-1760193400267 undefined queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+✅ Local cache updated queryClient.ts:62:15
+apiRequest called: DELETE /api/implant-procedures/temp-1760193400267 Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation DELETE /api/implant-procedures/temp-1760193400267 undefined queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+apiRequest called: POST /api/implant-procedures Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation POST /api/implant-procedures 
+Object { hospitalId: "736b7795-3b0c-440a-ac1b-9fc90212ee83", implantDate: "2025-10-11", procedureType: "ICD", deviceUsed: "f23eac94-9636-4211-b242-6d14528674a2", notes: "", materials: [] }
+queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+✅ Local cache updated queryClient.ts:62:15
+Offline: Loading from cache: /api/implant-procedures queryClient.ts:181:15
+✅ Local cache updated queryClient.ts:62:15
+apiRequest called: DELETE /api/implant-procedures/temp-1760193400267 Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation DELETE /api/implant-procedures/temp-1760193400267 undefined queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+✅ Local cache updated queryClient.ts:62:15
+apiRequest called: DELETE /api/implant-procedures/temp-1760193400267 Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation DELETE /api/implant-procedures/temp-1760193400267 undefined queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+✅ Local cache updated queryClient.ts:62:15
+apiRequest called: DELETE /api/implant-procedures/temp-1760193400274 Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation DELETE /api/implant-procedures/temp-1760193400274 undefined queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+apiRequest called: POST /api/implant-procedures Online: false queryClient.ts:41:11
+🔴 OFFLINE MODE: Queueing mutation POST /api/implant-procedures 
+Object { hospitalId: "736b7795-3b0c-440a-ac1b-9fc90212ee83", implantDate: "2025-10-11", procedureType: "ICD", deviceUsed: "f23eac94-9636-4211-b242-6d14528674a2", notes: "", materials: [] }
+queryClient.ts:47:13
+✅ Mutation queued successfully queryClient.ts:58:15
+✅ Local cache updated queryClient.ts:62:15
+Offline: Loading from cache: /api/implant-procedures
