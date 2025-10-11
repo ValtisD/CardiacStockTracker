@@ -1,5 +1,5 @@
 import { offlineStorage, type SyncQueueItem } from './offlineStorage';
-import { apiRequest } from './queryClient';
+import { apiRequest, queryClient } from './queryClient';
 
 export type SyncStatus = 'idle' | 'syncing' | 'error';
 
@@ -154,6 +154,55 @@ class SyncManager {
           // Remove from queue on success
           await offlineStorage.removeSyncQueueItem(item.id);
           console.log(`✅ Synced successfully: ${item.method} ${item.endpoint}`);
+          
+          // CRITICAL: Invalidate React Query cache to remove temp IDs and fetch fresh data
+          // This prevents duplicate entries (temp ID + real ID) from showing in the UI
+          await queryClient.invalidateQueries({
+            predicate: (query) => {
+              const queryKey = query.queryKey[0]?.toString() || '';
+              // Invalidate all queries related to this entity type
+              if (item.endpoint.includes('/inventory')) {
+                return queryKey.startsWith('/api/inventory');
+              } else if (item.endpoint.includes('/implant-procedures')) {
+                return queryKey.startsWith('/api/implant-procedures');
+              } else if (item.endpoint.includes('/hospitals')) {
+                return queryKey.startsWith('/api/hospitals');
+              } else if (item.endpoint.includes('/products')) {
+                return queryKey.startsWith('/api/products');
+              }
+              return false;
+            }
+          });
+          console.log(`🔄 Cache invalidated for: ${item.endpoint}`);
+          
+          // Clean up temp IDs from IndexedDB cache after successful sync
+          if (item.method === 'POST') {
+            try {
+              if (item.endpoint.includes('/implant-procedures')) {
+                const procedures = await offlineStorage.getProcedures();
+                const cleaned = procedures.filter(p => !p.id.startsWith('temp-'));
+                await offlineStorage.cacheProcedures(cleaned);
+                console.log(`🧹 Cleaned temp IDs from procedures cache`);
+              } else if (item.endpoint.includes('/inventory')) {
+                const inventory = await offlineStorage.getInventory();
+                const cleaned = inventory.filter(i => !i.id.startsWith('temp-'));
+                await offlineStorage.cacheInventory(cleaned);
+                console.log(`🧹 Cleaned temp IDs from inventory cache`);
+              } else if (item.endpoint.includes('/hospitals')) {
+                const hospitals = await offlineStorage.getHospitals();
+                const cleaned = hospitals.filter(h => !h.id.startsWith('temp-'));
+                await offlineStorage.cacheHospitals(cleaned);
+                console.log(`🧹 Cleaned temp IDs from hospitals cache`);
+              } else if (item.endpoint.includes('/products')) {
+                const products = await offlineStorage.getProducts();
+                const cleaned = products.filter(p => !p.id.startsWith('temp-'));
+                await offlineStorage.cacheProducts(cleaned);
+                console.log(`🧹 Cleaned temp IDs from products cache`);
+              }
+            } catch (cleanupError) {
+              console.error('❌ Failed to clean temp IDs from cache:', cleanupError);
+            }
+          }
         } catch (error: any) {
           console.error('❌ Sync failed for item:', item, error);
           
