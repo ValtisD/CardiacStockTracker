@@ -38,7 +38,16 @@ export default function OfflineIndicator() {
         await queryClient.invalidateQueries();
       }
     };
-    const handleOffline = () => setIsOnline(false);
+    
+    const handleOffline = async () => {
+      setIsOnline(false);
+      // CRITICAL: Invalidate all queries when going offline!
+      // This forces React Query to re-run queryFn which will fetch from IndexedDB
+      // Without this, React Query serves stale in-memory cache (staleTime: Infinity)
+      const { queryClient } = await import('@/lib/queryClient');
+      console.log('📴 Going offline - invalidating all queries to switch to IndexedDB');
+      await queryClient.invalidateQueries();
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -62,10 +71,17 @@ export default function OfflineIndicator() {
 
     // Poll navigator.onLine every second to catch changes that don't fire events
     // (DevTools offline mode doesn't always fire events reliably)
-    const pollInterval = setInterval(() => {
+    const pollInterval = setInterval(async () => {
       const currentStatus = navigator.onLine;
       if (currentStatus !== isOnline) {
-        setIsOnline(currentStatus);
+        // Status changed - trigger appropriate handler
+        if (currentStatus) {
+          // Went online
+          await handleOnline();
+        } else {
+          // Went offline
+          await handleOffline();
+        }
       }
     }, 1000);
 
