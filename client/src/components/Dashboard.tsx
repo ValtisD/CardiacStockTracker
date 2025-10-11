@@ -527,10 +527,7 @@ ${t('dashboard.emailClosing')}`;
               
               // Copy to clipboard
               navigator.clipboard.writeText(emailText).then(() => {
-                toast({
-                  title: t('dashboard.emailTextCopied'),
-                  description: t('dashboard.reorderTextCopied'),
-                });
+                // Silent success
               }).catch((err) => {
                 toast({
                   title: t('dashboard.failedToCopy'),
