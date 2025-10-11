@@ -47,6 +47,13 @@ export async function apiRequest(
     console.log('🔴 OFFLINE MODE: Queueing mutation', method, url, data);
     
     try {
+      // For POST requests, generate a temp ID to return
+      let responseData: any = data || {};
+      if (method === 'POST' && data) {
+        const tempId = `temp-${Date.now()}`;
+        responseData = { ...(data as object), id: tempId };
+      }
+      
       // Queue the mutation for later sync
       await syncManager.addToQueue(
         data ? 'create' : 'delete',
@@ -57,12 +64,12 @@ export async function apiRequest(
       );
       console.log('✅ Mutation queued successfully');
       
-      // Update local cache optimistically
-      await updateLocalCache(url, method, data);
+      // Update local cache optimistically with the same temp ID
+      await updateLocalCache(url, method, responseData);
       console.log('✅ Local cache updated');
       
-      // Return mock success response
-      return new Response(JSON.stringify(data || {}), {
+      // Return mock success response with temp ID for POST requests
+      return new Response(JSON.stringify(responseData), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -122,9 +129,8 @@ function getEntityFromUrl(url: string): string {
 async function updateLocalCache(url: string, method: string, data: any) {
   try {
     if (method === 'POST') {
-      // Add new item to cache with temporary ID
-      const tempId = `temp-${Date.now()}`;
-      const itemWithId = { ...data, id: tempId };
+      // Data already has the temp ID from the calling function
+      const itemWithId = data.id ? data : { ...data, id: `temp-${Date.now()}` };
       
       if (url.includes('/inventory')) {
         const existing = await offlineStorage.getInventory();

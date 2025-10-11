@@ -60,6 +60,21 @@ class SyncManager {
     method: string,
     data?: any
   ) {
+    // Check for duplicate entries to prevent the same mutation from being queued multiple times
+    const existingQueue = await offlineStorage.getSyncQueue();
+    const isDuplicate = existingQueue.some(item => 
+      item.endpoint === endpoint && 
+      item.method === method && 
+      JSON.stringify(item.data) === JSON.stringify(data) &&
+      // Only check duplicates added within last 5 seconds to allow intentional duplicates later
+      (Date.now() - item.timestamp < 5000)
+    );
+    
+    if (isDuplicate) {
+      console.warn('⚠️ Duplicate mutation detected, skipping queue addition:', method, endpoint);
+      return;
+    }
+    
     await offlineStorage.addToSyncQueue({
       type,
       entity: entity as any,
@@ -95,25 +110,31 @@ class SyncManager {
         return;
       }
 
+      console.log(`✅ ONLINE: Processing sync queue (${queue.length} items)...`);
+
       // Sort by timestamp to maintain order
       const sortedQueue = queue.sort((a, b) => a.timestamp - b.timestamp);
 
-      for (const item of sortedQueue) {
+      for (let i = 0; i < sortedQueue.length; i++) {
+        const item = sortedQueue[i];
         try {
+          console.log(`✅ Syncing mutation ${i + 1}/${sortedQueue.length}: ${item.method} ${item.endpoint}`);
+          
           // Execute the sync request
           await apiRequest(item.method as any, item.endpoint, item.data);
           
           // Remove from queue on success
           await offlineStorage.removeSyncQueueItem(item.id);
+          console.log(`✅ Synced successfully: ${item.method} ${item.endpoint}`);
         } catch (error) {
-          console.error('Sync failed for item:', item, error);
+          console.error('❌ Sync failed for item:', item, error);
           
           // Increment retry count
           item.retryCount++;
           
           // Remove item if it has been retried too many times (5 attempts)
           if (item.retryCount >= 5) {
-            console.error('Max retries reached, removing item:', item);
+            console.error('❌ Max retries reached, removing item:', item);
             await offlineStorage.removeSyncQueueItem(item.id);
           } else {
             await offlineStorage.updateSyncQueueItem(item);
@@ -121,9 +142,10 @@ class SyncManager {
         }
       }
 
+      console.log('✅ All pending changes synced successfully');
       this.updateStatus('idle');
     } catch (error) {
-      console.error('Sync process failed:', error);
+      console.error('❌ Sync process failed:', error);
       this.updateStatus('error');
     } finally {
       this.syncInProgress = false;
