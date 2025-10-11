@@ -235,6 +235,27 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     ));
   };
 
+  // Add new material item
+  const addMaterialItem = (type: 'materials' | 'others') => {
+    const setter = type === 'materials' ? setMaterials : setOtherMaterials;
+    const currentItems = type === 'materials' ? materials : otherMaterials;
+    
+    const newId = `${Date.now()}`; // Use timestamp as unique ID
+    setter(prev => [...prev, { 
+      id: newId, 
+      name: '', 
+      quantity: 1, 
+      source: 'car' 
+    }]);
+  };
+
+  // Remove material item
+  const removeMaterialItem = (type: 'materials' | 'others', id: string) => {
+    const setter = type === 'materials' ? setMaterials : setOtherMaterials;
+    
+    setter(prev => prev.filter(item => item.id !== id));
+  };
+
   const selectProduct = (type: 'materials' | 'leads' | 'others', id: string, productId: string) => {
     const product = products.find(p => p.id === productId);
     if (product) {
@@ -407,13 +428,28 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     icon: React.ReactNode;
   }) => {
     const filteredProducts = products;
+    const canAddRemove = type === 'materials' || type === 'others'; // Only materials and miscellaneous can be dynamic
 
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            {icon}
-            {title}
+          <CardTitle className="flex items-center justify-between gap-2 text-base">
+            <div className="flex items-center gap-2">
+              {icon}
+              {title}
+            </div>
+            {canAddRemove && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => addMaterialItem(type)}
+                data-testid={`button-add-${type}`}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t('procedures.addItem')}
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -521,6 +557,18 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                     >
                       <X className="h-3 w-3" />
                     </Button>
+                    {canAddRemove && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeMaterialItem(type, item.id)}
+                        className="h-8 w-8"
+                        data-testid={`button-remove-${type}-${item.id}`}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                    )}
                     {item.scanned && (
                       <Badge variant="secondary" className="text-xs">{t('procedures.scanned')}</Badge>
                     )}
