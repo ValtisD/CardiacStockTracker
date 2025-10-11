@@ -55,11 +55,6 @@ export default function QuickSearch({ onProcedureSelect }: QuickSearchProps) {
     setLocation(`/inventory/${item.location}`);
     setSearchQuery("");
     setActiveSearch("");
-    
-    toast({
-      title: t('search.foundInInventory'),
-      description: `${item.product.name} - ${item.location === 'car' ? t('inventory.carStock') : t('inventory.homeStock')}`,
-    });
   };
 
   const handleProcedureClick = (procedure: ImplantProcedure & { hospital: Hospital }) => {
@@ -68,11 +63,6 @@ export default function QuickSearch({ onProcedureSelect }: QuickSearchProps) {
     }
     setSearchQuery("");
     setActiveSearch("");
-    
-    toast({
-      title: t('search.foundInProcedure'),
-      description: `${t('procedures.procedure')} ${t('common.at')} ${procedure.hospital.name}`,
-    });
   };
 
   const hasResults = searchResults && (searchResults.inventoryItems.length > 0 || searchResults.procedures.length > 0);
