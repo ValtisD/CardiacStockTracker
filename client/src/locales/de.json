@@ -620,7 +620,7 @@
     "cancel": "Abbrechen",
     "updating": "Aktualisiert...",
     "update": "Aktualisieren",
-    "enterCodeManually": "Code manuell eingeben",
+    "enterCodeManually": "Barcode-Scanner",
     "manualEntry": "Barcode-Scanner",
     "enterBarcodePlaceholder": "Barcode, Modell oder Seriennummer eingeben",
     "startCamera": "Kamera starten",
