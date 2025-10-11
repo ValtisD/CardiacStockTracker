@@ -174,17 +174,6 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
         const product = products[0];
         setSelectedProduct(product);
         form.setValue("productId", product.id);
-        
-        toast({
-          title: t('inventory.productFound'),
-          description: `${product.name} (${product.modelNumber})`,
-        });
-      } else {
-        // Multiple results - user will select from dropdown
-        toast({
-          title: t('inventory.multipleProductsFound'),
-          description: t('inventory.selectFromResults', { count: products.length }),
-        });
       }
     } catch (error) {
       toast({
@@ -217,11 +206,6 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       foundProduct = productInfo;
       setSelectedProduct(productInfo);
       form.setValue("productId", productInfo.id);
-      
-      toast({
-        title: t('inventory.productFound'),
-        description: `${productInfo.name} - ${productInfo.modelNumber}`,
-      });
     } else {
       // Product not found - try to find by GTIN from GS1 data
       if (parsedGs1Data?.gtin) {
@@ -234,11 +218,6 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
             foundProduct = product;
             setSelectedProduct(product);
             form.setValue("productId", product.id);
-            
-            toast({
-              title: t('inventory.productFoundByGtin'),
-              description: `${product.name} - ${product.modelNumber}`,
-            });
           } else {
             toast({
               title: t('inventory.productNotFound'),
