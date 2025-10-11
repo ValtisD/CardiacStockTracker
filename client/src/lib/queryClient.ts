@@ -145,7 +145,11 @@ export const getQueryFn: <T>(options: {
     if (!navigator.onLine) {
       console.log('Offline: Loading from cache:', url);
       try {
-        if (url.includes('/api/products')) {
+        if (url.includes('/api/user/me')) {
+          const user = await offlineStorage.getUser();
+          console.log('Offline: Loaded user from cache:', user?.email);
+          return user || null;
+        } else if (url.includes('/api/products')) {
           const data = await offlineStorage.getProducts();
           console.log('Offline: Loaded', data?.length, 'products from cache');
           return data;
@@ -185,7 +189,10 @@ export const getQueryFn: <T>(options: {
       
       // Cache data for offline use
       try {
-        if (url.includes('/api/products')) {
+        if (url.includes('/api/user/me')) {
+          await offlineStorage.cacheUser(data);
+          console.log('Cached user for offline use:', data?.email);
+        } else if (url.includes('/api/products')) {
           await offlineStorage.cacheProducts(data);
           console.log('Cached', data?.length, 'products for offline use');
         } else if (url.includes('/api/inventory')) {
@@ -204,7 +211,9 @@ export const getQueryFn: <T>(options: {
       // Network error fallback - try cache
       console.log('Network error, trying cache:', url);
       try {
-        if (url.includes('/api/products')) {
+        if (url.includes('/api/user/me')) {
+          return await offlineStorage.getUser();
+        } else if (url.includes('/api/products')) {
           return await offlineStorage.getProducts();
         } else if (url.includes('/api/inventory/home')) {
           return await offlineStorage.getInventoryByLocation('home');

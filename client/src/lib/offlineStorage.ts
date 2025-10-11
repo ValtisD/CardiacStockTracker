@@ -1,7 +1,7 @@
 import type { Product, Inventory, Hospital, ImplantProcedure } from '@shared/schema';
 
 const DB_NAME = 'crm-stock-offline';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 // Store names
 const STORES = {
@@ -10,6 +10,7 @@ const STORES = {
   HOSPITALS: 'hospitals',
   PROCEDURES: 'procedures',
   SYNC_QUEUE: 'syncQueue',
+  USER: 'user',
 } as const;
 
 export interface SyncQueueItem {
@@ -30,9 +31,13 @@ class OfflineStorage {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        console.error('IndexedDB initialization failed:', request.error);
+        reject(request.error);
+      };
       request.onsuccess = () => {
         this.db = request.result;
+        console.log('IndexedDB initialized successfully');
         resolve();
       };
 
@@ -63,6 +68,10 @@ class OfflineStorage {
         if (!db.objectStoreNames.contains(STORES.SYNC_QUEUE)) {
           const queueStore = db.createObjectStore(STORES.SYNC_QUEUE, { keyPath: 'id' });
           queueStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains(STORES.USER)) {
+          db.createObjectStore(STORES.USER, { keyPath: 'userId' });
         }
       };
     });
@@ -209,6 +218,15 @@ class OfflineStorage {
 
   async getProcedures(): Promise<ImplantProcedure[]> {
     return this.getAll<ImplantProcedure>(STORES.PROCEDURES);
+  }
+
+  async cacheUser(user: any): Promise<void> {
+    await this.put(STORES.USER, user);
+  }
+
+  async getUser(): Promise<any | undefined> {
+    const users = await this.getAll<any>(STORES.USER);
+    return users[0]; // Return first user (single user app)
   }
 }
 
