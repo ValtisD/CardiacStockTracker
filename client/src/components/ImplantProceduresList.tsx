@@ -55,34 +55,49 @@ export default function ImplantProceduresList() {
     queryKey: ["/api/hospitals"],
   });
 
-  // Join procedures with hospitals (for offline compatibility)
+  const { data: products } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  // Join procedures with hospitals and products (for offline compatibility)
   const procedures = useMemo(() => {
     if (!rawProcedures) return [];
     
     return rawProcedures.map(procedure => {
       // If hospital is already populated (online), use it
-      if ((procedure as any).hospital) {
+      const hasHospital = (procedure as any).hospital;
+      const hasDeviceProduct = (procedure as any).deviceProduct !== undefined;
+      
+      if (hasHospital && hasDeviceProduct) {
         return procedure as ImplantProcedureWithHospital;
       }
       
-      // Otherwise, join manually (offline) - work even if hospitals aren't cached
-      const hospital = hospitals?.find(h => h.id === procedure.hospitalId);
+      // Otherwise, join manually (offline)
+      const hospital = hasHospital 
+        ? (procedure as any).hospital 
+        : hospitals?.find(h => h.id === procedure.hospitalId) || { 
+            id: procedure.hospitalId, 
+            name: t('procedures.unknownHospital', 'Unknown Hospital'),
+            address: '',
+            city: '',
+            zipCode: '',
+            primaryPhysician: null,
+            contactPhone: null,
+            notes: null,
+            createdAt: null,
+          } as Hospital;
+
+      const deviceProduct = hasDeviceProduct
+        ? (procedure as any).deviceProduct
+        : products?.find(p => p.id === procedure.deviceUsed) || null;
+      
       return {
         ...procedure,
-        hospital: hospital || { 
-          id: procedure.hospitalId, 
-          name: t('procedures.unknownHospital', 'Unknown Hospital'),
-          address: '',
-          city: '',
-          zipCode: '',
-          primaryPhysician: null,
-          contactPhone: null,
-          notes: null,
-          createdAt: null,
-        } as Hospital,
+        hospital,
+        deviceProduct,
       } as ImplantProcedureWithHospital;
     });
-  }, [rawProcedures, hospitals, t]);
+  }, [rawProcedures, hospitals, products, t]);
 
   // Filter procedures based on search query
   const filteredProcedures = procedures?.filter((procedure) => {

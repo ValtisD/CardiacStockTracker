@@ -196,7 +196,13 @@ export default function ImplantProcedureDetailDialog({
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">{t('procedures.date')}</p>
                       <p className="text-base" data-testid="text-procedure-date">
-                        {format(new Date(procedure.implantDate), "MMMM dd, yyyy")}
+                        {(() => {
+                          try {
+                            return format(new Date(procedure.implantDate), "MMMM dd, yyyy");
+                          } catch {
+                            return procedure.implantDate;
+                          }
+                        })()}
                       </p>
                     </div>
                   </div>
