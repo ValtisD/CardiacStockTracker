@@ -55,7 +55,18 @@
     "login": "Anmelden",
     "admin": "Administrator",
     "user": "Benutzer",
-    "minimum": "Minimum"
+    "minimum": "Minimum",
+    "at": "um"
+  },
+  "offline": {
+    "offlineMode": "Offline",
+    "workingOffline": "Offline arbeiten - Änderungen werden synchronisiert, wenn verbunden",
+    "pendingChanges": "ausstehend",
+    "syncing": "Synchronisiere Änderungen...",
+    "syncError": "Synchronisierungsfehler - wird erneut versucht",
+    "clickToSync": "Klicken zum Synchronisieren",
+    "installApp": "App installieren",
+    "installPrompt": "Installieren Sie diese App für Offline-Zugriff"
   },
   "nav": {
     "dashboard": "Dashboard",

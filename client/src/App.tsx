@@ -25,6 +25,7 @@ import ImplantReportForm from "@/components/ImplantReportForm";
 import ImplantProceduresList from "@/components/ImplantProceduresList";
 import UserProductSettings from "@/components/UserProductSettings";
 import UserManagement from "@/components/UserManagement";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import Settings from "@/pages/Settings";
 import RegistrationGate from "@/pages/RegistrationGate";
 import NotFound from "@/pages/not-found";
@@ -458,6 +459,7 @@ function AuthenticatedApp() {
               </div>
               
               <div className="flex items-center gap-1 md:gap-2">
+                <OfflineIndicator />
                 <UserMenu />
                 <ThemeToggle />
               </div>

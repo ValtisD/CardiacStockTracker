@@ -55,7 +55,18 @@
     "login": "Login",
     "admin": "Administrator",
     "user": "User",
-    "minimum": "Minimum"
+    "minimum": "Minimum",
+    "at": "at"
+  },
+  "offline": {
+    "offlineMode": "Offline",
+    "workingOffline": "Working offline - changes will sync when connected",
+    "pendingChanges": "pending",
+    "syncing": "Syncing changes...",
+    "syncError": "Sync error - will retry",
+    "clickToSync": "Click to sync now",
+    "installApp": "Install App",
+    "installPrompt": "Install this app for offline access"
   },
   "nav": {
     "dashboard": "Dashboard",
