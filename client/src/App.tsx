@@ -396,6 +396,7 @@ function AppContent() {
 function AuthenticatedApp() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { getAccessTokenSilently } = useAuth0();
   
   // Sync user's language preference from backend
   useLanguageSync();
@@ -406,6 +407,30 @@ function AuthenticatedApp() {
   });
 
   const isAdmin = currentUser?.isAdmin || false;
+
+  // Preload offline data when authenticated and online
+  useEffect(() => {
+    const preloadData = async () => {
+      if (navigator.onLine && currentUser) {
+        try {
+          const getAuthHeaders = async () => {
+            const token = await getAccessTokenSilently();
+            return {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            };
+          };
+          
+          const { syncManager } = await import('./lib/syncManager');
+          await syncManager.refreshData(getAuthHeaders);
+        } catch (error) {
+          console.error('Failed to preload offline data:', error);
+        }
+      }
+    };
+
+    preloadData();
+  }, [currentUser, getAccessTokenSilently]);
 
   // Fetch real low stock data from backend
   const { data: homeLowStock } = useQuery<Inventory[]>({
