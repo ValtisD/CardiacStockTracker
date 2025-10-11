@@ -43,26 +43,37 @@ export default function OfflineIndicator() {
     syncManager.sync();
   };
 
-  if (isOnline && pendingCount === 0 && syncStatus === 'idle') {
-    return null; // Don't show anything when online with nothing to sync
-  }
-
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2">
-        {!isOnline && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="secondary" className="gap-1.5">
-                <CloudOff className="h-3.5 w-3.5" />
-                {t('offline.offlineMode')}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{t('offline.workingOffline')}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
+        {/* Always show connection status */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge 
+              variant={!isOnline ? "secondary" : "outline"} 
+              className="gap-1.5"
+            >
+              {!isOnline ? (
+                <>
+                  <CloudOff className="h-3.5 w-3.5" />
+                  {t('offline.offlineMode')}
+                </>
+              ) : (
+                <>
+                  <Cloud className="h-3.5 w-3.5 text-green-600" />
+                  {t('offline.onlineMode', 'Online')}
+                </>
+              )}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              {!isOnline 
+                ? t('offline.workingOffline') 
+                : t('offline.connectedToServer', 'Connected to server')}
+            </p>
+          </TooltipContent>
+        </Tooltip>
 
         {pendingCount > 0 && (
           <Tooltip>

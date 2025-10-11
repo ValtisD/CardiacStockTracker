@@ -67,12 +67,15 @@ class SyncManager {
     const signature = `${method}:${endpoint}:${JSON.stringify(data)}`;
     const now = Date.now();
     
+    console.log('🔍 Checking mutation:', { method, endpoint, signature: signature.substring(0, 100) + '...' });
+    
     // Check in-memory cache first (prevents concurrent race conditions)
     const lastSeen = this.recentMutations.get(signature);
     if (lastSeen && (now - lastSeen < 5000)) {
       console.warn('⚠️ Duplicate mutation detected (in-memory), skipping:', method, endpoint);
       return;
     }
+    console.log('✅ Not a duplicate (in-memory check passed):', method, endpoint);
     
     // Also check IndexedDB for persistence across page loads
     const existingQueue = await offlineStorage.getSyncQueue();
@@ -92,11 +95,11 @@ class SyncManager {
     this.recentMutations.set(signature, now);
     
     // Clean up old entries from in-memory cache (older than 10 seconds)
-    for (const [sig, timestamp] of this.recentMutations.entries()) {
+    Array.from(this.recentMutations.entries()).forEach(([sig, timestamp]) => {
       if (now - timestamp > 10000) {
         this.recentMutations.delete(sig);
       }
-    }
+    });
     
     await offlineStorage.addToSyncQueue({
       type,
