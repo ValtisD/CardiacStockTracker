@@ -117,9 +117,8 @@ class OfflineStorage {
   async putMany<T>(storeName: string, items: T[]): Promise<void> {
     if (!this.db) await this.init();
     
-    // Handle case where items is not an array
-    if (!Array.isArray(items)) {
-      console.warn('putMany called with non-array:', items);
+    // All callers validate array before calling, but double-check for safety
+    if (!Array.isArray(items) || items.length === 0) {
       return;
     }
     
@@ -192,10 +191,12 @@ class OfflineStorage {
 
   // Entity-specific operations
   async cacheProducts(products: Product[]): Promise<void> {
-    // Filter out items without valid IDs
-    const validItems = Array.isArray(products) 
-      ? products.filter(item => item && item.id) 
-      : [];
+    if (!Array.isArray(products)) {
+      console.warn('cacheProducts called with non-array:', products);
+      return;
+    }
+    
+    const validItems = products.filter(item => item && item.id);
     
     if (validItems.length < products.length) {
       console.warn(`Filtered out ${products.length - validItems.length} products without valid IDs`);
@@ -209,10 +210,12 @@ class OfflineStorage {
   }
 
   async cacheInventory(inventory: Inventory[]): Promise<void> {
-    // Filter out items without valid IDs
-    const validItems = Array.isArray(inventory) 
-      ? inventory.filter(item => item && item.id) 
-      : [];
+    if (!Array.isArray(inventory)) {
+      console.warn('cacheInventory called with non-array:', inventory);
+      return;
+    }
+    
+    const validItems = inventory.filter(item => item && item.id);
     
     if (validItems.length < inventory.length) {
       console.warn(`Filtered out ${inventory.length - validItems.length} inventory items without valid IDs`);
@@ -239,10 +242,12 @@ class OfflineStorage {
   }
 
   async cacheHospitals(hospitals: Hospital[]): Promise<void> {
-    // Filter out items without valid IDs
-    const validItems = Array.isArray(hospitals) 
-      ? hospitals.filter(item => item && item.id) 
-      : [];
+    if (!Array.isArray(hospitals)) {
+      console.warn('cacheHospitals called with non-array:', hospitals);
+      return;
+    }
+    
+    const validItems = hospitals.filter(item => item && item.id);
     
     if (validItems.length < hospitals.length) {
       console.warn(`Filtered out ${hospitals.length - validItems.length} hospitals without valid IDs`);
@@ -256,14 +261,14 @@ class OfflineStorage {
   }
 
   async cacheProcedures(procedures: ImplantProcedure[]): Promise<void> {
-    // Ensure procedures is an array and filter out items without valid IDs
-    const validItems = Array.isArray(procedures) 
-      ? procedures.filter(item => item && item.id) 
-      : [];
-    
     if (!Array.isArray(procedures)) {
       console.warn('cacheProcedures called with non-array:', procedures);
-    } else if (validItems.length < procedures.length) {
+      return;
+    }
+    
+    const validItems = procedures.filter(item => item && item.id);
+    
+    if (validItems.length < procedures.length) {
       console.warn(`Filtered out ${procedures.length - validItems.length} procedures without valid IDs`);
     }
     
