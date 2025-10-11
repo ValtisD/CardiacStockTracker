@@ -330,15 +330,6 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         if (gs1Data?.serialNumber) {
           form.setValue('deviceSerialNumber', gs1Data.serialNumber);
         }
-        
-        const toastDescription = gs1Data?.serialNumber 
-          ? `${productInfo.name} set as primary device (Serial: ${gs1Data.serialNumber})`
-          : `${productInfo.name} set as primary device`;
-        
-        toast({
-          title: t('procedures.deviceScanned'),
-          description: toastDescription,
-        });
       } else {
         toast({
           title: t('procedures.productNotFound'),
@@ -372,26 +363,11 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         if (gs1Data?.lotNumber) {
           updateMaterialItem(type, id, 'lotNumber', gs1Data.lotNumber);
         }
-        
-        const toastDescription = gs1Data?.serialNumber 
-          ? `${productInfo.name} added (Serial: ${gs1Data.serialNumber})`
-          : `${productInfo.name} added successfully`;
-        
-        toast({
-          title: t('procedures.productScanned'),
-          description: toastDescription,
-        });
       } else {
         // Product not found - clear productId and set barcode as manual entry
         updateMaterialItem(type, id, 'productId', undefined);
         updateMaterialItem(type, id, 'name', barcode);
         updateMaterialItem(type, id, 'scanned', true);
-        
-        toast({
-          title: t('procedures.barcodeScanned'),
-          description: t('procedures.productNotFoundBarcodeAdded'),
-          variant: "default",
-        });
       }
     }
     
