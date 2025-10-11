@@ -139,8 +139,36 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const headers = await getAuthHeaders();
     const url = queryKey.join("/") as string;
+    
+    // If offline, return cached data immediately
+    if (!navigator.onLine) {
+      console.log('Offline: Loading from cache:', url);
+      try {
+        if (url.includes('/api/products')) {
+          const data = await offlineStorage.getProducts();
+          console.log('Offline: Loaded', data?.length, 'products from cache');
+          return data;
+        } else if (url.includes('/api/inventory/home')) {
+          return await offlineStorage.getInventoryByLocation('home');
+        } else if (url.includes('/api/inventory/car')) {
+          return await offlineStorage.getInventoryByLocation('car');
+        } else if (url.includes('/api/inventory')) {
+          return await offlineStorage.getInventory();
+        } else if (url.includes('/api/hospitals')) {
+          return await offlineStorage.getHospitals();
+        } else if (url.includes('/api/implant-procedures')) {
+          return await offlineStorage.getProcedures();
+        }
+      } catch (e) {
+        console.error('Failed to get offline data:', e);
+        // Return empty array as fallback
+        return [] as any;
+      }
+    }
+    
+    // Online: fetch from server
+    const headers = await getAuthHeaders();
     
     try {
       const res = await fetch(url, {
@@ -156,43 +184,41 @@ export const getQueryFn: <T>(options: {
       const data = await res.json();
       
       // Cache data for offline use
-      if (navigator.onLine) {
-        try {
-          if (url.includes('/api/products')) {
-            await offlineStorage.cacheProducts(data);
-          } else if (url.includes('/api/inventory')) {
-            await offlineStorage.cacheInventory(data);
-          } else if (url.includes('/api/hospitals')) {
-            await offlineStorage.cacheHospitals(data);
-          } else if (url.includes('/api/implant-procedures')) {
-            await offlineStorage.cacheProcedures(data);
-          }
-        } catch (e) {
-          console.error('Failed to cache data offline:', e);
+      try {
+        if (url.includes('/api/products')) {
+          await offlineStorage.cacheProducts(data);
+          console.log('Cached', data?.length, 'products for offline use');
+        } else if (url.includes('/api/inventory')) {
+          await offlineStorage.cacheInventory(data);
+        } else if (url.includes('/api/hospitals')) {
+          await offlineStorage.cacheHospitals(data);
+        } else if (url.includes('/api/implant-procedures')) {
+          await offlineStorage.cacheProcedures(data);
         }
+      } catch (e) {
+        console.error('Failed to cache data offline:', e);
       }
       
       return data;
     } catch (error) {
-      // If offline, try to get data from cache
-      if (!navigator.onLine) {
-        try {
-          if (url.includes('/api/products')) {
-            return await offlineStorage.getProducts();
-          } else if (url.includes('/api/inventory/home')) {
-            return await offlineStorage.getInventoryByLocation('home');
-          } else if (url.includes('/api/inventory/car')) {
-            return await offlineStorage.getInventoryByLocation('car');
-          } else if (url.includes('/api/inventory')) {
-            return await offlineStorage.getInventory();
-          } else if (url.includes('/api/hospitals')) {
-            return await offlineStorage.getHospitals();
-          } else if (url.includes('/api/implant-procedures')) {
-            return await offlineStorage.getProcedures();
-          }
-        } catch (e) {
-          console.error('Failed to get offline data:', e);
+      // Network error fallback - try cache
+      console.log('Network error, trying cache:', url);
+      try {
+        if (url.includes('/api/products')) {
+          return await offlineStorage.getProducts();
+        } else if (url.includes('/api/inventory/home')) {
+          return await offlineStorage.getInventoryByLocation('home');
+        } else if (url.includes('/api/inventory/car')) {
+          return await offlineStorage.getInventoryByLocation('car');
+        } else if (url.includes('/api/inventory')) {
+          return await offlineStorage.getInventory();
+        } else if (url.includes('/api/hospitals')) {
+          return await offlineStorage.getHospitals();
+        } else if (url.includes('/api/implant-procedures')) {
+          return await offlineStorage.getProcedures();
         }
+      } catch (e) {
+        console.error('Failed to get offline data after network error:', e);
       }
       throw error;
     }
