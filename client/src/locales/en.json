@@ -482,6 +482,7 @@
     "hospitalNotesPlaceholder": "Additional notes or instructions",
     "addHospital": "Add Hospital",
     "loadingProcedures": "Loading procedures...",
+    "addItem": "Add Item",
     "noProceduresFound": "No procedures found",
     "clickNewReportHint": "Click 'New Implant Report' to add your first procedure",
     "date": "Date",
