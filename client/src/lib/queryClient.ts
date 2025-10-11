@@ -38,40 +38,75 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  console.log('apiRequest called:', method, url, 'Online:', navigator.onLine);
+  
   const headers = await getAuthHeaders();
   
   // If offline and this is a mutation, queue it and return a mock success response
   if (!navigator.onLine && method !== 'GET') {
-    console.log('Offline: Queueing mutation', method, url);
+    console.log('🔴 OFFLINE MODE: Queueing mutation', method, url, data);
     
-    // Queue the mutation for later sync
-    await syncManager.addToQueue(
-      data ? 'create' : 'delete',
-      getEntityFromUrl(url),
-      url,
-      method,
-      data
-    );
-    
-    // Update local cache optimistically
-    await updateLocalCache(url, method, data);
-    
-    // Return mock success response
-    return new Response(JSON.stringify(data || {}), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    try {
+      // Queue the mutation for later sync
+      await syncManager.addToQueue(
+        data ? 'create' : 'delete',
+        getEntityFromUrl(url),
+        url,
+        method,
+        data
+      );
+      console.log('✅ Mutation queued successfully');
+      
+      // Update local cache optimistically
+      await updateLocalCache(url, method, data);
+      console.log('✅ Local cache updated');
+      
+      // Return mock success response
+      return new Response(JSON.stringify(data || {}), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('❌ Failed to queue offline mutation:', error);
+      throw error;
+    }
   }
   
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    // If network error and this is a mutation, try offline queue
+    if (method !== 'GET') {
+      console.log('🔴 Network error on mutation, attempting offline queue:', method, url);
+      try {
+        await syncManager.addToQueue(
+          data ? 'create' : 'delete',
+          getEntityFromUrl(url),
+          url,
+          method,
+          data
+        );
+        await updateLocalCache(url, method, data);
+        console.log('✅ Mutation queued after network error');
+        
+        return new Response(JSON.stringify(data || {}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (queueError) {
+        console.error('❌ Failed to queue mutation after network error:', queueError);
+      }
+    }
+    throw error;
+  }
 }
 
 // Helper to extract entity type from URL
