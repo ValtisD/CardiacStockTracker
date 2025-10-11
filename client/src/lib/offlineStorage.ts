@@ -116,14 +116,30 @@ class OfflineStorage {
 
   async putMany<T>(storeName: string, items: T[]): Promise<void> {
     if (!this.db) await this.init();
+    
+    // Handle case where items is not an array
+    if (!Array.isArray(items)) {
+      console.warn('putMany called with non-array:', items);
+      return;
+    }
+    
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
 
-      items.forEach(item => store.put(item));
+      items.forEach(item => {
+        try {
+          store.put(item);
+        } catch (e) {
+          console.error('Failed to put item in store:', storeName, item, e);
+        }
+      });
 
       transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
+      transaction.onerror = () => {
+        console.error('Transaction error in putMany:', storeName, transaction.error);
+        reject(transaction.error);
+      };
     });
   }
 
@@ -176,7 +192,16 @@ class OfflineStorage {
 
   // Entity-specific operations
   async cacheProducts(products: Product[]): Promise<void> {
-    await this.putMany(STORES.PRODUCTS, products);
+    // Filter out items without valid IDs
+    const validItems = Array.isArray(products) 
+      ? products.filter(item => item && item.id) 
+      : [];
+    
+    if (validItems.length < products.length) {
+      console.warn(`Filtered out ${products.length - validItems.length} products without valid IDs`);
+    }
+    
+    await this.putMany(STORES.PRODUCTS, validItems);
   }
 
   async getProducts(): Promise<Product[]> {
@@ -184,7 +209,16 @@ class OfflineStorage {
   }
 
   async cacheInventory(inventory: Inventory[]): Promise<void> {
-    await this.putMany(STORES.INVENTORY, inventory);
+    // Filter out items without valid IDs
+    const validItems = Array.isArray(inventory) 
+      ? inventory.filter(item => item && item.id) 
+      : [];
+    
+    if (validItems.length < inventory.length) {
+      console.warn(`Filtered out ${inventory.length - validItems.length} inventory items without valid IDs`);
+    }
+    
+    await this.putMany(STORES.INVENTORY, validItems);
   }
 
   async getInventory(): Promise<Inventory[]> {
@@ -205,7 +239,16 @@ class OfflineStorage {
   }
 
   async cacheHospitals(hospitals: Hospital[]): Promise<void> {
-    await this.putMany(STORES.HOSPITALS, hospitals);
+    // Filter out items without valid IDs
+    const validItems = Array.isArray(hospitals) 
+      ? hospitals.filter(item => item && item.id) 
+      : [];
+    
+    if (validItems.length < hospitals.length) {
+      console.warn(`Filtered out ${hospitals.length - validItems.length} hospitals without valid IDs`);
+    }
+    
+    await this.putMany(STORES.HOSPITALS, validItems);
   }
 
   async getHospitals(): Promise<Hospital[]> {
@@ -213,7 +256,18 @@ class OfflineStorage {
   }
 
   async cacheProcedures(procedures: ImplantProcedure[]): Promise<void> {
-    await this.putMany(STORES.PROCEDURES, procedures);
+    // Ensure procedures is an array and filter out items without valid IDs
+    const validItems = Array.isArray(procedures) 
+      ? procedures.filter(item => item && item.id) 
+      : [];
+    
+    if (!Array.isArray(procedures)) {
+      console.warn('cacheProcedures called with non-array:', procedures);
+    } else if (validItems.length < procedures.length) {
+      console.warn(`Filtered out ${procedures.length - validItems.length} procedures without valid IDs`);
+    }
+    
+    await this.putMany(STORES.PROCEDURES, validItems);
   }
 
   async getProcedures(): Promise<ImplantProcedure[]> {

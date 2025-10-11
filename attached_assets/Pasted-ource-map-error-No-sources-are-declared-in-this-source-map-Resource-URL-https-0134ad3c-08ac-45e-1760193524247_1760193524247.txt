@@ -1,0 +1,138 @@
+ource map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WOOG5QLI.js?v=c725b5b5
+Source Map URL: chunk-WOOG5QLI.js.map
+
+Layout was forced before the page was fully loaded. If stylesheets are not yet loaded this may cause a flash of unstyled content. node.js:409:1
+[vite] connecting... client:495:9
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react.js?v=c725b5b5
+Source Map URL: react.js.map
+
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-hook-form.js?v=c725b5b5
+Source Map URL: react-hook-form.js.map
+
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/date-fns.js?v=c725b5b5
+Source Map URL: date-fns.js.map
+
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/zod.js?v=c725b5b5
+Source Map URL: zod.js.map
+
+[vite] connected. client:618:15
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-slot.js?v=c725b5b5
+Source Map URL: @radix-ui_react-slot.js.map
+
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools react-dom.development.js:29895:17
+IndexedDB initialized successfully offlineStorage.ts:40:17
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=c725b5b5
+Source Map URL: @radix-ui_react-dialog.js.map
+
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/drizzle-orm.js?v=c725b5b5
+Source Map URL: drizzle-orm.js.map
+
+Source map error: No sources are declared in this source map.
+Resource URL: https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/clsx.js?v=c725b5b5
+Source Map URL: clsx.js.map
+
+Service Worker registration failed: DOMException: The operation is insecure. main.tsx:16:17
+IndexedDB initialized successfully offlineStorage.ts:40:17
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:196:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:112:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx:32:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=scJD4QFOqAZLKezcTBzPk:672:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=scJD4QFOqAZLKezcTBzPk:526:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c725b5b5:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=c725b5b5:1546:18
+App react-dom.development.js:86:30
+apiRequest called: POST /api/implant-procedures Online: true queryClient.ts:41:11
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:229:19
+Cached 43 products for offline use queryClient.ts:232:19
+Offline data preloaded successfully syncManager.ts:163:15
+Navigating to: /hospitals AppSidebar.tsx:33:13
+Navigated to: /hospitals App.tsx:454:13
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:454:13
+Navigating to: /products AppSidebar.tsx:33:13
+Navigated to: /products App.tsx:454:13
+Navigating to: /analytics AppSidebar.tsx:33:13
+Navigated to: /analytics App.tsx:454:13
+Navigating to: /products AppSidebar.tsx:33:13
+Navigated to: /products App.tsx:454:13
+Navigating to: /settings AppSidebar.tsx:33:13
+Navigated to: /settings App.tsx:454:13
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:454:13
+Navigating to: /hospitals AppSidebar.tsx:33:13
+Navigated to: /hospitals App.tsx:454:13
+Navigating to: /inventory/car AppSidebar.tsx:33:13
+Navigated to: /inventory/car App.tsx:454:13
+Failed to cache data offline: DOMException: Data provided to an operation does not meet requirements.
+    putMany offlineStorage.ts:123
+    putMany offlineStorage.ts:123
+    putMany offlineStorage.ts:119
+    cacheInventory offlineStorage.ts:187
+    getQueryFn queryClient.ts:234
+    fetchFn query.ts:429
+    run retryer.ts:153
+queryClient.ts:241:17
+Navigating to: /inventory/home AppSidebar.tsx:33:13
+Navigated to: /inventory/home App.tsx:454:13
+Failed to cache data offline: DOMException: Data provided to an operation does not meet requirements.
+    putMany offlineStorage.ts:123
+    putMany offlineStorage.ts:123
+    putMany offlineStorage.ts:119
+    cacheInventory offlineStorage.ts:187
+    getQueryFn queryClient.ts:234
+    fetchFn query.ts:429
+    run retryer.ts:153
+queryClient.ts:241:17
+Navigating to: / AppSidebar.tsx:33:13
+Navigated to: / App.tsx:454:13
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:454:13
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. dialog.tsx:542:36
+Failed to cache data offline: TypeError: items.forEach is not a function
+    putMany offlineStorage.ts:123
+    putMany offlineStorage.ts:119
+    cacheProcedures offlineStorage.ts:216
+    getQueryFn queryClient.ts:238
+    fetchFn query.ts:429
+    run retryer.ts:153
+    start retryer.ts:218
+    fetch query.ts:540
+    executeFetch_fn queryObserver.ts:346
+    setOptions queryObserver.ts:199
+    useBaseQuery useBaseQuery.ts:109
+    React 15
