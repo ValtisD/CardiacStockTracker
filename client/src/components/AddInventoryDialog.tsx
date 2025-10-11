@@ -98,10 +98,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       queryClient.invalidateQueries({ 
         predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
       });
-      toast({
-        title: t('inventory.itemAdded'),
-        description: t('inventory.itemAddedSuccess'),
-      });
+      // Toast notification removed - user requested no pop-ups when adding multiple products
       handleClose();
     },
     onError: (error: Error) => {
