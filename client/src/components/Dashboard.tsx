@@ -18,6 +18,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
+import QuickSearch from "@/components/QuickSearch";
+import ImplantProcedureDetailDialog from "@/components/ImplantProcedureDetailDialog";
 
 interface InventoryWithProduct extends Inventory {
   product?: Product;
@@ -32,6 +34,7 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [showProceduresDialog, setShowProceduresDialog] = useState(false);
   const [showExpiringReport, setShowExpiringReport] = useState(false);
+  const [selectedProcedureId, setSelectedProcedureId] = useState<string | null>(null);
   const { toast } = useToast();
   const { data: homeInventory, isLoading: homeLoading, error: homeError } = useQuery<InventoryWithProduct[]>({
     queryKey: ["/api/inventory?location=home"],
@@ -119,6 +122,9 @@ export default function Dashboard() {
           {t('dashboard.lastUpdated')} {new Date().toLocaleDateString()}
         </Badge>
       </div>
+
+      {/* Quick Search */}
+      <QuickSearch onProcedureSelect={setSelectedProcedureId} />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -576,6 +582,13 @@ ${t('dashboard.emailClosing')}`;
           </CardContent>
         </Card>
       )}
+
+      {/* Procedure Details Dialog */}
+      <ImplantProcedureDetailDialog
+        procedureId={selectedProcedureId}
+        isOpen={!!selectedProcedureId}
+        onClose={() => setSelectedProcedureId(null)}
+      />
     </div>
   );
 }

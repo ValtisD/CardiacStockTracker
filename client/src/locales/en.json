@@ -652,5 +652,13 @@
     "unauthorized": "Unauthorized",
     "notFound": "Not found",
     "serverError": "Server error. Please try again later."
+  },
+  "search": {
+    "quickSearchPlaceholder": "Search by serial or lot number...",
+    "enterSearchQuery": "Please enter a search query",
+    "foundInInventory": "Found in Inventory",
+    "foundInProcedures": "Found in Procedures",
+    "noResultsFound": "No results found for",
+    "at": "at"
   }
 }

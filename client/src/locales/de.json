@@ -652,5 +652,13 @@
     "unauthorized": "Nicht autorisiert",
     "notFound": "Nicht gefunden",
     "serverError": "Serverfehler. Bitte versuchen Sie es später erneut."
+  },
+  "search": {
+    "quickSearchPlaceholder": "Nach Serien- oder Chargennummer suchen...",
+    "enterSearchQuery": "Bitte geben Sie eine Suchanfrage ein",
+    "foundInInventory": "Im Bestand gefunden",
+    "foundInProcedures": "In Verfahren gefunden",
+    "noResultsFound": "Keine Ergebnisse gefunden für",
+    "at": "bei"
   }
 }
