@@ -208,11 +208,14 @@ export const getQueryFn: <T>(options: {
           // The frontend will calculate from cached inventory
           console.log('Offline: Low stock queries not available offline, returning []');
           return [];
-        } else if (url.includes('/api/inventory/home')) {
+        } else if (url.includes('/api/inventory') && url.includes('location=home')) {
+          console.log('Offline: Loading HOME inventory from cache');
           return await offlineStorage.getInventoryByLocation('home');
-        } else if (url.includes('/api/inventory/car')) {
+        } else if (url.includes('/api/inventory') && url.includes('location=car')) {
+          console.log('Offline: Loading CAR inventory from cache');
           return await offlineStorage.getInventoryByLocation('car');
         } else if (url.includes('/api/inventory')) {
+          console.log('Offline: Loading ALL inventory from cache');
           return await offlineStorage.getInventory();
         } else if (url.includes('/api/hospitals')) {
           return await offlineStorage.getHospitals();
