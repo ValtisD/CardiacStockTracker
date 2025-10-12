@@ -673,5 +673,18 @@
     "foundInProcedures": "In Verfahren gefunden",
     "noResultsFound": "Keine Ergebnisse gefunden für",
     "at": "bei"
+  },
+  "batchScan": {
+    "title": "Stapel-Scan - Mehrere Artikel hinzufügen",
+    "scanBarcode": "Barcode scannen",
+    "enterBarcodePlaceholder": "Barcode zum Stapel hinzufügen",
+    "addScan": "Hinzufügen",
+    "scannedItems": "Gescannte Artikel",
+    "noItemsScanned": "Noch keine Artikel gescannt",
+    "scanBarcodeToStart": "Scannen Sie einen Barcode um zu beginnen",
+    "addAllToHome": "Alle zum Heimbestand hinzufügen",
+    "itemAlreadyScanned": "Artikel bereits gescannt",
+    "itemAlreadyInList": "Dieser Artikel ist bereits in der Stapelliste",
+    "scanFailed": "Barcode-Scan fehlgeschlagen"
   }
 }

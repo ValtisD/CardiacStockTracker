@@ -1,4 +1,4 @@
-import { Package, Car, Hospital, AlertTriangle, TrendingUp, Calendar, Plus, Building2, Download, FileText, Mail } from "lucide-react";
+import { Package, Car, Hospital, AlertTriangle, TrendingUp, Calendar, Plus, Building2, Download, FileText, Mail, Scan } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
 import QuickSearch from "@/components/QuickSearch";
 import ImplantProcedureDetailDialog from "@/components/ImplantProcedureDetailDialog";
+import BatchScanDialog from "@/components/BatchScanDialog";
 
 interface InventoryWithProduct extends Inventory {
   product?: Product;
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const [showProceduresDialog, setShowProceduresDialog] = useState(false);
   const [showExpiringReport, setShowExpiringReport] = useState(false);
   const [selectedProcedureId, setSelectedProcedureId] = useState<string | null>(null);
+  const [showBatchScanDialog, setShowBatchScanDialog] = useState(false);
   const { toast } = useToast();
   const { data: homeInventory, isLoading: homeLoading, error: homeError } = useQuery<InventoryWithProduct[]>({
     queryKey: ["/api/inventory?location=home"],
@@ -406,6 +408,15 @@ export default function Dashboard() {
               {t('dashboard.addNewHospital')}
             </Button>
           </Link>
+          <Button
+            variant="outline"
+            className="justify-start gap-2 w-full"
+            data-testid="button-batch-scan"
+            onClick={() => setShowBatchScanDialog(true)}
+          >
+            <Scan className="h-4 w-4" />
+            {t('batchScan.title')}
+          </Button>
           <Button 
             variant="outline" 
             className="justify-start gap-2 w-full" 
@@ -673,6 +684,12 @@ ${t('dashboard.emailClosing')}`;
         procedureId={selectedProcedureId}
         isOpen={!!selectedProcedureId}
         onClose={() => setSelectedProcedureId(null)}
+      />
+
+      {/* Batch Scan Dialog */}
+      <BatchScanDialog
+        open={showBatchScanDialog}
+        onOpenChange={setShowBatchScanDialog}
       />
     </div>
   );

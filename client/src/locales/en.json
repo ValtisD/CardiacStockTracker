@@ -684,5 +684,18 @@
     "foundInProcedures": "Found in Procedures",
     "noResultsFound": "No results found for",
     "at": "at"
+  },
+  "batchScan": {
+    "title": "Batch Scan - Add Multiple Items",
+    "scanBarcode": "Scan Barcode",
+    "enterBarcodePlaceholder": "Enter barcode to add to batch",
+    "addScan": "Add",
+    "scannedItems": "Scanned Items",
+    "noItemsScanned": "No items scanned yet",
+    "scanBarcodeToStart": "Scan a barcode to get started",
+    "addAllToHome": "Add All to Home Stock",
+    "itemAlreadyScanned": "Item Already Scanned",
+    "itemAlreadyInList": "This item is already in the batch list",
+    "scanFailed": "Failed to scan barcode"
   }
 }
