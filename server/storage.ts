@@ -101,7 +101,7 @@ export class DatabaseStorage implements IStorage {
 
   async searchProducts(query: string): Promise<Product[]> {
     const result = await db.select().from(products).where(
-      sql`${products.modelNumber} = ${query} OR ${products.gtin} = ${query}`
+      sql`${products.modelNumber} = ${query} OR ${products.gtin} = ${query} OR ${products.boxGtin} = ${query}`
     );
     return result;
   }

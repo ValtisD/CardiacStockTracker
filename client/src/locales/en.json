@@ -281,6 +281,8 @@
     "noProductGtin": "No product found with this GTIN",
     "gtinLookupFailed": "GTIN lookup failed",
     "productNotInDatabase": "Product not in database",
+    "boxScanned": "Box scanned",
+    "boxScanDescription": "Box contains {{quantity}} units - quantity auto-filled",
     "trackingModeRequired": "Tracking mode required",
     "trackingModeRequiredDescription": "Please select a tracking mode",
     "serialNumberRequired": "Serial number required",

@@ -275,6 +275,31 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       }
     }
 
+    // Check if this is a box GTIN scan
+    const scannedGtin = parsedGs1Data?.gtin || barcode;
+    const isBoxScan = foundProduct.boxGtin && scannedGtin === foundProduct.boxGtin;
+    
+    if (isBoxScan && foundProduct.boxQuantity) {
+      // Box GTIN scanned - auto-fill quantity with box quantity
+      setSelectedProduct(foundProduct);
+      form.setValue("productId", foundProduct.id);
+      form.setValue("quantity", foundProduct.boxQuantity);
+      form.setValue("trackingMode", "lot"); // Boxes are typically lot-tracked
+      if (parsedGs1Data?.expirationDate) {
+        form.setValue("expirationDate", parsedGs1Data.expirationDate);
+      }
+      if (parsedGs1Data?.lotNumber) {
+        form.setValue("lotNumber", parsedGs1Data.lotNumber);
+      }
+      setShowBarcodeScanner(false);
+      
+      toast({
+        title: t('inventory.boxScanned'),
+        description: t('inventory.boxScanDescription', { quantity: foundProduct.boxQuantity }),
+      });
+      return;
+    }
+
     // Only proceed if we have valid tracking data
     if (!parsedGs1Data?.serialNumber && !parsedGs1Data?.lotNumber) {
       // No tracking data - fall back to manual entry with pre-filled product

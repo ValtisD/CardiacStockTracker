@@ -281,6 +281,8 @@
     "noProductGtin": "Kein Produkt mit dieser GTIN gefunden",
     "gtinLookupFailed": "GTIN-Suche fehlgeschlagen",
     "productNotInDatabase": "Produkt nicht in Datenbank",
+    "boxScanned": "Karton gescannt",
+    "boxScanDescription": "Karton enthält {{quantity}} Einheiten - Menge automatisch ausgefüllt",
     "trackingModeRequired": "Verfolgungsmodus erforderlich",
     "trackingModeRequiredDescription": "Bitte wählen Sie einen Verfolgungsmodus aus",
     "serialNumberRequired": "Seriennummer erforderlich",
