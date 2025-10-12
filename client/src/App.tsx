@@ -282,14 +282,18 @@ function AppContent() {
         setValidatingRegistration(true);
         
         try {
+          // Get Auth0 access token for authenticated request
+          const accessToken = await getAccessTokenSilently();
+          
           const response = await fetch('/api/auth/verify-registration-token', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`, // SECURITY: Authenticate request with JWT
             },
             body: JSON.stringify({ 
               token: validationToken,
-              userId: user?.sub  // Pass Auth0 user ID to mark as validated
+              // SECURITY: userId now comes from JWT on server, not from client
             }),
           });
           

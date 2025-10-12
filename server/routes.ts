@@ -73,10 +73,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Verify registration token (public endpoint, called on Auth0 callback)
-  app.post("/api/auth/verify-registration-token", async (req, res) => {
+  // Verify registration token (protected endpoint - requires authentication)
+  app.post("/api/auth/verify-registration-token", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const { token, userId } = req.body;
+      const { token } = req.body;
+      const userId = req.userId!; // SECURITY: Use userId from authenticated JWT, not from client
       
       if (!token || typeof token !== 'string') {
         return res.status(400).json({ valid: false, error: "Token is required" });
@@ -98,23 +99,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Token is valid - delete it (one-time use)
       validationTokens.delete(token);
       
-      // If userId provided, mark user as validated in database
-      if (userId && typeof userId === 'string') {
-        try {
-          const { db } = await import('./db');
-          const { users } = await import('@shared/schema');
-          const { eq } = await import('drizzle-orm');
-          
-          await db
-            .update(users)
-            .set({ validated: true })
-            .where(eq(users.userId, userId));
-          
-          console.log(`User ${userId} marked as validated`);
-        } catch (dbError) {
-          console.error('Error marking user as validated:', dbError);
-          // Don't fail the request if database update fails
-        }
+      // Mark authenticated user as validated
+      try {
+        const { db } = await import('./db');
+        const { users } = await import('@shared/schema');
+        const { eq } = await import('drizzle-orm');
+        
+        await db
+          .update(users)
+          .set({ validated: true })
+          .where(eq(users.userId, userId));
+        
+        console.log(`User ${userId} marked as validated`);
+      } catch (dbError) {
+        console.error('Error marking user as validated:', dbError);
+        return res.status(500).json({ valid: false, error: "Failed to validate user" });
       }
       
       res.json({ valid: true });
