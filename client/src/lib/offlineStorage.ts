@@ -1,7 +1,7 @@
 import type { Product, Inventory, Hospital, ImplantProcedure } from '@shared/schema';
 
 const DB_NAME = 'crm-stock-offline';
-const DB_VERSION = 3; // v3: Added userId index to sync queue for user-specific queues
+const DB_VERSION = 4; // v4: Added sync state store for persistent retry tracking
 
 // Store names
 const STORES = {
@@ -11,6 +11,7 @@ const STORES = {
   PROCEDURES: 'procedures',
   SYNC_QUEUE: 'syncQueue',
   USER: 'user',
+  SYNC_STATE: 'syncState', // v4: Persistent sync retry state
 } as const;
 
 export interface SyncQueueItem {
@@ -23,6 +24,13 @@ export interface SyncQueueItem {
   method: string;
   timestamp: number;
   retryCount: number;
+}
+
+export interface SyncState {
+  id: 'sync-state'; // Singleton key
+  needsSync: boolean;
+  lastAttempt: number;
+  reason: string; // Why sync is needed (e.g., "pending_changes", "auth_ready")
 }
 
 class OfflineStorage {
@@ -94,6 +102,11 @@ class OfflineStorage {
 
         if (!db.objectStoreNames.contains(STORES.USER)) {
           db.createObjectStore(STORES.USER, { keyPath: 'userId' });
+        }
+
+        if (!db.objectStoreNames.contains(STORES.SYNC_STATE)) {
+          db.createObjectStore(STORES.SYNC_STATE, { keyPath: 'id' });
+          console.log('🔄 DB v4 upgrade: Created sync state store for persistent retry tracking');
         }
       };
     });
@@ -417,6 +430,26 @@ class OfflineStorage {
       console.error('❌ Failed to cleanup temp IDs:', error);
       return { needsRefresh: false };
     }
+  }
+
+  // Sync State Management (v4)
+  async getSyncState(): Promise<SyncState | null> {
+    const state = await this.get<SyncState>(STORES.SYNC_STATE, 'sync-state');
+    return state || null;
+  }
+
+  async setSyncState(needsSync: boolean, reason: string): Promise<void> {
+    const state: SyncState = {
+      id: 'sync-state',
+      needsSync,
+      lastAttempt: Date.now(),
+      reason
+    };
+    await this.put(STORES.SYNC_STATE, state);
+  }
+
+  async clearSyncState(): Promise<void> {
+    await this.delete(STORES.SYNC_STATE, 'sync-state');
   }
 }
 
