@@ -28,6 +28,15 @@ class OfflineStorage {
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
+    // Request persistent storage for iOS/Safari
+    if (navigator.storage && navigator.storage.persist) {
+      const isPersisted = await navigator.storage.persist();
+      console.log(`📦 Storage persistence: ${isPersisted ? 'GRANTED' : 'NOT granted'}`);
+      if (!isPersisted) {
+        console.warn('⚠️ Storage may be cleared by browser. On iOS: Add to Home Screen for persistence.');
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
