@@ -7,8 +7,10 @@ import { debugLogger, type LogEntry } from '@/lib/debugLogger';
 import { offlineStorage } from '@/lib/offlineStorage';
 import { queryClient } from '@/lib/queryClient';
 import { offlineState } from '@/lib/offlineState';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export function DebugPanel() {
+  const { user, isAuthenticated } = useAuth0();
   const [isOpen, setIsOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isOffline, setIsOffline] = useState(offlineState.isOffline());
@@ -248,23 +250,41 @@ export function DebugPanel() {
             )}
           </div>
           
+          {/* Current User Info */}
+          {isAuthenticated && user?.sub && (
+            <div className="mt-3 p-2 bg-primary/10 rounded border border-primary/20">
+              <div className="text-xs font-medium">🔐 Current Auth0 User:</div>
+              <div className="text-xs font-mono mt-1">
+                {user.sub}
+              </div>
+            </div>
+          )}
+          
           {/* Queue Items Details */}
           {queueItems.length > 0 && (
             <div className="mt-3 space-y-2">
               <div className="text-sm font-medium">🔄 Sync Queue Items:</div>
-              {queueItems.map((item, idx) => (
-                <div key={item.id} className="text-xs p-2 bg-background/50 rounded border">
-                  <div className="font-mono">
-                    <span className="text-muted-foreground">#{idx + 1}</span> {item.method} {item.endpoint}
+              {queueItems.map((item, idx) => {
+                const isUserMatch = isAuthenticated && user?.sub === item.userId;
+                return (
+                  <div key={item.id} className={`text-xs p-2 rounded border ${
+                    isUserMatch 
+                      ? 'bg-green-500/10 border-green-500/30' 
+                      : 'bg-red-500/10 border-red-500/30'
+                  }`}>
+                    <div className="font-mono">
+                      <span className="text-muted-foreground">#{idx + 1}</span> {item.method} {item.endpoint}
+                    </div>
+                    <div className="text-muted-foreground mt-1">
+                      userId: <span className="font-semibold">{item.userId?.substring(0, 30)}</span>
+                      {isUserMatch ? ' ✅' : ' ❌ MISMATCH'}
+                    </div>
+                    <div className="text-muted-foreground">
+                      retries: {item.retryCount} | {new Date(item.timestamp).toLocaleTimeString()}
+                    </div>
                   </div>
-                  <div className="text-muted-foreground mt-1">
-                    userId: <span className="font-semibold">{item.userId?.substring(0, 15)}...</span>
-                  </div>
-                  <div className="text-muted-foreground">
-                    retries: {item.retryCount} | {new Date(item.timestamp).toLocaleTimeString()}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
