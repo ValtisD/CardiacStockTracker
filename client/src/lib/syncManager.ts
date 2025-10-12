@@ -43,17 +43,22 @@ class SyncManager {
         }
       });
     }
-
-    // Initial sync if online (in case there are pending changes from previous session)
-    if (!offlineState.isOffline()) {
-      setTimeout(() => {
-        this.getPendingCount().then(count => {
-          if (count > 0) {
-            console.log(`🔄 Initial sync: ${count} pending changes from previous session`);
-            this.sync();
-          }
-        });
-      }, 1000);
+  }
+  
+  // CRITICAL: Check for pending sync items from previous session
+  // This should be called AFTER tokenProvider is set (from App.tsx)
+  async checkInitialSync(): Promise<void> {
+    if (!this.isOnline) {
+      console.log('⏸️ Skipping initial sync check - offline');
+      return;
+    }
+    
+    const count = await this.getPendingCount();
+    if (count > 0) {
+      console.log(`🔄 Initial sync: ${count} pending changes from previous session`);
+      await this.sync();
+    } else {
+      console.log('✅ No pending changes from previous session');
     }
   }
   

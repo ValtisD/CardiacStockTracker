@@ -354,6 +354,10 @@ function AppContent() {
               throw error;
             }
           });
+          
+          // CRITICAL: Check for pending sync items AFTER token is set
+          // This ensures sync has auth token to work with
+          await syncManager.checkInitialSync();
         } catch (error) {
           console.error("Failed to initialize token:", error);
           // CRITICAL: Even if token fetch fails (offline), set tokenReady=true

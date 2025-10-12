@@ -19,6 +19,7 @@ export function DebugPanel() {
     procedures: 0,
     syncQueue: 0
   });
+  const [queueItems, setQueueItems] = useState<any[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new logs arrive
@@ -80,7 +81,7 @@ export function DebugPanel() {
         offlineStorage.getInventory(),
         offlineStorage.getHospitals(),
         offlineStorage.getProcedures(),
-        offlineStorage.getSyncQueue()
+        offlineStorage.getSyncQueue() // Get ALL queue items regardless of userId
       ]);
 
       setStats({
@@ -90,6 +91,9 @@ export function DebugPanel() {
         procedures: procedures?.length || 0,
         syncQueue: syncQueue?.length || 0
       });
+      
+      // Store queue items for display
+      setQueueItems(syncQueue || []);
     } catch (e) {
       console.error('Failed to load debug stats:', e);
     }
@@ -243,6 +247,26 @@ export function DebugPanel() {
               </Badge>
             )}
           </div>
+          
+          {/* Queue Items Details */}
+          {queueItems.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <div className="text-sm font-medium">🔄 Sync Queue Items:</div>
+              {queueItems.map((item, idx) => (
+                <div key={item.id} className="text-xs p-2 bg-background/50 rounded border">
+                  <div className="font-mono">
+                    <span className="text-muted-foreground">#{idx + 1}</span> {item.method} {item.endpoint}
+                  </div>
+                  <div className="text-muted-foreground mt-1">
+                    userId: <span className="font-semibold">{item.userId?.substring(0, 15)}...</span>
+                  </div>
+                  <div className="text-muted-foreground">
+                    retries: {item.retryCount} | {new Date(item.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Logs */}
