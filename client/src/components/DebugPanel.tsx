@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Bug, X, Trash2, RefreshCw } from 'lucide-react';
+import { Bug, X, Trash2, RefreshCw, Copy } from 'lucide-react';
 import { debugLogger, type LogEntry } from '@/lib/debugLogger';
 import { offlineStorage } from '@/lib/offlineStorage';
 import { queryClient } from '@/lib/queryClient';
@@ -83,6 +83,22 @@ export function DebugPanel() {
     }
   };
 
+  const copyLogsToClipboard = async () => {
+    try {
+      const logsText = logs.map(log => {
+        const timestamp = new Date(log.timestamp).toLocaleTimeString();
+        const levelIcon = getLevelIcon(log.level);
+        const dataStr = log.data ? `\n${JSON.stringify(log.data, null, 2)}` : '';
+        return `${timestamp} ${levelIcon} ${log.message}${dataStr}`;
+      }).join('\n\n');
+
+      await navigator.clipboard.writeText(logsText);
+      debugLogger.success('📋 Logs copied to clipboard!');
+    } catch (error) {
+      debugLogger.error('Failed to copy logs', { error: String(error) });
+    }
+  };
+
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('de-DE', { 
@@ -146,6 +162,14 @@ export function DebugPanel() {
               data-testid="button-reload-cache"
             >
               <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={copyLogsToClipboard}
+              data-testid="button-copy-logs"
+            >
+              <Copy className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
