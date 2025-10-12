@@ -352,7 +352,12 @@
     "saving": "Speichert...",
     "updateProduct": "Produkt aktualisieren",
     "scanBarcodeTitle": "Produkt-Barcode scannen",
-    "productName": "Produktname"
+    "productName": "Produktname",
+    "boxPackaging": "Kartonverpackung (Optional)",
+    "boxGtin": "Karton-GTIN",
+    "boxGtinPlaceholder": "GTIN für Mehrfachpackung eingeben",
+    "boxQuantity": "Stück pro Karton",
+    "boxQuantityPlaceholder": "Anzahl pro Karton eingeben"
   },
   "hospitals": {
     "title": "Krankenhäuser",

@@ -38,6 +38,8 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       gtin: product?.gtin || "",
       modelNumber: product?.modelNumber || "",
       name: product?.name || "",
+      boxGtin: product?.boxGtin || "",
+      boxQuantity: product?.boxQuantity || undefined,
     },
   });
 
@@ -187,6 +189,53 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                 </FormItem>
               )}
             />
+
+            <div className="border-t pt-4 mt-4">
+              <h3 className="text-sm font-medium mb-3">{t("products.boxPackaging")}</h3>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="boxGtin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("products.boxGtin")}</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder={t("products.boxGtinPlaceholder")} 
+                          {...field}
+                          value={field.value ?? ""}
+                          data-testid="input-box-gtin"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="boxQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("products.boxQuantity")}</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number"
+                          placeholder={t("products.boxQuantityPlaceholder")} 
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          data-testid="input-box-quantity"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <div className="flex justify-end gap-4 pt-4">
               {onCancel && (

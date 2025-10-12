@@ -352,7 +352,12 @@
     "saving": "Saving...",
     "updateProduct": "Update Product",
     "scanBarcodeTitle": "Scan Product Barcode",
-    "productName": "Product Name"
+    "productName": "Product Name",
+    "boxPackaging": "Box Packaging (Optional)",
+    "boxGtin": "Box GTIN",
+    "boxGtinPlaceholder": "Enter GTIN for multi-pack box",
+    "boxQuantity": "Units per Box",
+    "boxQuantityPlaceholder": "Enter quantity per box"
   },
   "hospitals": {
     "title": "Hospitals",
