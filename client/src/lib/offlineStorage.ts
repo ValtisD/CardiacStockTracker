@@ -219,9 +219,13 @@ class OfflineStorage {
   async getSyncQueue(userId?: string): Promise<SyncQueueItem[]> {
     if (!this.db) await this.init();
     
+    console.log('🔍 getSyncQueue called with userId:', userId?.substring(0, 20) + '...' || 'undefined');
+    
     // If no userId provided, return all items (for backwards compatibility)
     if (!userId) {
-      return this.getAll<SyncQueueItem>(STORES.SYNC_QUEUE);
+      const allItems = await this.getAll<SyncQueueItem>(STORES.SYNC_QUEUE);
+      console.log('🔍 getSyncQueue (no userId) returning all items:', allItems.length);
+      return allItems;
     }
 
     // Return only items for this specific user
@@ -231,8 +235,14 @@ class OfflineStorage {
       const index = store.index('userId');
       const request = index.getAll(userId);
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        console.log('🔍 getSyncQueue (userId:', userId?.substring(0, 20) + '...) found items:', request.result.length);
+        resolve(request.result);
+      };
+      request.onerror = () => {
+        console.error('🔍 getSyncQueue ERROR:', request.error);
+        reject(request.error);
+      };
     });
   }
 

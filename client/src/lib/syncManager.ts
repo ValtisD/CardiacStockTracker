@@ -193,7 +193,9 @@ class SyncManager {
   }
 
   async getPendingCount(): Promise<number> {
+    debugLogger.info('📊 getPendingCount called', { userId: this.userId?.substring(0, 20) + '...' || 'undefined' });
     const queue = await offlineStorage.getSyncQueue(this.userId || undefined);
+    debugLogger.info('📊 getPendingCount result', { count: queue.length, userId: this.userId?.substring(0, 20) + '...' || 'undefined' });
     return queue.length;
   }
 
