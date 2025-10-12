@@ -14,24 +14,28 @@ class SyncManager {
   
   // In-memory cache to prevent concurrent duplicate mutations
   private recentMutations: Map<string, number> = new Map();
+  
+  // Retry scheduler (v4: Persistent sync retry)
+  private retryTimer: NodeJS.Timeout | null = null;
+  private retryAttempts = 0;
+  private maxRetryAttempts = 10; // Max retries before giving up
 
   constructor() {
     // Listen for online/offline changes using our reliable offlineState
     offlineState.subscribe((isOffline) => {
       if (!isOffline) {
-        // Just went ONLINE - autosync pending changes
-        console.log('🌐 Back online - checking for pending changes to sync...');
-        this.getPendingCount().then(count => {
+        // Just went ONLINE - trigger retry scheduler
+        debugLogger.info('🌐 Back online - triggering sync retry');
+        this.attemptSync();
+      } else {
+        // Went OFFLINE - reset status and set sync state
+        debugLogger.warn('📴 Went offline');
+        this.updateStatus('idle');
+        this.getPendingCount().then(async (count) => {
           if (count > 0) {
-            console.log(`🔄 Auto-syncing ${count} pending changes...`);
-            this.sync();
-          } else {
-            console.log('✅ No pending changes to sync');
+            await offlineStorage.setSyncState(true, 'went_offline_with_pending');
           }
         });
-      } else {
-        // Went OFFLINE - reset status
-        this.updateStatus('idle');
       }
     });
 
@@ -48,17 +52,115 @@ class SyncManager {
   // CRITICAL: Check for pending sync items from previous session
   // This should be called AFTER tokenProvider is set (from App.tsx)
   async checkInitialSync(): Promise<void> {
+    debugLogger.info('🔍 checkInitialSync: Starting check');
+    
+    // Check if we have a persisted sync state from previous session
+    const syncState = await offlineStorage.getSyncState();
+    if (syncState?.needsSync) {
+      debugLogger.info('📋 Found persistent sync state', { reason: syncState.reason, lastAttempt: new Date(syncState.lastAttempt).toISOString() });
+    }
+    
     if (!this.isOnline) {
-      console.log('⏸️ Skipping initial sync check - offline');
+      debugLogger.warn('⏸️ OFFLINE - waiting for offlineState subscription to trigger when online');
+      await offlineStorage.setSyncState(true, 'offline_at_init');
+      // Don't schedule retry while offline - offlineState subscription will trigger when online
       return;
     }
     
     const count = await this.getPendingCount();
     if (count > 0) {
-      console.log(`🔄 Initial sync: ${count} pending changes from previous session`);
-      await this.sync();
+      debugLogger.info(`🔄 Initial sync: ${count} pending changes`, { count });
+      await offlineStorage.setSyncState(true, 'pending_changes');
+      await this.attemptSync();
     } else {
-      console.log('✅ No pending changes from previous session');
+      debugLogger.success('✅ No pending changes from previous session');
+      await offlineStorage.clearSyncState();
+    }
+  }
+  
+  // Retry scheduler with exponential backoff
+  private scheduleRetry(): void {
+    // Clear existing timer
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+    }
+    
+    // Calculate backoff: 2s, 4s, 8s, 16s, 32s, 60s (max)
+    // retryAttempts is incremented BEFORE calling this, so:
+    // attempt=1: Math.pow(2, 1) = 2s
+    // attempt=2: Math.pow(2, 2) = 4s
+    // attempt=3: Math.pow(2, 3) = 8s, etc.
+    const backoffMs = Math.min(
+      Math.pow(2, this.retryAttempts) * 1000,
+      60000 // Max 60 seconds
+    );
+    
+    debugLogger.info(`⏰ Scheduling retry after attempt #${this.retryAttempts} in ${backoffMs}ms`);
+    
+    this.retryTimer = setTimeout(async () => {
+      await this.attemptSync();
+    }, backoffMs);
+  }
+  
+  private stopRetry(): void {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.retryAttempts = 0;
+  }
+  
+  // Attempt to sync with retry logic
+  private async attemptSync(): Promise<void> {
+    debugLogger.info('🔄 attemptSync: Checking conditions', { attempt: this.retryAttempts });
+    
+    if (!this.isOnline) {
+      debugLogger.warn('⏸️ OFFLINE - waiting for offlineState subscription to trigger when online');
+      await offlineStorage.setSyncState(true, 'offline_during_attempt');
+      // DON'T schedule retry while offline - rely on offlineState subscription to trigger when online
+      // This prevents battery-draining tight loops of 2s timers while offline
+      return;
+    }
+    
+    const count = await this.getPendingCount();
+    if (count === 0) {
+      debugLogger.success('✅ No pending changes, clearing sync state');
+      await offlineStorage.clearSyncState();
+      this.stopRetry();
+      return;
+    }
+    
+    // CRITICAL: Check max attempts BEFORE incrementing
+    if (this.retryAttempts >= this.maxRetryAttempts) {
+      debugLogger.error(`❌ Max retry attempts (${this.maxRetryAttempts}) reached, giving up`);
+      this.errorCallback?.('Sync failed after maximum retries', 'Please check your connection and try again');
+      await offlineStorage.clearSyncState();
+      this.stopRetry();
+      return;
+    }
+    
+    // Increment AFTER max check passes (so attempt #10 actually runs)
+    this.retryAttempts++;
+    debugLogger.info(`🚀 Sync attempt #${this.retryAttempts} of ${this.maxRetryAttempts} (${count} items)`);
+    
+    try {
+      await this.sync();
+      
+      // Check if sync was successful (no items left)
+      const remainingCount = await this.getPendingCount();
+      if (remainingCount === 0) {
+        debugLogger.success('✅ Sync successful, clearing sync state');
+        await offlineStorage.clearSyncState();
+        this.stopRetry();
+      } else {
+        debugLogger.warn(`⚠️ ${remainingCount} items still pending, will retry`);
+        await offlineStorage.setSyncState(true, 'partial_sync');
+        this.scheduleRetry();
+      }
+    } catch (error) {
+      debugLogger.error('❌ Sync failed', error);
+      await offlineStorage.setSyncState(true, 'sync_error');
+      this.scheduleRetry();
     }
   }
   
