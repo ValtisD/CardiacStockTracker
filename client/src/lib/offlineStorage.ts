@@ -200,8 +200,24 @@ class OfflineStorage {
     await this.put(STORES.SYNC_QUEUE, queueItem);
   }
 
-  async getSyncQueue(): Promise<SyncQueueItem[]> {
-    return this.getAll<SyncQueueItem>(STORES.SYNC_QUEUE);
+  async getSyncQueue(userId?: string): Promise<SyncQueueItem[]> {
+    if (!this.db) await this.init();
+    
+    // If no userId provided, return all items (for backwards compatibility)
+    if (!userId) {
+      return this.getAll<SyncQueueItem>(STORES.SYNC_QUEUE);
+    }
+
+    // Return only items for this specific user
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(STORES.SYNC_QUEUE, 'readonly');
+      const store = transaction.objectStore(STORES.SYNC_QUEUE);
+      const index = store.index('userId');
+      const request = index.getAll(userId);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
   }
 
   async removeSyncQueueItem(id: string): Promise<void> {
