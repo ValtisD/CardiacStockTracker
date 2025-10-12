@@ -521,7 +521,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/implant-procedures/:id/materials", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
-      const materials = await storage.getProcedureMaterials(req.params.id);
+      const userId = req.userId!;
+      const procedureId = req.params.id;
+      
+      // SECURITY: Verify procedure belongs to requesting user before returning materials
+      const procedure = await storage.getImplantProcedure(userId, procedureId);
+      if (!procedure) {
+        return res.status(404).json({ error: "Procedure not found" });
+      }
+      
+      const materials = await storage.getProcedureMaterials(procedureId);
       res.json(materials);
     } catch (error) {
       console.error("Error fetching procedure materials:", error instanceof Error ? error.message : 'Unknown error');
