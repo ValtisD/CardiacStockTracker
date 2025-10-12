@@ -31,6 +31,8 @@ import Settings from "@/pages/Settings";
 import RegistrationGate from "@/pages/RegistrationGate";
 import NotFound from "@/pages/not-found";
 import { syncManager } from "@/lib/syncManager";
+import { debugLogger } from "@/lib/debugLogger";
+import { offlineStorage } from "@/lib/offlineStorage";
 
 // Theme toggle component
 function ThemeToggle() {
@@ -375,6 +377,50 @@ function AppContent() {
       setTokenReady(false);
     }
   }, [isAuthenticated, getAccessTokenSilently, validatingRegistration, user]);
+
+  // iOS PWA Resume Handlers (pageshow/visibilitychange)
+  // These catch iOS-specific events when app resumes from background or network changes
+  useEffect(() => {
+    const handlePageShow = async (event: PageTransitionEvent) => {
+      // persisted=true means page was loaded from bfcache (back-forward cache)
+      // This happens on iOS when resuming the PWA
+      if (event.persisted) {
+        try {
+          debugLogger.info('📱 pageshow (bfcache) - iOS PWA resumed, checking sync state');
+          const syncState = await offlineStorage.getSyncState();
+          if (syncState?.needsSync && isAuthenticated && user?.sub) {
+            debugLogger.info('🔄 Resume sync: Found pending sync state', { reason: syncState.reason });
+            await syncManager.checkInitialSync();
+          }
+        } catch (error) {
+          debugLogger.error('❌ pageshow handler error', error);
+        }
+      }
+    };
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          debugLogger.info('👁️ visibilitychange - App visible, checking sync state');
+          const syncState = await offlineStorage.getSyncState();
+          if (syncState?.needsSync && isAuthenticated && user?.sub) {
+            debugLogger.info('🔄 Visibility sync: Found pending sync state', { reason: syncState.reason });
+            await syncManager.checkInitialSync();
+          }
+        } catch (error) {
+          debugLogger.error('❌ visibilitychange handler error', error);
+        }
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, user]);
 
   if (isLoading || validatingRegistration) {
     return (
