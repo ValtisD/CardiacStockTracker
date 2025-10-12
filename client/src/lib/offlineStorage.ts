@@ -228,6 +228,28 @@ class OfflineStorage {
     await this.put(STORES.SYNC_QUEUE, item);
   }
 
+  async clearSyncQueueForUser(userId: string): Promise<void> {
+    if (!this.db) await this.init();
+    
+    // Get all items for this user and delete them
+    return new Promise(async (resolve, reject) => {
+      try {
+        const items = await this.getSyncQueue(userId);
+        const transaction = this.db!.transaction(STORES.SYNC_QUEUE, 'readwrite');
+        const store = transaction.objectStore(STORES.SYNC_QUEUE);
+
+        items.forEach(item => {
+          store.delete(item.id);
+        });
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
   // Entity-specific operations
   async cacheProducts(products: Product[]): Promise<void> {
     if (!Array.isArray(products)) {
