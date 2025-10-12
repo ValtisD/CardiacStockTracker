@@ -1,5 +1,6 @@
 import { offlineStorage, type SyncQueueItem } from './offlineStorage';
 import { apiRequest, queryClient } from './queryClient';
+import { offlineState } from './offlineState';
 
 export type SyncStatus = 'idle' | 'syncing' | 'error';
 
@@ -32,14 +33,14 @@ class SyncManager {
     }
 
     // Initial sync if online
-    if (navigator.onLine) {
+    if (!offlineState.isOffline()) {
       setTimeout(() => this.sync(), 1000);
     }
   }
   
   // Always check current online status (don't cache it)
   private get isOnline(): boolean {
-    return navigator.onLine;
+    return !offlineState.isOffline();
   }
 
   private updateStatus(status: SyncStatus) {

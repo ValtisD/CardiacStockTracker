@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { syncManager, type SyncStatus } from '@/lib/syncManager';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
+import { offlineState } from '@/lib/offlineState';
+import { queryClient } from '@/lib/queryClient';
 import {
   Tooltip,
   TooltipContent,
@@ -15,42 +17,39 @@ import {
 export default function OfflineIndicator() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(!offlineState.isOffline());
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
-    const handleOnline = async () => {
-      setIsOnline(true);
-      // Clean up any leftover temp IDs from previous offline sessions
-      const { offlineStorage } = await import('@/lib/offlineStorage');
-      const { queryClient } = await import('@/lib/queryClient');
-      
-      // ALWAYS invalidate all queries when going online to refresh stale data
-      console.log('🔄 Going online - invalidating all queries to refresh data');
-      await queryClient.invalidateQueries();
-      
-      const cleanup = await offlineStorage.cleanupTempIds();
-      
-      // If cleanup removed temp IDs, invalidate again to ensure UI is clean
-      if (cleanup.needsRefresh) {
-        console.log('🔄 Cleanup removed temp IDs - invalidating queries again');
-        await queryClient.invalidateQueries();
-      }
-    };
+    console.log('📱 OfflineIndicator useEffect running');
     
-    const handleOffline = async () => {
-      setIsOnline(false);
-      // CRITICAL: Invalidate all queries when going offline!
-      // This forces React Query to re-run queryFn which will fetch from IndexedDB
-      // Without this, React Query serves stale in-memory cache (staleTime: Infinity)
-      const { queryClient } = await import('@/lib/queryClient');
-      console.log('📴 Going offline - invalidating all queries to switch to IndexedDB');
-      await queryClient.invalidateQueries();
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    // Subscribe to offline state changes
+    const unsubscribeOffline = offlineState.subscribe(async (isOffline) => {
+      setIsOnline(!isOffline);
+      
+      if (isOffline) {
+        // Going offline - clear React Query cache to force queryFn to fetch from IndexedDB
+        console.log('📴 Going OFFLINE - clearing cache to use IndexedDB');
+        queryClient.removeQueries();
+      } else {
+        // Going online - clean up temp IDs and refresh from server
+        console.log('🌐 Going ONLINE - cleaning up and refreshing from server');
+        const { offlineStorage } = await import('@/lib/offlineStorage');
+        
+        // Invalidate all queries to fetch fresh data from server
+        await queryClient.invalidateQueries();
+        
+        // Clean up temp IDs from previous offline sessions
+        const cleanup = await offlineStorage.cleanupTempIds();
+        
+        // If cleanup removed temp IDs, invalidate again
+        if (cleanup.needsRefresh) {
+          console.log('🔄 Temp IDs removed - invalidating again');
+          await queryClient.invalidateQueries();
+        }
+      }
+    });
 
     const unsubscribe = syncManager.onStatusChange((status, pending) => {
       setSyncStatus(status);
@@ -69,29 +68,11 @@ export default function OfflineIndicator() {
     // Initial pending count
     syncManager.getPendingCount().then(setPendingCount);
 
-    // Poll navigator.onLine every second to catch changes that don't fire events
-    // (DevTools offline mode doesn't always fire events reliably)
-    const pollInterval = setInterval(async () => {
-      const currentStatus = navigator.onLine;
-      if (currentStatus !== isOnline) {
-        // Status changed - trigger appropriate handler
-        if (currentStatus) {
-          // Went online
-          await handleOnline();
-        } else {
-          // Went offline
-          await handleOffline();
-        }
-      }
-    }, 1000);
-
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      unsubscribeOffline();
       unsubscribe();
-      clearInterval(pollInterval);
     };
-  }, [isOnline, toast]);
+  }, [toast]);
 
   const handleSync = () => {
     syncManager.sync();

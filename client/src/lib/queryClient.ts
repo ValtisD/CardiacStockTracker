@@ -1,6 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { offlineStorage } from "./offlineStorage";
 import { syncManager } from "./syncManager";
+import { offlineState } from "./offlineState";
 
 // Token provider - will be set by Auth0Provider wrapper
 let getAccessToken: (() => Promise<string>) | null = null;
@@ -39,13 +40,14 @@ export async function apiRequest(
   data?: unknown | undefined,
   options?: { bypassOfflineCheck?: boolean }
 ): Promise<Response> {
-  console.log('apiRequest called:', method, url, 'Online:', navigator.onLine, 'Bypass:', options?.bypassOfflineCheck);
+  const isOffline = offlineState.isOffline();
+  console.log('apiRequest called:', method, url, 'Online:', !isOffline, 'Bypass:', options?.bypassOfflineCheck);
   
   const headers = await getAuthHeaders();
   
   // If offline and this is a mutation, queue it and return a mock success response
   // BUT: Skip offline check if this is called from sync manager (it already verified we're online)
-  if (!navigator.onLine && method !== 'GET' && !options?.bypassOfflineCheck) {
+  if (isOffline && method !== 'GET' && !options?.bypassOfflineCheck) {
     console.log('🔴 OFFLINE MODE: Queueing mutation', method, url, data);
     
     try {
@@ -192,7 +194,7 @@ export const getQueryFn: <T>(options: {
     const url = queryKey.join("/") as string;
     
     // If offline, return cached data immediately
-    if (!navigator.onLine) {
+    if (offlineState.isOffline()) {
       console.log('Offline: Loading from cache:', url);
       try {
         if (url.includes('/api/user/me')) {
