@@ -31,6 +31,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   const { t } = useTranslation();
   const { toast } = useToast();
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [boxQuantityInput, setBoxQuantityInput] = useState<string>(product?.boxQuantity?.toString() || "1");
 
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
@@ -39,7 +40,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       modelNumber: product?.modelNumber || "",
       name: product?.name || "",
       boxGtin: product?.boxGtin || "",
-      boxQuantity: product?.boxQuantity ?? 1,
+      boxQuantity: product?.boxQuantity || 1,
     },
   });
 
@@ -224,24 +225,29 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                           type="number"
                           min="1"
                           placeholder={t("products.boxQuantityPlaceholder")} 
-                          value={field.value === undefined ? "" : field.value}
+                          value={boxQuantityInput}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === "" || value === null) {
+                            setBoxQuantityInput(value);
+                            
+                            // Update form value
+                            if (value === "") {
                               field.onChange(undefined);
                             } else {
                               const parsed = parseInt(value, 10);
-                              field.onChange(isNaN(parsed) ? undefined : parsed);
+                              if (!isNaN(parsed) && parsed > 0) {
+                                field.onChange(parsed);
+                              }
                             }
                           }}
-                          onBlur={(e) => {
-                            if (field.value === undefined || field.value === null || field.value === "") {
+                          onBlur={() => {
+                            // If empty or invalid, set to 1
+                            if (boxQuantityInput === "" || parseInt(boxQuantityInput, 10) < 1 || isNaN(parseInt(boxQuantityInput, 10))) {
+                              setBoxQuantityInput("1");
                               field.onChange(1);
                             }
                             field.onBlur();
                           }}
-                          name={field.name}
-                          ref={field.ref}
                           data-testid="input-box-quantity"
                           disabled={isSubmitting}
                         />
