@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Bug, X, Trash2 } from 'lucide-react';
+import { Bug, X, Trash2, RefreshCw } from 'lucide-react';
 import { debugLogger, type LogEntry } from '@/lib/debugLogger';
 import { offlineStorage } from '@/lib/offlineStorage';
+import { queryClient } from '@/lib/queryClient';
 
 export function DebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
@@ -137,15 +138,14 @@ export function DebugPanel() {
             <Button
               size="sm"
               variant="default"
-              onClick={() => {
-                debugLogger.info('Test log from button click!');
-                debugLogger.success('DebugLogger is working!');
-                debugLogger.warn('This is a warning');
-                debugLogger.error('This is an error', { test: true });
+              onClick={async () => {
+                debugLogger.info('🔄 Forcing data reload...');
+                await queryClient.invalidateQueries();
+                debugLogger.success('✅ Cache invalidated - new requests will be made!');
               }}
-              data-testid="button-test-log"
+              data-testid="button-reload-cache"
             >
-              Test
+              <RefreshCw className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
