@@ -410,6 +410,39 @@ function AuthenticatedApp() {
   const isAdmin = currentUser?.isAdmin || false;
   const isPrimeAdmin = currentUser?.isPrimeAdmin || false;
 
+  // CRITICAL: Sync pending offline changes IMMEDIATELY on app start (before any queries run)
+  // This runs ONCE when component mounts, BEFORE currentUser is even loaded
+  useEffect(() => {
+    const syncPendingChanges = async () => {
+      // Detect if running as PWA
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                    (window.navigator as any).standalone ||
+                    document.referrer.includes('android-app://');
+      
+      // Only run if online
+      if (!navigator.onLine && !isPWA) return;
+      
+      try {
+        const { debugLogger } = await import('./lib/debugLogger');
+        const { syncManager } = await import('./lib/syncManager');
+        
+        // CRITICAL: Check if there are pending offline changes from before app reload
+        const pendingCount = await syncManager.getPendingCount();
+        if (pendingCount > 0) {
+          debugLogger.info(`🔄 APP START: Found ${pendingCount} pending changes - syncing NOW before loading data...`);
+          await syncManager.sync();
+          debugLogger.success(`✅ ${pendingCount} offline changes synced to server!`);
+        } else {
+          debugLogger.info('ℹ️ APP START: No pending changes to sync');
+        }
+      } catch (error) {
+        console.error('Failed to sync pending changes on app start:', error);
+      }
+    };
+
+    syncPendingChanges();
+  }, []); // Empty deps - runs ONCE on mount
+
   // Preload offline data when authenticated and online
   useEffect(() => {
     const preloadData = async () => {
@@ -421,24 +454,13 @@ function AuthenticatedApp() {
                     document.referrer.includes('android-app://');
       
       if (isPWA) {
-        console.log('📱 Running as PWA - ensuring data is synced and cached...');
+        console.log('📱 Running as PWA - caching fresh data...');
       }
       
       // Cache data if online (or in PWA mode where navigator.onLine might be unreliable)
       if (navigator.onLine || isPWA) {
         try {
           const { debugLogger } = await import('./lib/debugLogger');
-          const { syncManager } = await import('./lib/syncManager');
-          
-          // CRITICAL: FIRST check if there are pending offline changes from before app reload
-          const pendingCount = await syncManager.getPendingCount();
-          if (pendingCount > 0) {
-            debugLogger.info(`🔄 App reloaded with ${pendingCount} pending changes - syncing first...`);
-            await syncManager.sync();
-            debugLogger.success(`✅ ${pendingCount} offline changes synced to server!`);
-          }
-          
-          // THEN cache fresh data from server (including newly synced items)
           debugLogger.info('Auto-caching data for offline use...');
           
           const getAuthHeaders = async () => {
@@ -449,6 +471,7 @@ function AuthenticatedApp() {
             };
           };
           
+          const { syncManager } = await import('./lib/syncManager');
           await syncManager.refreshData(getAuthHeaders);
           
           debugLogger.success('All data cached! You can now work offline.');
