@@ -358,9 +358,11 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
+      networkMode: 'always', // CRITICAL: Allow queries even when offline!
     },
     mutations: {
       retry: false,
+      networkMode: 'always', // CRITICAL: Allow mutations even when offline (we queue them)!
     },
   },
 });
