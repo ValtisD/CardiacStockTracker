@@ -421,13 +421,24 @@ function AuthenticatedApp() {
                     document.referrer.includes('android-app://');
       
       if (isPWA) {
-        console.log('📱 Running as PWA - ensuring data is cached...');
+        console.log('📱 Running as PWA - ensuring data is synced and cached...');
       }
       
       // Cache data if online (or in PWA mode where navigator.onLine might be unreliable)
       if (navigator.onLine || isPWA) {
         try {
           const { debugLogger } = await import('./lib/debugLogger');
+          const { syncManager } = await import('./lib/syncManager');
+          
+          // CRITICAL: FIRST check if there are pending offline changes from before app reload
+          const pendingCount = await syncManager.getPendingCount();
+          if (pendingCount > 0) {
+            debugLogger.info(`🔄 App reloaded with ${pendingCount} pending changes - syncing first...`);
+            await syncManager.sync();
+            debugLogger.success(`✅ ${pendingCount} offline changes synced to server!`);
+          }
+          
+          // THEN cache fresh data from server (including newly synced items)
           debugLogger.info('Auto-caching data for offline use...');
           
           const getAuthHeaders = async () => {
@@ -438,7 +449,6 @@ function AuthenticatedApp() {
             };
           };
           
-          const { syncManager } = await import('./lib/syncManager');
           await syncManager.refreshData(getAuthHeaders);
           
           debugLogger.success('All data cached! You can now work offline.');
