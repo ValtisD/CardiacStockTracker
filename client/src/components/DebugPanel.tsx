@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,14 @@ export function DebugPanel() {
     procedures: 0,
     syncQueue: 0
   });
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new logs arrive
+  useEffect(() => {
+    if (isOpen && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs, isOpen]);
 
   useEffect(() => {
     // Load existing logs immediately
@@ -173,39 +181,42 @@ export function DebugPanel() {
         </div>
 
         {/* Logs */}
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-2">
-            {logs.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                No logs yet. Start using the app!
-              </div>
-            ) : (
-              logs.map((log, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-md text-sm ${getLevelColor(log.level)}`}
-                >
-                  <div className="flex items-start gap-2">
-                    <span className="text-base">{getLevelIcon(log.level)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="font-medium">{log.message}</span>
-                        <span className="text-xs opacity-60 whitespace-nowrap">
-                          {formatTime(log.timestamp)}
-                        </span>
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-4 space-y-2">
+              {logs.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  No logs yet. Start using the app!
+                </div>
+              ) : (
+                logs.map((log, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-md text-sm ${getLevelColor(log.level)}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-base">{getLevelIcon(log.level)}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="font-medium">{log.message}</span>
+                          <span className="text-xs opacity-60 whitespace-nowrap">
+                            {formatTime(log.timestamp)}
+                          </span>
+                        </div>
+                        {log.data !== undefined && (
+                          <pre className="text-xs opacity-80 overflow-x-auto">
+                            {JSON.stringify(log.data, null, 2)}
+                          </pre>
+                        )}
                       </div>
-                      {log.data !== undefined && (
-                        <pre className="text-xs opacity-80 overflow-x-auto">
-                          {JSON.stringify(log.data, null, 2)}
-                        </pre>
-                      )}
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
+                ))
+              )}
+              <div ref={logsEndRef} />
+            </div>
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );
