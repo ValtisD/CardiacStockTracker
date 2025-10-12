@@ -255,8 +255,11 @@ export const getQueryFn: <T>(options: {
         } else if (url.includes('/api/products')) {
           await offlineStorage.cacheProducts(data);
           console.log('Cached', data?.length, 'products for offline use');
-        } else if (url.includes('/api/inventory')) {
+        } else if (url === '/api/inventory') {
+          // CRITICAL: Only cache FULL inventory query (not location-specific queries)
+          // Location-specific queries would clear the entire inventory store
           await offlineStorage.cacheInventory(data);
+          console.log('Cached', data?.length, 'inventory items for offline use');
         } else if (url.includes('/api/hospitals')) {
           await offlineStorage.cacheHospitals(data);
         } else if (url.includes('/api/implant-procedures')) {

@@ -226,9 +226,13 @@ class OfflineStorage {
     }
     
     // CRITICAL: Clear store first, then add items (handles empty arrays correctly)
+    console.log(`📦 Caching inventory: clearing store, then adding ${validItems.length} items`);
     await this.clear(STORES.INVENTORY);
     if (validItems.length > 0) {
       await this.putMany(STORES.INVENTORY, validItems);
+      console.log(`✅ Cached ${validItems.length} inventory items to IndexedDB`);
+    } else {
+      console.log(`✅ Cleared inventory store (received empty array)`);
     }
   }
 
