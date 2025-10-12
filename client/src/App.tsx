@@ -30,6 +30,7 @@ import { DebugPanel } from "@/components/DebugPanel";
 import Settings from "@/pages/Settings";
 import RegistrationGate from "@/pages/RegistrationGate";
 import NotFound from "@/pages/not-found";
+import { syncManager } from "@/lib/syncManager";
 
 // Theme toggle component
 function ThemeToggle() {
@@ -333,13 +334,18 @@ function AppContent() {
 
   // Set up token provider for API requests and verify it works
   useEffect(() => {
-    if (isAuthenticated && !validatingRegistration) {
+    // CRITICAL: Wait for user?.sub to be available (Auth0 can set isAuthenticated before user is ready)
+    if (isAuthenticated && !validatingRegistration && user?.sub) {
       const setupToken = async () => {
+        // CRITICAL: Set userId FIRST (before any async operations that might fail)
+        // This ensures offline queue works even if token fetch fails
+        syncManager.setUserId(user.sub!);
+        
         try {
-          // First, get the token to ensure Auth0 is ready
+          // Then try to get the token to ensure Auth0 is ready
           await getAccessTokenSilently();
           
-          // Then set up the token provider
+          // Set up the token provider
           setTokenProvider(async () => {
             try {
               return await getAccessTokenSilently();
@@ -348,16 +354,23 @@ function AppContent() {
               throw error;
             }
           });
-          
-          setTokenReady(true);
         } catch (error) {
           console.error("Failed to initialize token:", error);
+          // CRITICAL: Even if token fetch fails (offline), set tokenReady=true
+          // so app remains usable in offline mode with userId already set
+        } finally {
+          // ALWAYS set tokenReady, even on error (enables offline mode)
+          setTokenReady(true);
         }
       };
       
       setupToken();
+    } else if (!isAuthenticated) {
+      // CRITICAL: Clear userId on logout to prevent wrong user's data being synced
+      syncManager.setUserId(null);
+      setTokenReady(false);
     }
-  }, [isAuthenticated, getAccessTokenSilently, validatingRegistration]);
+  }, [isAuthenticated, getAccessTokenSilently, validatingRegistration, user]);
 
   if (isLoading || validatingRegistration) {
     return (
