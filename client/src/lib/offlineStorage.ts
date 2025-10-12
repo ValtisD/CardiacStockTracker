@@ -202,7 +202,11 @@ class OfflineStorage {
       console.warn(`Filtered out ${products.length - validItems.length} products without valid IDs`);
     }
     
-    await this.putMany(STORES.PRODUCTS, validItems);
+    // CRITICAL: Clear store first, then add items (handles empty arrays correctly)
+    await this.clear(STORES.PRODUCTS);
+    if (validItems.length > 0) {
+      await this.putMany(STORES.PRODUCTS, validItems);
+    }
   }
 
   async getProducts(): Promise<Product[]> {
@@ -221,7 +225,11 @@ class OfflineStorage {
       console.warn(`Filtered out ${inventory.length - validItems.length} inventory items without valid IDs`);
     }
     
-    await this.putMany(STORES.INVENTORY, validItems);
+    // CRITICAL: Clear store first, then add items (handles empty arrays correctly)
+    await this.clear(STORES.INVENTORY);
+    if (validItems.length > 0) {
+      await this.putMany(STORES.INVENTORY, validItems);
+    }
   }
 
   async getInventory(): Promise<Inventory[]> {
@@ -253,7 +261,11 @@ class OfflineStorage {
       console.warn(`Filtered out ${hospitals.length - validItems.length} hospitals without valid IDs`);
     }
     
-    await this.putMany(STORES.HOSPITALS, validItems);
+    // CRITICAL: Clear store first, then add items (handles empty arrays correctly)
+    await this.clear(STORES.HOSPITALS);
+    if (validItems.length > 0) {
+      await this.putMany(STORES.HOSPITALS, validItems);
+    }
   }
 
   async getHospitals(): Promise<Hospital[]> {
@@ -272,7 +284,11 @@ class OfflineStorage {
       console.warn(`Filtered out ${procedures.length - validItems.length} procedures without valid IDs`);
     }
     
-    await this.putMany(STORES.PROCEDURES, validItems);
+    // CRITICAL: Clear store first, then add items (handles empty arrays correctly)
+    await this.clear(STORES.PROCEDURES);
+    if (validItems.length > 0) {
+      await this.putMany(STORES.PROCEDURES, validItems);
+    }
   }
 
   async getProcedures(): Promise<ImplantProcedure[]> {

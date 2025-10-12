@@ -70,7 +70,8 @@ The application is a fully installable Progressive Web App with complete offline
 1. **Online First**: When online, data is fetched from server and cached locally in IndexedDB
 2. **Offline Fallback**: When offline, queries read from IndexedDB; mutations are queued
 3. **Automatic Sync**: When connection returns, queued changes sync automatically in order
-4. **Conflict Prevention**: Optimistic updates provide instant UI feedback while maintaining data integrity
+4. **IndexedDB Refresh**: After sync completes, IndexedDB is refreshed with latest server data to ensure offline mode shows current state
+5. **Cache Clearing**: All cache methods (cacheProducts, cacheInventory, etc.) clear the IndexedDB store first, then add new items - ensuring empty arrays properly clear old data
 
 **Files**:
 - `client/src/lib/offlineStorage.ts`: IndexedDB wrapper for local data persistence

@@ -1,0 +1,66 @@
+📱 OfflineIndicator useEffect running OfflineIndicator.tsx:25:13
+➕ Listener subscribed, total: 1 offlineState.ts:27:13
+IndexedDB initialized successfully offlineStorage.ts:40:17
+🧹 Cleaning up temp IDs from cache... offlineStorage.ts:293:13
+🧹 Removed 2 temp procedures offlineStorage.ts:302:17
+✅ Temp ID cleanup complete offlineStorage.ts:333:15
+🔄 Invalidating React Query cache after temp ID cleanup syncManager.ts:145:17
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:254:19
+🚀 Auto-caching data for offline use... App.tsx:416:19
+📦 Fetching data from server... syncManager.ts:303:15
+Filtered out 43 inventory items without valid IDs offlineStorage.ts:221:15
+📦 Caching: 43 products, 36 inventory items, 3 hospitals, 0 procedures syncManager.ts:313:15
+✅ Offline cache ready! You can now work offline. syncManager.ts:322:15
+✅ All data cached! You can now work offline. App.tsx:429:19
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:458:13
+Cached 43 products for offline use queryClient.ts:257:19
+Navigating to: /hospitals AppSidebar.tsx:33:13
+Navigated to: /hospitals App.tsx:458:13
+Navigating to: /inventory/car AppSidebar.tsx:33:13
+Navigated to: /inventory/car App.tsx:458:13
+Filtered out 43 inventory items without valid IDs offlineStorage.ts:221:15
+Navigating to: / AppSidebar.tsx:33:13
+Navigated to: / App.tsx:458:13
+📡 Poll detected change: navigator.onLine = false , isOffline = false offlineState.ts:52:13
+📴 App is now OFFLINE (listeners: 1) offlineState.ts:17:15
+🔔 Calling listener #0 offlineState.ts:19:17
+📴 Going OFFLINE - clearing cache to use IndexedDB OfflineIndicator.tsx:33:17
+Navigating to: /inventory/car AppSidebar.tsx:33:13
+Navigated to: /inventory/car App.tsx:458:13
+Offline: Loading from cache: /api/inventory?location=car queryClient.ts:198:15
+Offline: Loading CAR inventory from cache queryClient.ts:217:19
+Offline: Loading from cache: /api/inventory/low-stock?location=car queryClient.ts:198:15
+Offline: Low stock queries not available offline, returning [] queryClient.ts:211:19
+Offline: Loading from cache: /api/user-product-settings queryClient.ts:198:15
+Offline: Loading from cache: /api/inventory/summary?location=car queryClient.ts:198:15
+Offline: Loading CAR inventory from cache queryClient.ts:217:19
+Offline: Loading from cache: /api/user/language queryClient.ts:198:15
+Offline: Loading from cache: /api/user/me queryClient.ts:198:15
+Offline: Loading from cache: /api/inventory/low-stock?location=home queryClient.ts:198:15
+Offline: Low stock queries not available offline, returning [] queryClient.ts:211:19
+Offline: Loaded user from cache: valtisdimitris@gmail.com queryClient.ts:202:19
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:458:13
+Offline: Loading from cache: /api/implant-procedures queryClient.ts:198:15
+Offline: Loading from cache: /api/hospitals queryClient.ts:198:15
+Offline: Loading from cache: /api/products queryClient.ts:198:15
+Offline: Loaded 43 products from cache queryClient.ts:206:19
+📡 Poll detected change: navigator.onLine = true , isOffline = true offlineState.ts:52:13
+🌐 App is now ONLINE (listeners: 1) offlineState.ts:17:15
+🔔 Calling listener #0 offlineState.ts:19:17
+🌐 Going ONLINE - cleaning up and refreshing from server OfflineIndicator.tsx:37:17
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:254:19
+Cached 43 products for offline use queryClient.ts:257:19
+🧹 Cleaning up temp IDs from cache... offlineStorage.ts:293:13
+🧹 Removed 2 temp procedures offlineStorage.ts:302:17
+✅ Temp ID cleanup complete offlineStorage.ts:333:15
+🔄 Temp IDs removed - invalidating again OfflineIndicator.tsx:48:19
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:254:19
+Cached 43 products for offline use queryClient.ts:257:19
+📡 Poll detected change: navigator.onLine = false , isOffline = false offlineState.ts:52:13
+📴 App is now OFFLINE (listeners: 1) offlineState.ts:17:15
+🔔 Calling listener #0 offlineState.ts:19:17
+📴 Going OFFLINE - clearing cache to use IndexedDB OfflineIndicator.tsx:33:17
+Navigating to: /inventory/car AppSidebar.tsx:33:13
+Navigated to: /inventory/car App.tsx:458:13
