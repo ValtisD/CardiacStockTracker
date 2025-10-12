@@ -1,4 +1,4 @@
-import { eq, and, sql, desc, isNull, gt, ilike, or } from "drizzle-orm";
+import { eq, and, sql, desc, isNull, gt, ilike, or, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   products,
@@ -517,14 +517,7 @@ export class DatabaseStorage implements IStorage {
   async getLowStockItems(userId: string, location?: string): Promise<(Inventory & { product: Product })[]> {
     if (location === 'car') {
       // For car stock: check user's product settings and compare car stock to minCarStock
-      const allProducts = await db.select().from(products);
       const userSettings = await this.getUserProductSettings(userId);
-      
-      // Create a map of product settings
-      const settingsMap = new Map<string, UserProductSettings>();
-      for (const setting of userSettings) {
-        settingsMap.set(setting.productId, setting);
-      }
       
       // Get user's car inventory
       const allCarInventory = await db
@@ -544,12 +537,25 @@ export class DatabaseStorage implements IStorage {
         carStockMap.set(item.productId, (carStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Check products with settings against minCarStock
+      // Iterate over user settings only and check against minCarStock
       const lowStockProducts: (Inventory & { product: Product; userSettings?: UserProductSettings })[] = [];
-      for (const product of allProducts) {
-        const settings = settingsMap.get(product.id);
-        if (settings) {
-          const carStock = carStockMap.get(product.id) || 0;
+      
+      // Fetch all products for the configured settings in one query
+      const productIds = userSettings.map(s => s.productId);
+      const productMap = new Map<string, Product>();
+      if (productIds.length > 0) {
+        const productsForSettings = await db.select().from(products).where(
+          inArray(products.id, productIds)
+        );
+        for (const product of productsForSettings) {
+          productMap.set(product.id, product);
+        }
+      }
+      
+      for (const settings of userSettings) {
+        const product = productMap.get(settings.productId);
+        if (product) {
+          const carStock = carStockMap.get(settings.productId) || 0;
           if (carStock < settings.minCarStock) {
             // Create a dummy inventory item for low stock reporting
             lowStockProducts.push({
@@ -573,14 +579,7 @@ export class DatabaseStorage implements IStorage {
       return lowStockProducts;
     } else if (location === 'home') {
       // For home stock: check user's product settings and compare total stock to minTotalStock
-      const allProducts = await db.select().from(products);
       const userSettings = await this.getUserProductSettings(userId);
-      
-      // Create a map of product settings
-      const settingsMap = new Map<string, UserProductSettings>();
-      for (const setting of userSettings) {
-        settingsMap.set(setting.productId, setting);
-      }
       
       // Get user's inventory across all locations
       const allInventory = await db
@@ -597,12 +596,25 @@ export class DatabaseStorage implements IStorage {
         totalStockMap.set(item.productId, (totalStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Check products with settings against minTotalStock
+      // Iterate over user settings only and check against minTotalStock
       const lowStockProducts: (Inventory & { product: Product; userSettings?: UserProductSettings })[] = [];
-      for (const product of allProducts) {
-        const settings = settingsMap.get(product.id);
-        if (settings) {
-          const totalStock = totalStockMap.get(product.id) || 0;
+      
+      // Fetch all products for the configured settings in one query
+      const productIds = userSettings.map(s => s.productId);
+      const productMap = new Map<string, Product>();
+      if (productIds.length > 0) {
+        const productsForSettings = await db.select().from(products).where(
+          inArray(products.id, productIds)
+        );
+        for (const product of productsForSettings) {
+          productMap.set(product.id, product);
+        }
+      }
+      
+      for (const settings of userSettings) {
+        const product = productMap.get(settings.productId);
+        if (product) {
+          const totalStock = totalStockMap.get(settings.productId) || 0;
           if (totalStock < settings.minTotalStock) {
             // Create a dummy inventory item for low stock reporting
             lowStockProducts.push({
@@ -626,14 +638,7 @@ export class DatabaseStorage implements IStorage {
       return lowStockProducts;
     } else {
       // For total stock (no location specified): check user's product settings and compare total stock to minTotalStock
-      const allProducts = await db.select().from(products);
       const userSettings = await this.getUserProductSettings(userId);
-      
-      // Create a map of product settings
-      const settingsMap = new Map<string, UserProductSettings>();
-      for (const setting of userSettings) {
-        settingsMap.set(setting.productId, setting);
-      }
       
       // Get user's inventory across all locations
       const allInventory = await db
@@ -650,12 +655,25 @@ export class DatabaseStorage implements IStorage {
         totalStockMap.set(item.productId, (totalStockMap.get(item.productId) || 0) + item.quantity);
       }
 
-      // Check products with settings against minTotalStock
+      // Iterate over user settings only and check against minTotalStock
       const lowStockProducts: (Inventory & { product: Product; userSettings?: UserProductSettings })[] = [];
-      for (const product of allProducts) {
-        const settings = settingsMap.get(product.id);
-        if (settings) {
-          const totalStock = totalStockMap.get(product.id) || 0;
+      
+      // Fetch all products for the configured settings in one query
+      const productIds = userSettings.map(s => s.productId);
+      const productMap = new Map<string, Product>();
+      if (productIds.length > 0) {
+        const productsForSettings = await db.select().from(products).where(
+          inArray(products.id, productIds)
+        );
+        for (const product of productsForSettings) {
+          productMap.set(product.id, product);
+        }
+      }
+      
+      for (const settings of userSettings) {
+        const product = productMap.get(settings.productId);
+        if (product) {
+          const totalStock = totalStockMap.get(settings.productId) || 0;
           if (totalStock < settings.minTotalStock) {
             // Create a dummy inventory item for low stock reporting
             lowStockProducts.push({
