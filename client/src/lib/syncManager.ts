@@ -266,6 +266,16 @@ class SyncManager {
       }
 
       console.log('✅ All pending changes synced successfully');
+      
+      // CRITICAL: Refresh IndexedDB with latest server data after sync
+      // This ensures offline mode shows current data (with real IDs, not temp IDs)
+      console.log('🔄 Refreshing IndexedDB with latest server data...');
+      await this.refreshData();
+      
+      // Invalidate React Query cache to show fresh data in UI
+      await queryClient.invalidateQueries();
+      console.log('✅ Cache refreshed - UI now shows latest synced data');
+      
       this.updateStatus('idle');
     } catch (error) {
       console.error('❌ Sync process failed:', error);
