@@ -1,9 +1,8 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
+import { getDatabaseUrl } from "./config/database.js";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
-}
-
-const sql = neon(process.env.DATABASE_URL);
+// Automatically uses DEV_DATABASE_URL in development, DATABASE_URL in production
+const databaseUrl = getDatabaseUrl();
+const sql = neon(databaseUrl);
 export const db = drizzle(sql);
