@@ -39,7 +39,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       modelNumber: product?.modelNumber || "",
       name: product?.name || "",
       boxGtin: product?.boxGtin || "",
-      boxQuantity: product?.boxQuantity || undefined,
+      boxQuantity: product?.boxQuantity ?? 1,
     },
   });
 
@@ -222,10 +222,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                       <FormControl>
                         <Input 
                           type="number"
+                          min="1"
                           placeholder={t("products.boxQuantityPlaceholder")} 
-                          {...field}
                           value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? undefined : parseInt(value) || undefined);
+                          }}
+                          onBlur={() => {
+                            if (!field.value) {
+                              field.onChange(1);
+                            }
+                          }}
                           data-testid="input-box-quantity"
                           disabled={isSubmitting}
                         />
