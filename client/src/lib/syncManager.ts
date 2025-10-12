@@ -327,14 +327,24 @@ class SyncManager {
     try {
       const headers = getAuthHeaders ? await getAuthHeaders() : {};
       
-      console.log('📦 Fetching data from server...');
+      console.log('📦 Fetching data from server...', { hasAuthHeaders: !!getAuthHeaders });
       
-      // Fetch and cache fresh data from server
+      // Helper to fetch and validate response
+      const fetchData = async (url: string) => {
+        const response = await fetch(url, { headers, credentials: 'include' });
+        if (!response.ok) {
+          console.error(`❌ Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+          throw new Error(`HTTP ${response.status}: ${url}`);
+        }
+        return response.json();
+      };
+      
+      // Fetch and cache fresh data from server (only if successful)
       const [products, inventory, hospitals, procedures] = await Promise.all([
-        fetch('/api/products', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
-        fetch('/api/inventory', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
-        fetch('/api/hospitals', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
-        fetch('/api/implant-procedures', { headers, credentials: 'include' }).then(r => r.ok ? r.json() : []),
+        fetchData('/api/products'),
+        fetchData('/api/inventory'),
+        fetchData('/api/hospitals'),
+        fetchData('/api/implant-procedures'),
       ]);
 
       console.log(`📦 Caching: ${products.length} products, ${inventory.length} inventory items, ${hospitals.length} hospitals, ${procedures.length} procedures`);
@@ -349,6 +359,7 @@ class SyncManager {
       console.log('✅ Offline cache ready! You can now work offline.');
     } catch (error) {
       console.error('❌ Failed to refresh offline data:', error);
+      // Don't cache anything if fetch fails - preserve existing cache
     }
   }
 }
