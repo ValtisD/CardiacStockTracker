@@ -1,6 +1,7 @@
 import { offlineStorage, type SyncQueueItem } from './offlineStorage';
 import { apiRequest, queryClient } from './queryClient';
 import { offlineState } from './offlineState';
+import { debugLogger } from './debugLogger';
 
 export type SyncStatus = 'idle' | 'syncing' | 'error';
 
@@ -322,18 +323,21 @@ class SyncManager {
 
   // Force a full data refresh from server
   async refreshData(getAuthHeaders?: () => Promise<HeadersInit>) {
-    if (!this.isOnline) return;
+    if (!this.isOnline) {
+      debugLogger.warn('Skipping data refresh - offline');
+      return;
+    }
 
     try {
       const headers = getAuthHeaders ? await getAuthHeaders() : {};
       
-      console.log('📦 Fetching data from server...', { hasAuthHeaders: !!getAuthHeaders });
+      debugLogger.info('Fetching data from server...', { hasAuthHeaders: !!getAuthHeaders });
       
       // Helper to fetch and validate response
       const fetchData = async (url: string) => {
         const response = await fetch(url, { headers, credentials: 'include' });
         if (!response.ok) {
-          console.error(`❌ Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+          debugLogger.error(`Failed to fetch ${url}`, { status: response.status, statusText: response.statusText });
           throw new Error(`HTTP ${response.status}: ${url}`);
         }
         return response.json();
@@ -347,7 +351,7 @@ class SyncManager {
         fetchData('/api/implant-procedures'),
       ]);
 
-      console.log(`📦 Caching: ${products.length} products, ${inventory.length} inventory items, ${hospitals.length} hospitals, ${procedures.length} procedures`);
+      debugLogger.success(`Caching: ${products.length} products, ${inventory.length} inventory, ${hospitals.length} hospitals, ${procedures.length} procedures`);
 
       await Promise.all([
         offlineStorage.cacheProducts(products),
@@ -356,9 +360,9 @@ class SyncManager {
         offlineStorage.cacheProcedures(procedures),
       ]);
       
-      console.log('✅ Offline cache ready! You can now work offline.');
+      debugLogger.success('Offline cache ready! You can now work offline.');
     } catch (error) {
-      console.error('❌ Failed to refresh offline data:', error);
+      debugLogger.error('Failed to refresh offline data', { error: error instanceof Error ? error.message : String(error) });
       // Don't cache anything if fetch fails - preserve existing cache
     }
   }
