@@ -9,6 +9,8 @@ export const products = pgTable("products", {
   gtin: text("gtin").notNull().unique(), // Global Trade Item Number from GS1 barcodes - now required and unique
   modelNumber: text("model_number").notNull(),
   name: text("name").notNull(),
+  boxGtin: text("box_gtin").unique(), // GTIN for multi-pack boxes (optional)
+  boxQuantity: integer("box_quantity"), // Number of individual units per box (optional)
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
