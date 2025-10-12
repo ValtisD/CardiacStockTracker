@@ -227,7 +227,12 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(value === "" ? undefined : parseInt(value) || undefined);
+                            if (value === "") {
+                              field.onChange(undefined);
+                            } else {
+                              const parsed = Number(value);
+                              field.onChange(Number.isNaN(parsed) ? undefined : parsed);
+                            }
                           }}
                           onBlur={() => {
                             if (!field.value) {
