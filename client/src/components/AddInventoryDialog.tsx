@@ -37,7 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import { parseGS1Barcode, type GS1Data } from "@/lib/gs1Parser";
-import type { Product } from "@shared/schema";
+import type { Product, Inventory } from "@shared/schema";
 import { z } from "zod";
 
 const addInventorySchema = z.object({
@@ -89,6 +89,37 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
 
   const addInventoryMutation = useMutation({
     mutationFn: async (data: AddInventoryFormData) => {
+      // Smart Car Stock Addition: Check home stock first when adding to car
+      if (data.location === 'car') {
+        try {
+          const response = await apiRequest('GET', '/api/inventory?location=home');
+          const homeInventory: Inventory[] = await response.json();
+          
+          // Find matching item in home stock
+          const matchingItem = homeInventory.find((item) => {
+            const productMatch = item.productId === data.productId;
+            const serialMatch = data.trackingMode === 'serial' && item.serialNumber === data.serialNumber;
+            const lotMatch = data.trackingMode === 'lot' && item.lotNumber === data.lotNumber;
+            return productMatch && (serialMatch || lotMatch);
+          });
+          
+          if (matchingItem) {
+            // Item exists in home - transfer it instead of adding new
+            const transferPayload = {
+              inventoryId: matchingItem.id,
+              fromLocation: 'home',
+              toLocation: 'car',
+              quantity: data.quantity
+            };
+            return await apiRequest('POST', '/api/inventory/transfer', transferPayload);
+          }
+        } catch (error) {
+          // If home stock check fails, proceed with normal add
+          console.error('Failed to check home stock:', error);
+        }
+      }
+      
+      // Normal add flow (or if not found in home)
       const payload = {
         ...data,
         serialNumber: data.trackingMode === 'serial' ? data.serialNumber : null,
