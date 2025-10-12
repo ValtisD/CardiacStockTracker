@@ -20,8 +20,8 @@ import type { Product, UserProductSettings } from "@shared/schema";
 
 interface SettingsFormData {
   productId: string;
-  minCarStock: number;
-  minTotalStock: number;
+  minCarStock: number | undefined;
+  minTotalStock: number | undefined;
 }
 
 export default function UserProductSettings() {
@@ -42,8 +42,8 @@ export default function UserProductSettings() {
     mutationFn: async (data: SettingsFormData) => {
       setSavingProductId(data.productId);
       const res = await apiRequest("PUT", `/api/user-product-settings/${data.productId}`, {
-        minCarStock: data.minCarStock,
-        minTotalStock: data.minTotalStock,
+        minCarStock: data.minCarStock ?? 0,
+        minTotalStock: data.minTotalStock ?? 0,
       });
       return res.json();
     },
@@ -69,7 +69,7 @@ export default function UserProductSettings() {
     },
   });
 
-  const handleInputChange = (productId: string, field: 'minCarStock' | 'minTotalStock', value: number) => {
+  const handleInputChange = (productId: string, field: 'minCarStock' | 'minTotalStock', value: number | undefined) => {
     const currentSettings = settings?.find(s => s.productId === productId);
     const current = pendingChanges.get(productId) || {
       productId,
@@ -90,10 +90,10 @@ export default function UserProductSettings() {
     }
   };
 
-  const getDisplayValue = (productId: string, field: 'minCarStock' | 'minTotalStock'): number => {
+  const getDisplayValue = (productId: string, field: 'minCarStock' | 'minTotalStock'): number | string => {
     const pending = pendingChanges.get(productId);
     if (pending) {
-      return pending[field];
+      return pending[field] ?? "";
     }
     const currentSettings = settings?.find(s => s.productId === productId);
     return currentSettings?.[field] ?? 0;
@@ -159,7 +159,21 @@ export default function UserProductSettings() {
                       min="0"
                       className="w-20 text-center"
                       value={getDisplayValue(product.id, 'minCarStock')}
-                      onChange={(e) => handleInputChange(product.id, 'minCarStock', parseInt(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "") {
+                          handleInputChange(product.id, 'minCarStock', undefined);
+                        } else {
+                          const parsed = Number(value);
+                          handleInputChange(product.id, 'minCarStock', Number.isNaN(parsed) ? undefined : parsed);
+                        }
+                      }}
+                      onBlur={() => {
+                        const pending = pendingChanges.get(product.id);
+                        if (pending && pending.minCarStock === undefined) {
+                          handleInputChange(product.id, 'minCarStock', 0);
+                        }
+                      }}
                       data-testid={`input-min-car-${product.id}`}
                       disabled={savingProductId === product.id}
                     />
@@ -172,7 +186,21 @@ export default function UserProductSettings() {
                       min="0"
                       className="w-20 text-center"
                       value={getDisplayValue(product.id, 'minTotalStock')}
-                      onChange={(e) => handleInputChange(product.id, 'minTotalStock', parseInt(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "") {
+                          handleInputChange(product.id, 'minTotalStock', undefined);
+                        } else {
+                          const parsed = Number(value);
+                          handleInputChange(product.id, 'minTotalStock', Number.isNaN(parsed) ? undefined : parsed);
+                        }
+                      }}
+                      onBlur={() => {
+                        const pending = pendingChanges.get(product.id);
+                        if (pending && pending.minTotalStock === undefined) {
+                          handleInputChange(product.id, 'minTotalStock', 0);
+                        }
+                      }}
                       data-testid={`input-min-total-${product.id}`}
                       disabled={savingProductId === product.id}
                     />
