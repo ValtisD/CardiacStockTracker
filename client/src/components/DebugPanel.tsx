@@ -18,7 +18,15 @@ export function DebugPanel() {
   });
 
   useEffect(() => {
-    const unsubscribe = debugLogger.subscribe(setLogs);
+    // Load existing logs immediately
+    setLogs(debugLogger.getLogs());
+    
+    // Subscribe to new logs
+    const unsubscribe = debugLogger.subscribe((newLogs) => {
+      console.log('🐛 Debug panel received new logs:', newLogs.length);
+      setLogs(newLogs);
+    });
+    
     return () => {
       unsubscribe();
     };
@@ -27,8 +35,22 @@ export function DebugPanel() {
   useEffect(() => {
     if (isOpen) {
       loadStats();
+      
+      // Auto-refresh stats every 2 seconds when panel is open
+      const interval = setInterval(loadStats, 2000);
+      return () => clearInterval(interval);
     }
   }, [isOpen]);
+  
+  // Also refresh stats when logs change (in case caching happened)
+  useEffect(() => {
+    if (isOpen && logs.length > 0) {
+      const lastLog = logs[logs.length - 1];
+      if (lastLog.message.includes('cached') || lastLog.message.includes('Loaded')) {
+        loadStats();
+      }
+    }
+  }, [logs, isOpen]);
 
   const loadStats = async () => {
     try {
