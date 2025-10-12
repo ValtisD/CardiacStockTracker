@@ -20,9 +20,32 @@ export default function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(!offlineState.isOffline());
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [pendingCount, setPendingCount] = useState(0);
+  const [isPWA, setIsPWA] = useState(false);
+  const [isPersisted, setIsPersisted] = useState(false);
 
   useEffect(() => {
     console.log('📱 OfflineIndicator useEffect running');
+    
+    // Check if running as PWA
+    const checkPWA = () => {
+      const pwa = window.matchMedia('(display-mode: standalone)').matches ||
+                  (window.navigator as any).standalone ||
+                  document.referrer.includes('android-app://');
+      setIsPWA(pwa);
+      console.log(`📱 PWA Mode: ${pwa ? 'YES' : 'NO'}`);
+    };
+    
+    // Check storage persistence
+    const checkPersistence = async () => {
+      if (navigator.storage && navigator.storage.persisted) {
+        const persisted = await navigator.storage.persisted();
+        setIsPersisted(persisted);
+        console.log(`💾 Storage Persisted: ${persisted ? 'YES' : 'NO'}`);
+      }
+    };
+    
+    checkPWA();
+    checkPersistence();
     
     // Subscribe to offline state changes
     const unsubscribeOffline = offlineState.subscribe(async (isOffline) => {
@@ -81,6 +104,27 @@ export default function OfflineIndicator() {
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2">
+        {/* PWA/Storage Status - only show if NOT persistent or NOT PWA on iOS */}
+        {(isPWA || !isPersisted) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge 
+                variant={isPersisted ? "outline" : "destructive"} 
+                className="gap-1.5"
+              >
+                {isPWA ? '📱' : '🌐'} {isPersisted ? '✓' : '⚠️'}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs max-w-xs">
+                {isPWA ? '📱 Running as PWA' : '🌐 Running in browser'}<br/>
+                {isPersisted ? '✅ Storage is persistent' : '⚠️ Storage NOT persistent - data may be cleared!'}
+                {!isPersisted && !isPWA && <><br/>💡 Add to Home Screen for persistent storage</>}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* Always show connection status */}
         <Tooltip>
           <TooltipTrigger asChild>

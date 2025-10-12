@@ -411,7 +411,19 @@ function AuthenticatedApp() {
   // Preload offline data when authenticated and online
   useEffect(() => {
     const preloadData = async () => {
-      if (navigator.onLine && currentUser) {
+      if (!currentUser) return;
+      
+      // Detect if running as PWA
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                    (window.navigator as any).standalone ||
+                    document.referrer.includes('android-app://');
+      
+      if (isPWA) {
+        console.log('📱 Running as PWA - ensuring data is cached...');
+      }
+      
+      // Cache data if online (or in PWA mode where navigator.onLine might be unreliable)
+      if (navigator.onLine || isPWA) {
         try {
           console.log('🚀 Auto-caching data for offline use...');
           
