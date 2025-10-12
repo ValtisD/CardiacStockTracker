@@ -2,14 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Bug, X, Trash2, RefreshCw, Copy } from 'lucide-react';
+import { Bug, X, Trash2, RefreshCw, Copy, WifiOff, Wifi } from 'lucide-react';
 import { debugLogger, type LogEntry } from '@/lib/debugLogger';
 import { offlineStorage } from '@/lib/offlineStorage';
 import { queryClient } from '@/lib/queryClient';
+import { offlineState } from '@/lib/offlineState';
 
 export function DebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isOffline, setIsOffline] = useState(offlineState.isOffline());
   const [stats, setStats] = useState({
     products: 0,
     inventory: 0,
@@ -36,6 +38,16 @@ export function DebugPanel() {
       setLogs(newLogs);
     });
     
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Subscribe to offline state changes
+    const unsubscribe = offlineState.subscribe((offline) => {
+      setIsOffline(offline);
+    });
     return () => {
       unsubscribe();
     };
@@ -153,11 +165,23 @@ export function DebugPanel() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
+              variant={isOffline ? "destructive" : "default"}
+              onClick={() => {
+                const newOfflineState = !isOffline;
+                offlineState.setOffline(newOfflineState);
+                debugLogger.info(newOfflineState ? '📴 FORCED OFFLINE MODE' : '🌐 FORCED ONLINE MODE');
+              }}
+              data-testid="button-toggle-offline"
+            >
+              {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4" />}
+            </Button>
+            <Button
+              size="sm"
               variant="default"
               onClick={async () => {
-                debugLogger.info('🔄 Forcing data reload...');
-                await queryClient.invalidateQueries();
-                debugLogger.success('✅ Cache invalidated - new requests will be made!');
+                debugLogger.info('🔄 Forcing all queries to refetch NOW...');
+                await queryClient.refetchQueries();
+                debugLogger.success('✅ All queries refetched!');
               }}
               data-testid="button-reload-cache"
             >
