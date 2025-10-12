@@ -194,6 +194,9 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
     
+    // DEBUG: Always log every request
+    debugLogger.info('🌐 getQueryFn called', { url, isOffline: offlineState.isOffline() });
+    
     // If offline, return cached data immediately
     if (offlineState.isOffline()) {
       debugLogger.info('OFFLINE MODE: Loading from cache', { url });

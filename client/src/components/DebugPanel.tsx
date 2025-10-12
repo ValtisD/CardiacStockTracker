@@ -179,8 +179,12 @@ export function DebugPanel() {
               size="sm"
               variant="default"
               onClick={async () => {
-                debugLogger.info('🔄 Forcing all queries to refetch NOW...');
-                await queryClient.refetchQueries();
+                debugLogger.info('🔄 Clearing React Query cache and forcing refetch...');
+                // Clear ALL cache first
+                queryClient.clear();
+                debugLogger.info('✅ Cache cleared, now refetching...');
+                // Then refetch everything
+                await queryClient.refetchQueries({ type: 'active' });
                 debugLogger.success('✅ All queries refetched!');
               }}
               data-testid="button-reload-cache"
