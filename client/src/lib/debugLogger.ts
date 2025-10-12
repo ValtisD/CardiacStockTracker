@@ -14,11 +14,21 @@ class DebugLogger {
   private listeners: Set<(logs: LogEntry[]) => void> = new Set();
 
   log(level: LogLevel, message: string, data?: any) {
+    // Serialize Error objects for proper logging
+    let serializedData = data;
+    if (data instanceof Error) {
+      serializedData = {
+        name: data.name,
+        message: data.message,
+        stack: data.stack
+      };
+    }
+
     const entry: LogEntry = {
       timestamp: Date.now(),
       level,
       message,
-      data
+      data: serializedData
     };
 
     this.logs.push(entry);
@@ -39,8 +49,8 @@ class DebugLogger {
       warn: '⚠️'
     }[level];
     
-    if (data !== undefined) {
-      console.log(`${emoji} ${message}`, data);
+    if (serializedData !== undefined) {
+      console.log(`${emoji} ${message}`, serializedData);
     } else {
       console.log(`${emoji} ${message}`);
     }

@@ -37,6 +37,9 @@ class OfflineStorage {
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
+    // Prevent race conditions from multiple simultaneous init calls
+    if (this.db) return;
+    
     // Request persistent storage for iOS/Safari
     if (navigator.storage && navigator.storage.persist) {
       const isPersisted = await navigator.storage.persist();
