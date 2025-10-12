@@ -56,21 +56,32 @@ export default function OfflineIndicator() {
         console.log('📴 Going OFFLINE - clearing cache to use IndexedDB');
         queryClient.removeQueries();
       } else {
-        // Going online - clean up temp IDs and refresh from server
-        console.log('🌐 Going ONLINE - cleaning up and refreshing from server');
+        // Going online - FIRST sync offline changes, THEN refresh from server
+        console.log('🌐 Going ONLINE - syncing offline changes first...');
+        
+        // 1. FIRST: Sync all pending offline changes to server
+        const pendingCount = await syncManager.getPendingCount();
+        if (pendingCount > 0) {
+          console.log(`📤 Syncing ${pendingCount} pending changes...`);
+          await syncManager.sync();
+          console.log('✅ Sync completed');
+        }
+        
+        // 2. THEN: Clean up temp IDs from previous offline sessions
         const { offlineStorage } = await import('@/lib/offlineStorage');
-        
-        // Invalidate all queries to fetch fresh data from server
-        await queryClient.invalidateQueries();
-        
-        // Clean up temp IDs from previous offline sessions
         const cleanup = await offlineStorage.cleanupTempIds();
+        
+        // 3. FINALLY: Invalidate queries to fetch fresh data from server (including newly synced items)
+        console.log('🔄 Refreshing data from server...');
+        await queryClient.invalidateQueries();
         
         // If cleanup removed temp IDs, invalidate again
         if (cleanup.needsRefresh) {
           console.log('🔄 Temp IDs removed - invalidating again');
           await queryClient.invalidateQueries();
         }
+        
+        console.log('✅ Online transition complete');
       }
     });
 
