@@ -52,12 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ valid: false, error: "Server configuration error" });
       }
 
-      // Debug logging (remove after testing)
-      console.log('Validation attempt:');
-      console.log('  Received (trimmed):', secretWord.trim());
-      console.log('  Expected (trimmed):', expectedSecretWord.trim());
-      console.log('  Match:', secretWord.trim() === expectedSecretWord.trim());
-
+      // SECURITY: No logging of secret words to prevent exposure in production logs
       const isValid = secretWord.trim() === expectedSecretWord.trim();
       
       if (isValid) {
