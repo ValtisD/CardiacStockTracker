@@ -2,6 +2,7 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { offlineStorage } from "./offlineStorage";
 import { syncManager } from "./syncManager";
 import { offlineState } from "./offlineState";
+import { debugLogger } from "./debugLogger";
 
 // Token provider - will be set by Auth0Provider wrapper
 let getAccessToken: (() => Promise<string>) | null = null;
@@ -272,46 +273,51 @@ export const getQueryFn: <T>(options: {
       return data;
     } catch (error) {
       // Network error fallback - try cache
-      console.log('🔌 Network error, trying offline cache:', url);
+      debugLogger.warn('Network error, trying offline cache', { url });
       try {
         if (url.includes('/api/user/me')) {
           const cachedUser = await offlineStorage.getUser();
-          console.log('✅ Loaded user from cache:', cachedUser?.email);
+          debugLogger.success('Loaded user from cache', { email: cachedUser?.email });
           return cachedUser;
         } else if (url.includes('/api/products')) {
           const cachedProducts = await offlineStorage.getProducts();
-          console.log('✅ Loaded', cachedProducts?.length, 'products from cache');
+          debugLogger.success(`Loaded ${cachedProducts?.length || 0} products from cache`);
           return cachedProducts;
         } else if (url.includes('/api/inventory')) {
           // Parse query parameters to determine location
           const urlObj = new URL(url, window.location.origin);
           const location = urlObj.searchParams.get('location');
           
+          debugLogger.info('Inventory request detected', { url, location });
+          
           if (location === 'home') {
             const cachedItems = await offlineStorage.getInventoryByLocation('home');
-            console.log('✅ Loaded', cachedItems?.length, 'HOME inventory items from cache');
+            debugLogger.success(`Loaded ${cachedItems?.length || 0} HOME inventory items from cache`);
             return cachedItems;
           } else if (location === 'car') {
             const cachedItems = await offlineStorage.getInventoryByLocation('car');
-            console.log('✅ Loaded', cachedItems?.length, 'CAR inventory items from cache');
+            debugLogger.success(`Loaded ${cachedItems?.length || 0} CAR inventory items from cache`);
             return cachedItems;
           } else {
             // No location specified - return all inventory
             const cachedItems = await offlineStorage.getInventory();
-            console.log('✅ Loaded', cachedItems?.length, 'ALL inventory items from cache');
+            debugLogger.success(`Loaded ${cachedItems?.length || 0} ALL inventory items from cache`);
             return cachedItems;
           }
         } else if (url.includes('/api/hospitals')) {
           const cachedHospitals = await offlineStorage.getHospitals();
-          console.log('✅ Loaded', cachedHospitals?.length, 'hospitals from cache');
+          debugLogger.success(`Loaded ${cachedHospitals?.length || 0} hospitals from cache`);
           return cachedHospitals;
         } else if (url.includes('/api/implant-procedures')) {
           const cachedProcedures = await offlineStorage.getProcedures();
-          console.log('✅ Loaded', cachedProcedures?.length, 'procedures from cache');
+          debugLogger.success(`Loaded ${cachedProcedures?.length || 0} procedures from cache`);
           return cachedProcedures;
         }
+        
+        // URL not matched
+        debugLogger.error('URL not matched for offline fallback', { url });
       } catch (e) {
-        console.error('❌ Failed to get offline data after network error:', e);
+        debugLogger.error('Failed to get offline data', { error: e instanceof Error ? e.message : String(e), url });
       }
       throw error;
     }

@@ -26,6 +26,7 @@ import ImplantProceduresList from "@/components/ImplantProceduresList";
 import UserProductSettings from "@/components/UserProductSettings";
 import UserManagement from "@/components/UserManagement";
 import OfflineIndicator from "@/components/OfflineIndicator";
+import { DebugPanel } from "@/components/DebugPanel";
 import Settings from "@/pages/Settings";
 import RegistrationGate from "@/pages/RegistrationGate";
 import NotFound from "@/pages/not-found";
@@ -425,7 +426,8 @@ function AuthenticatedApp() {
       // Cache data if online (or in PWA mode where navigator.onLine might be unreliable)
       if (navigator.onLine || isPWA) {
         try {
-          console.log('🚀 Auto-caching data for offline use...');
+          const { debugLogger } = await import('./lib/debugLogger');
+          debugLogger.info('Auto-caching data for offline use...');
           
           const getAuthHeaders = async () => {
             const token = await getAccessTokenSilently();
@@ -438,9 +440,10 @@ function AuthenticatedApp() {
           const { syncManager } = await import('./lib/syncManager');
           await syncManager.refreshData(getAuthHeaders);
           
-          console.log('✅ All data cached! You can now work offline.');
+          debugLogger.success('All data cached! You can now work offline.');
         } catch (error) {
-          console.error('❌ Failed to preload offline data:', error);
+          const { debugLogger } = await import('./lib/debugLogger');
+          debugLogger.error('Failed to preload offline data', { error: error instanceof Error ? error.message : String(error) });
         }
       }
     };
@@ -513,6 +516,7 @@ function AuthenticatedApp() {
         </div>
       </SidebarProvider>
       <Toaster />
+      <DebugPanel />
     </TooltipProvider>
   );
 }
