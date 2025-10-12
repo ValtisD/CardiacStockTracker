@@ -51,7 +51,11 @@ The frontend is a React 18 SPA with TypeScript, built using Vite. It utilizes Sh
 - Global search
 - Low stock alerts
 - PDF exports for expiring products and stock reports
-- Barcode scanning with GS1 parsing for product lookup and auto-filling inventory details (serial, lot, expiration). It supports real-time camera-based scanning and manual GTIN entry, with comprehensive error handling and duplicate serial prevention.
+- **Streamlined Barcode Scanning**: GS1 parsing for product lookup and auto-filling inventory details (serial, lot, expiration). Supports real-time camera-based scanning and manual GTIN entry.
+  - **Serial Number Scans**: Auto-submit immediately without confirmation (errors show toast, form stays open with preserved values for manual correction)
+  - **Lot Number Scans**: Quick quantity dialog appears → User enters quantity → Auto-submit (errors automatically reopen quantity dialog with preserved value for easy retry)
+  - **Error Recovery**: All form state preserved (product, serial/lot, expiration, quantity) so users can retry failed submissions without re-entering data
+  - **Duplicate Prevention**: Detects duplicate serial numbers and shows specific error message
 - PDF Export for Expiring Products Report, Car Stock Report, and Home Stock Reorder Report (with automatic German email text copy to clipboard).
 - Individual item transfer buttons ("Move to Car" / "Move to Home") in inventory tables for quick location changes.
 - **Progressive Web App (PWA)** with full offline capabilities for field use in hospitals with poor connectivity.
