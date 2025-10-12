@@ -189,9 +189,10 @@ class OfflineStorage {
   }
 
   // Sync queue operations
-  async addToSyncQueue(item: Omit<SyncQueueItem, 'id' | 'timestamp' | 'retryCount'>): Promise<void> {
+  async addToSyncQueue(item: Omit<SyncQueueItem, 'id' | 'timestamp' | 'retryCount'>, userId: string): Promise<void> {
     const queueItem: SyncQueueItem = {
       ...item,
+      userId, // CRITICAL: Associate queue item with user for re-login scenarios
       id: `${Date.now()}-${Math.random()}`,
       timestamp: Date.now(),
       retryCount: 0,
