@@ -272,25 +272,46 @@ export const getQueryFn: <T>(options: {
       return data;
     } catch (error) {
       // Network error fallback - try cache
-      console.log('Network error, trying cache:', url);
+      console.log('🔌 Network error, trying offline cache:', url);
       try {
         if (url.includes('/api/user/me')) {
-          return await offlineStorage.getUser();
+          const cachedUser = await offlineStorage.getUser();
+          console.log('✅ Loaded user from cache:', cachedUser?.email);
+          return cachedUser;
         } else if (url.includes('/api/products')) {
-          return await offlineStorage.getProducts();
-        } else if (url.includes('/api/inventory/home')) {
-          return await offlineStorage.getInventoryByLocation('home');
-        } else if (url.includes('/api/inventory/car')) {
-          return await offlineStorage.getInventoryByLocation('car');
+          const cachedProducts = await offlineStorage.getProducts();
+          console.log('✅ Loaded', cachedProducts?.length, 'products from cache');
+          return cachedProducts;
         } else if (url.includes('/api/inventory')) {
-          return await offlineStorage.getInventory();
+          // Parse query parameters to determine location
+          const urlObj = new URL(url, window.location.origin);
+          const location = urlObj.searchParams.get('location');
+          
+          if (location === 'home') {
+            const cachedItems = await offlineStorage.getInventoryByLocation('home');
+            console.log('✅ Loaded', cachedItems?.length, 'HOME inventory items from cache');
+            return cachedItems;
+          } else if (location === 'car') {
+            const cachedItems = await offlineStorage.getInventoryByLocation('car');
+            console.log('✅ Loaded', cachedItems?.length, 'CAR inventory items from cache');
+            return cachedItems;
+          } else {
+            // No location specified - return all inventory
+            const cachedItems = await offlineStorage.getInventory();
+            console.log('✅ Loaded', cachedItems?.length, 'ALL inventory items from cache');
+            return cachedItems;
+          }
         } else if (url.includes('/api/hospitals')) {
-          return await offlineStorage.getHospitals();
+          const cachedHospitals = await offlineStorage.getHospitals();
+          console.log('✅ Loaded', cachedHospitals?.length, 'hospitals from cache');
+          return cachedHospitals;
         } else if (url.includes('/api/implant-procedures')) {
-          return await offlineStorage.getProcedures();
+          const cachedProcedures = await offlineStorage.getProcedures();
+          console.log('✅ Loaded', cachedProcedures?.length, 'procedures from cache');
+          return cachedProcedures;
         }
       } catch (e) {
-        console.error('Failed to get offline data after network error:', e);
+        console.error('❌ Failed to get offline data after network error:', e);
       }
       throw error;
     }

@@ -1,0 +1,74 @@
+Info] Successfully preconnected to https://fonts.googleapis.com/
+[Info] Successfully preconnected to https://fonts.gstatic.com/
+[Warning] Parsing application manifest : The manifest is not valid JSON data.
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] 🔧 offlineState initialized, isOffline: – false (offlineState.ts, line 3)
+[Log] ➕ Listener subscribed, total: – 1 (offlineState.ts, line 20)
+[Log] 📦 Storage persistence: NOT granted (offlineStorage.ts, line 18)
+[Warning] ⚠️ Storage may be cleared by browser. On iOS: Add to Home Screen for persistence. (offlineStorage.ts, line 20)
+[Log] IndexedDB initialized successfully (offlineStorage.ts, line 31)
+[Error] Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of Primitive.button.SlotClone.
+Badge@https://valtis.de/src/components/ui/badge.tsx:36:27
+Primitive.button.SlotClone@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-2K77HOHX.js:79:45
+Primitive.button.Slot@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-2K77HOHX.js:56:45
+Primitive.button@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-AXMZZQ2X.js:42:49
+Primitive.div.SlotClone@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-2K77HOHX.js:79:45
+Primitive.div.Slot@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-2K77HOHX.js:56:45
+Primitive.div@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-AXMZZQ2X.js:42:49
+PopperAnchor@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-DMZOJSWY.js:1927:64
+TooltipTrigger@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/@radix-ui_react-tooltip.js:194:54
+TooltipProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-5SZQWSWC.js:48:52
+PopperProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-5SZQWSWC.js:48:52
+Popper@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-DMZOJSWY.js:1919:44
+Tooltip@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/@radix-ui_react-tooltip.js:110:12
+div
+TooltipProviderProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-5SZQWSWC.js:48:52
+TooltipProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/@radix-ui_react-tooltip.js:64:12
+OfflineIndicator@https://valtis.de/src/components/OfflineIndicator.tsx:35:31
+div
+header
+div
+div
+div
+TooltipProviderProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-5SZQWSWC.js:48:52
+TooltipProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/@radix-ui_react-tooltip.js:64:12
+SidebarProvider@https://valtis.de/src/components/ui/sidebar.tsx:59:14
+TooltipProviderProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/chunk-5SZQWSWC.js:48:52
+TooltipProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/@radix-ui_react-tooltip.js:64:12
+AuthenticatedApp@https://valtis.de/src/App.tsx:660:49
+AppContent@https://valtis.de/src/App.tsx:514:88
+QueryClientProvider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+Auth0Provider@https://valtis.de/@fs/var/www/crm-inventory/node_modules/.vite/deps/@auth0_auth0-react.js:1546:22
+App
+	printWarning (chunk-RPCDYKBN.js:521)
+	error (chunk-RPCDYKBN.js:505)
+	validateFunctionComponentInDev (chunk-RPCDYKBN.js:15013)
+	mountIndeterminateComponent (chunk-RPCDYKBN.js:14988)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performConcurrentWorkOnRoot (chunk-RPCDYKBN.js:18678:98)
+	workLoop (chunk-RPCDYKBN.js:197)
+	flushWork (chunk-RPCDYKBN.js:176)
+	performWorkUntilDeadline (chunk-RPCDYKBN.js:384)
+[Log] 📱 OfflineIndicator useEffect running (OfflineIndicator.tsx, line 43)
+[Log] 📱 PWA Mode: NO (OfflineIndicator.tsx, line 47)
+[Log] ➕ Listener subscribed, total: – 2 (offlineState.ts, line 20)
+[Log] 💾 Storage Persisted: NO (OfflineIndicator.tsx, line 53)
+[Log] 📦 Storage persistence: NOT granted (offlineStorage.ts, line 18)
+[Warning] ⚠️ Storage may be cleared by browser. On iOS: Add to Home Screen for persistence. (offlineStorage.ts, line 20)
+[Log] IndexedDB initialized successfully (offlineStorage.ts, line 31)
+[Warning] ⚠️ Service Worker not available (requires HTTPS): – "SecurityError" (main.tsx, line 16)
+[Log] ✅ Offline data persistence via IndexedDB is still active! (main.tsx, line 17)
+[Log] Cached user for offline use: – "valtisdimitris@gmail.com" (queryClient.ts, line 194)
+[Log] 🚀 Auto-caching data for offline use... (App.tsx, line 677)
+[Log] 📦 Fetching data from server... – {hasAuthHeaders: true} (syncManager.ts, line 238)
+[Log] 📦 Caching: 43 products, 32 inventory items, 3 hospitals, 0 procedures (syncManager.ts, line 253)
+[Log] 📦 Caching inventory: clearing store, then adding 32 items (offlineStorage.ts, line 181)
+[Log] ✅ Cached 32 inventory items to IndexedDB (offlineStorage.ts, line 185)
+[Log] ✅ Offline cache ready! You can now work offline. (syncManager.ts, line 260)
+[Log] ✅ All data cached! You can now work offline. (App.tsx, line 687)
