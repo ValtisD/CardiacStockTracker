@@ -66,6 +66,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const [gs1Data, setGs1Data] = useState<GS1Data | null>(null);
   const [manualGtin, setManualGtin] = useState("");
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
+  const [showQuantityDialog, setShowQuantityDialog] = useState(false);
+  const [quickAddQuantity, setQuickAddQuantity] = useState("1");
   const { toast } = useToast();
 
   // No manual scroll lock manipulation - Dialog components handle this automatically
@@ -101,7 +103,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       // Toast notification removed - user requested no pop-ups when adding multiple products
       handleClose();
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
       // Parse error message to check for duplicate serial number
       const errorMessage = error.message || "";
       
@@ -115,11 +117,18 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
               description: t('inventory.duplicateSerialDescription'),
               variant: "destructive",
             });
+            // For serial numbers, error is shown and dialog stays open for manual correction
             return;
           }
         } catch (e) {
           // If parsing fails, fall through to generic error
         }
+      }
+      
+      // For lot number quick-add errors, reopen quantity dialog for easy retry
+      if (variables.trackingMode === 'lot' && !showQuantityDialog) {
+        setQuickAddQuantity(variables.quantity.toString());
+        setShowQuantityDialog(true);
       }
       
       toast({
@@ -187,14 +196,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   };
 
   const handleScanComplete = async (barcode: string, productInfo?: Product, parsedGs1Data?: GS1Data) => {
-    // Reset form fields to prevent stale data from previous scans or manual edits
-    form.setValue("trackingMode", null);
-    form.setValue("serialNumber", "");
-    form.setValue("lotNumber", "");
-    form.setValue("quantity", 1);
-    form.setValue("expirationDate", undefined);
-    
-    // If GS1 data was parsed, store it for later use
+    // Store GS1 data for visibility and error recovery
     if (parsedGs1Data) {
       setGs1Data(parsedGs1Data);
     }
@@ -204,8 +206,6 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
     // If product was found by barcode, use it
     if (productInfo) {
       foundProduct = productInfo;
-      setSelectedProduct(productInfo);
-      form.setValue("productId", productInfo.id);
     } else {
       // Product not found - try to find by GTIN from GS1 data
       if (parsedGs1Data?.gtin) {
@@ -214,16 +214,15 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
           const products: Product[] = await response.json();
           
           if (products.length > 0) {
-            const product = products[0];
-            foundProduct = product;
-            setSelectedProduct(product);
-            form.setValue("productId", product.id);
+            foundProduct = products[0];
           } else {
             toast({
               title: t('inventory.productNotFound'),
               description: t('inventory.noProductGtin'),
               variant: "destructive",
             });
+            setShowBarcodeScanner(false);
+            return;
           }
         } catch (error) {
           toast({
@@ -231,6 +230,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
             description: t('inventory.gtinLookupFailed'),
             variant: "destructive",
           });
+          setShowBarcodeScanner(false);
+          return;
         }
       } else {
         toast({
@@ -238,24 +239,94 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
           description: t('inventory.productNotInDatabase'),
           variant: "destructive",
         });
+        setShowBarcodeScanner(false);
+        return;
       }
     }
 
-    // Auto-populate fields from GS1 data if available
-    if (parsedGs1Data) {
+    // Only proceed if we have valid tracking data
+    if (!parsedGs1Data?.serialNumber && !parsedGs1Data?.lotNumber) {
+      // No tracking data - fall back to manual entry with pre-filled product
+      setSelectedProduct(foundProduct);
+      form.setValue("productId", foundProduct.id);
+      if (parsedGs1Data?.expirationDate) {
+        form.setValue("expirationDate", parsedGs1Data.expirationDate);
+      }
+      setShowBarcodeScanner(false);
+      return;
+    }
+
+    // STREAMLINED WORKFLOW: Auto-submit for serial, ask quantity for lot
+    if (parsedGs1Data.serialNumber) {
+      // Serial number detected → Add directly to stock
+      setSelectedProduct(foundProduct);
+      form.setValue("productId", foundProduct.id);
+      form.setValue("trackingMode", "serial");
+      form.setValue("serialNumber", parsedGs1Data.serialNumber);
+      form.setValue("quantity", 1);
       if (parsedGs1Data.expirationDate) {
         form.setValue("expirationDate", parsedGs1Data.expirationDate);
       }
-      if (parsedGs1Data.serialNumber) {
-        form.setValue("trackingMode", "serial");
-        form.setValue("serialNumber", parsedGs1Data.serialNumber);
-        form.setValue("quantity", 1);
-      } else if (parsedGs1Data.lotNumber) {
-        form.setValue("trackingMode", "lot");
-        form.setValue("lotNumber", parsedGs1Data.lotNumber);
-        form.setValue("quantity", 1);
+      
+      // Close barcode scanner
+      setShowBarcodeScanner(false);
+      
+      // Auto-submit immediately (errors will show toast and close dialog automatically)
+      const formData: AddInventoryFormData = {
+        productId: foundProduct.id,
+        location,
+        trackingMode: "serial",
+        serialNumber: parsedGs1Data.serialNumber,
+        lotNumber: undefined,
+        quantity: 1,
+        expirationDate: parsedGs1Data.expirationDate || undefined,
+      };
+      addInventoryMutation.mutate(formData);
+    } else if (parsedGs1Data.lotNumber) {
+      // Lot number detected → Ask for quantity only
+      setSelectedProduct(foundProduct);
+      form.setValue("productId", foundProduct.id);
+      form.setValue("trackingMode", "lot");
+      form.setValue("lotNumber", parsedGs1Data.lotNumber);
+      form.setValue("quantity", 1);
+      if (parsedGs1Data.expirationDate) {
+        form.setValue("expirationDate", parsedGs1Data.expirationDate);
       }
+      
+      // Close barcode scanner and show quick quantity dialog
+      setShowBarcodeScanner(false);
+      setQuickAddQuantity("1");
+      setShowQuantityDialog(true);
     }
+  };
+
+  const handleQuickAdd = () => {
+    const quantity = parseInt(quickAddQuantity);
+    if (isNaN(quantity) || quantity < 1) {
+      toast({
+        title: t('inventory.invalidQuantity'),
+        description: t('inventory.quantityMustBePositive'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // IMPORTANT: Sync quantity to form state for error recovery
+    // If mutation fails, user can retry from main dialog with correct quantity
+    form.setValue("quantity", quantity);
+
+    const formData: AddInventoryFormData = {
+      productId: form.getValues("productId"),
+      location,
+      trackingMode: "lot",
+      serialNumber: undefined,
+      lotNumber: form.getValues("lotNumber"),
+      quantity,
+      expirationDate: form.getValues("expirationDate") || undefined,
+    };
+
+    setShowQuantityDialog(false);
+    addInventoryMutation.mutate(formData);
   };
 
   const handleSubmit = (data: AddInventoryFormData) => {
@@ -619,6 +690,67 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
           title={t('inventory.scanProductBarcode')}
         />
       )}
+
+      {/* Quick Quantity Dialog for Lot Number Scans */}
+      <Dialog open={showQuantityDialog} onOpenChange={setShowQuantityDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('inventory.enterQuantity')}</DialogTitle>
+            <DialogDescription>
+              {selectedProduct?.name && (
+                <div className="mt-2 space-y-1">
+                  <p className="font-medium text-foreground">{selectedProduct.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('inventory.lotNumber')}: {form.getValues("lotNumber")}
+                  </p>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="quick-quantity" className="text-sm font-medium">
+                {t('inventory.quantity')}
+              </label>
+              <Input
+                id="quick-quantity"
+                type="number"
+                min="1"
+                value={quickAddQuantity}
+                onChange={(e) => setQuickAddQuantity(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleQuickAdd();
+                  }
+                }}
+                autoFocus
+                data-testid="input-quick-quantity"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowQuantityDialog(false)}
+              disabled={addInventoryMutation.isPending}
+              data-testid="button-quantity-cancel"
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleQuickAdd}
+              disabled={addInventoryMutation.isPending}
+              data-testid="button-quantity-add"
+            >
+              {addInventoryMutation.isPending ? t('inventory.adding') : t('inventory.addToStock')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
