@@ -408,6 +408,7 @@ function AuthenticatedApp() {
   });
 
   const isAdmin = currentUser?.isAdmin || false;
+  const isPrimeAdmin = currentUser?.isPrimeAdmin || false;
 
   // Preload offline data when authenticated and online
   useEffect(() => {
@@ -516,7 +517,7 @@ function AuthenticatedApp() {
         </div>
       </SidebarProvider>
       <Toaster />
-      <DebugPanel />
+      {isPrimeAdmin && <DebugPanel />}
     </TooltipProvider>
   );
 }
