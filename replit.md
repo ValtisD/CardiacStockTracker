@@ -114,6 +114,46 @@ PostgreSQL (Neon serverless) is the primary database, using Drizzle ORM for sche
 
 Data validation is performed using Zod schemas on both client and server.
 
+#### Development & Production Database Separation
+
+The application uses **Neon database branching** to safely separate development and production databases, protecting live production data during development and testing.
+
+**Setup**:
+- **Production Database**: Original Neon database (main branch) containing live stock data
+- **Development Database**: Neon branch created from production - exact copy for safe testing
+- **Automatic Switching**: App detects environment and uses appropriate database
+  - Replit workspace → Uses `DEV_DATABASE_URL` (development branch)
+  - Published deployment → Uses `DATABASE_URL` (production)
+
+**Secrets Configuration**:
+- `DATABASE_URL`: Production database connection string (main branch)
+- `DEV_DATABASE_URL`: Development database connection string (Neon branch)
+
+**Database Migration Workflow**:
+
+*For Development (Safe Testing)*:
+```bash
+# Push schema changes to DEVELOPMENT database only
+bash scripts/db-push-dev.sh
+```
+
+*For Production (After Testing)*:
+```bash
+# Push schema changes to PRODUCTION database (with confirmation)
+bash scripts/db-push-prod.sh
+```
+
+**Files**:
+- `server/config/database.ts`: Automatic database URL selection logic
+- `scripts/db-push-dev.sh`: Helper script for dev database migrations
+- `scripts/db-push-prod.sh`: Helper script for production database migrations (with safety confirmation)
+
+**Best Practices**:
+1. Always test schema changes on development branch first
+2. Verify no data loss warnings before pushing to production
+3. Use `npm run db:push --force` only when absolutely certain the change is safe
+4. Production database is automatically backed up via Neon's point-in-time restore feature
+
 ## External Dependencies
 
 ### Database Services
