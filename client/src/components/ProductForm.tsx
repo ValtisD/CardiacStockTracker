@@ -224,21 +224,24 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                           type="number"
                           min="1"
                           placeholder={t("products.boxQuantityPlaceholder")} 
-                          value={field.value ?? ""}
+                          value={field.value === undefined ? "" : field.value}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === "") {
+                            if (value === "" || value === null) {
                               field.onChange(undefined);
                             } else {
-                              const parsed = Number(value);
-                              field.onChange(Number.isNaN(parsed) ? undefined : parsed);
+                              const parsed = parseInt(value, 10);
+                              field.onChange(isNaN(parsed) ? undefined : parsed);
                             }
                           }}
-                          onBlur={() => {
-                            if (!field.value) {
+                          onBlur={(e) => {
+                            if (field.value === undefined || field.value === null || field.value === "") {
                               field.onChange(1);
                             }
+                            field.onBlur();
                           }}
+                          name={field.name}
+                          ref={field.ref}
                           data-testid="input-box-quantity"
                           disabled={isSubmitting}
                         />
