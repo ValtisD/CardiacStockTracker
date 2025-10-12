@@ -1,7 +1,7 @@
 import type { Product, Inventory, Hospital, ImplantProcedure } from '@shared/schema';
 
 const DB_NAME = 'crm-stock-offline';
-const DB_VERSION = 2;
+const DB_VERSION = 3; // v3: Added userId index to sync queue for user-specific queues
 
 // Store names
 const STORES = {
@@ -15,6 +15,7 @@ const STORES = {
 
 export interface SyncQueueItem {
   id: string;
+  userId: string; // CRITICAL: User-specific queue to prevent data loss on re-login
   type: 'create' | 'update' | 'delete';
   entity: keyof typeof STORES;
   data: any;
@@ -52,6 +53,8 @@ class OfflineStorage {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const transaction = (event.target as IDBOpenDBRequest).transaction!;
+        const oldVersion = event.oldVersion;
 
         // Create object stores
         if (!db.objectStoreNames.contains(STORES.PRODUCTS)) {
@@ -77,6 +80,16 @@ class OfflineStorage {
         if (!db.objectStoreNames.contains(STORES.SYNC_QUEUE)) {
           const queueStore = db.createObjectStore(STORES.SYNC_QUEUE, { keyPath: 'id' });
           queueStore.createIndex('timestamp', 'timestamp', { unique: false });
+          queueStore.createIndex('userId', 'userId', { unique: false });
+        } else if (oldVersion < 3) {
+          // v3 upgrade: Add userId index to existing sync queue
+          const queueStore = transaction.objectStore(STORES.SYNC_QUEUE);
+          if (!queueStore.indexNames.contains('userId')) {
+            queueStore.createIndex('userId', 'userId', { unique: false });
+          }
+          // Clear old queue items without userId (they can't be synced properly anyway)
+          queueStore.clear();
+          console.log('🔄 DB v3 upgrade: Added userId index to sync queue, cleared old items');
         }
 
         if (!db.objectStoreNames.contains(STORES.USER)) {
