@@ -10,6 +10,7 @@ class SyncManager {
   private listeners: Set<(status: SyncStatus, pending: number) => void> = new Set();
   private syncInProgress = false;
   private errorCallback: ((error: string, details?: string) => void) | null = null;
+  private userId: string | null = null; // CRITICAL: User ID for user-specific sync queue
   
   // In-memory cache to prevent concurrent duplicate mutations
   private recentMutations: Map<string, number> = new Map();
@@ -78,8 +79,14 @@ class SyncManager {
     this.errorCallback = callback;
   }
 
+  // CRITICAL: Set userId for user-specific sync queue (call on login)
+  setUserId(userId: string | null) {
+    this.userId = userId;
+    console.log(`🔐 SyncManager userId set: ${userId ? userId.substring(0, 10) + '...' : 'null'}`);
+  }
+
   async getPendingCount(): Promise<number> {
-    const queue = await offlineStorage.getSyncQueue();
+    const queue = await offlineStorage.getSyncQueue(this.userId || undefined);
     return queue.length;
   }
 
@@ -104,8 +111,8 @@ class SyncManager {
     }
     console.log('✅ Not a duplicate (in-memory check passed):', method, endpoint);
     
-    // Also check IndexedDB for persistence across page loads
-    const existingQueue = await offlineStorage.getSyncQueue();
+    // Also check IndexedDB for persistence across page loads (user-specific queue)
+    const existingQueue = await offlineStorage.getSyncQueue(this.userId || undefined);
     const isDuplicate = existingQueue.some(item => 
       item.endpoint === endpoint && 
       item.method === method && 
@@ -128,13 +135,19 @@ class SyncManager {
       }
     });
     
+    // CRITICAL: Must have userId set before queuing (prevents orphaned queue items)
+    if (!this.userId) {
+      console.error('❌ Cannot add to queue: userId not set!');
+      return;
+    }
+    
     await offlineStorage.addToSyncQueue({
       type,
       entity: entity as any,
       endpoint,
       method,
       data,
-    });
+    }, this.userId);
     
     // Notify listeners of pending changes
     const count = await this.getPendingCount();
@@ -164,7 +177,8 @@ class SyncManager {
         await queryClient.invalidateQueries();
       }
       
-      const queue = await offlineStorage.getSyncQueue();
+      // CRITICAL: Only get queue items for this user (prevents syncing other users' data)
+      const queue = await offlineStorage.getSyncQueue(this.userId || undefined);
       
       if (queue.length === 0) {
         this.updateStatus('idle');
@@ -172,7 +186,7 @@ class SyncManager {
         return;
       }
 
-      console.log(`✅ ONLINE: Processing sync queue (${queue.length} items)...`);
+      console.log(`✅ ONLINE: Processing sync queue (${queue.length} items for user ${this.userId?.substring(0, 10)}...)...`);
 
       // Sort by timestamp to maintain order
       const sortedQueue = queue.sort((a, b) => a.timestamp - b.timestamp);
