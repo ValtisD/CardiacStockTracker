@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Icons</title></head>
+<body>
+<canvas id="canvas180" width="180" height="180"></canvas>
+<canvas id="canvas192" width="192" height="192"></canvas>
+<canvas id="canvas512" width="512" height="512"></canvas>
+<script>
+function drawIcon(canvas, size) {
+  const ctx = canvas.getContext('2d');
+  // Dark blue background
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, size, size);
+  
+  // White medical cross/heartbeat
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = size / 20;
+  
+  // Draw heartbeat line
+  ctx.beginPath();
+  const centerY = size / 2;
+  const points = [
+    [size * 0.1, centerY],
+    [size * 0.3, centerY],
+    [size * 0.35, centerY - size * 0.15],
+    [size * 0.4, centerY + size * 0.2],
+    [size * 0.45, centerY - size * 0.1],
+    [size * 0.5, centerY],
+    [size * 0.7, centerY],
+    [size * 0.75, centerY + size * 0.15],
+    [size * 0.8, centerY - size * 0.1],
+    [size * 0.9, centerY]
+  ];
+  
+  ctx.moveTo(points[0][0], points[0][1]);
+  points.forEach(([x, y]) => ctx.lineTo(x, y));
+  ctx.stroke();
+}
+
+drawIcon(document.getElementById('canvas180'), 180);
+drawIcon(document.getElementById('canvas192'), 192);
+drawIcon(document.getElementById('canvas512'), 512);
+
+// Note: Download these canvases as PNG manually or use a script
+console.log('Icons generated - right-click each canvas and save as PNG');
+</script>
+</body>
+</html>

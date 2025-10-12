@@ -87,6 +87,12 @@ The application is a fully installable Progressive Web App with complete offline
 - Visual indicators show offline status and pending changes count
 - Toast notifications only for errors (all success toasts removed per user preference)
 
+**iOS Setup Requirements**:
+1. **Add to Home Screen**: On iOS Safari, tap Share → "Add to Home Screen" for full PWA features
+2. **IndexedDB Persistence**: iOS requires the app to be installed as PWA for reliable IndexedDB storage
+3. **Service Worker Limitation**: Service workers require HTTPS (works in production/deployed apps, may fail in development)
+4. **Offline Mode**: IndexedDB-based offline functionality works independently of service workers
+
 ### Backend
 
 The backend is an Express.js server providing a RESTful API. It uses a middleware-based request/response pipeline and custom error handling. The data access layer uses a repository pattern with Drizzle ORM for type-safe PostgreSQL queries and transaction support.

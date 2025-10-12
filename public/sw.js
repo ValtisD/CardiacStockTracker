@@ -1,12 +1,10 @@
-const CACHE_NAME = 'crm-stock-v1';
-const RUNTIME_CACHE = 'crm-stock-runtime-v1';
+const CACHE_NAME = 'crm-stock-v2';
+const RUNTIME_CACHE = 'crm-stock-runtime-v2';
 
-// Assets to cache on install
+// Assets to cache on install (only actual production files)
 const PRECACHE_ASSETS = [
   '/',
-  '/index.html',
-  '/src/main.tsx',
-  '/src/index.css'
+  '/manifest.json'
 ];
 
 // Install event - cache critical assets
