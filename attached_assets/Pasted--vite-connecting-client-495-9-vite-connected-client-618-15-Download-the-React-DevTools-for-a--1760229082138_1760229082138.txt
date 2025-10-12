@@ -1,0 +1,145 @@
+[vite] connecting... client:495:9
+[vite] connected. client:618:15
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools react-dom.development.js:29895:17
+🔧 offlineState initialized, isOffline: false offlineState.ts:7:9
+IndexedDB initialized successfully offlineStorage.ts:40:17
+Service Worker registration failed: DOMException: The operation is insecure. main.tsx:16:17
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:196:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:112:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx?t=1760228892308:35:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?t=1760228892308&v=vCGhO0a_0_-q_LBtR1RDZ:672:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?t=1760228892308&v=vCGhO0a_0_-q_LBtR1RDZ:526:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c725b5b5:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=c725b5b5:1546:18
+App react-dom.development.js:86:30
+📱 OfflineIndicator useEffect running OfflineIndicator.tsx:25:13
+➕ Listener subscribed, total: 1 offlineState.ts:27:13
+IndexedDB initialized successfully offlineStorage.ts:40:17
+🧹 Cleaning up temp IDs from cache... offlineStorage.ts:313:13
+✅ Temp ID cleanup complete offlineStorage.ts:353:15
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:254:19
+🚀 Auto-caching data for offline use... App.tsx:416:19
+📦 Fetching data from server... syncManager.ts:303:15
+📦 Caching: 43 products, 36 inventory items, 3 hospitals, 0 procedures syncManager.ts:313:15
+📦 Caching inventory: clearing store, then adding 36 items offlineStorage.ts:229:13
+✅ Cached 36 inventory items to IndexedDB offlineStorage.ts:233:15
+✅ Offline cache ready! You can now work offline. syncManager.ts:322:15
+✅ All data cached! You can now work offline. App.tsx:429:19
+📡 Poll detected change: navigator.onLine = false , isOffline = false offlineState.ts:52:13
+📴 App is now OFFLINE (listeners: 1) offlineState.ts:17:15
+🔔 Calling listener #0 offlineState.ts:19:17
+📴 Going OFFLINE - clearing cache to use IndexedDB OfflineIndicator.tsx:33:17
+Navigating to: /inventory/car AppSidebar.tsx:33:13
+Navigated to: /inventory/car App.tsx:458:13
+Offline: Loading from cache: /api/inventory?location=car queryClient.ts:198:15
+Offline: Loading CAR inventory from cache queryClient.ts:217:19
+Offline: Loading from cache: /api/inventory/low-stock?location=car queryClient.ts:198:15
+Offline: Low stock queries not available offline, returning [] queryClient.ts:211:19
+Offline: Loading from cache: /api/user-product-settings queryClient.ts:198:15
+Offline: Loading from cache: /api/inventory/summary?location=car queryClient.ts:198:15
+Offline: Loading CAR inventory from cache queryClient.ts:217:19
+Offline: Loading from cache: /api/user/language queryClient.ts:198:15
+Offline: Loading from cache: /api/user/me queryClient.ts:198:15
+Offline: Loading from cache: /api/inventory/low-stock?location=home queryClient.ts:198:15
+Offline: Low stock queries not available offline, returning [] queryClient.ts:211:19
+Offline: Loaded user from cache: valtisdimitris@gmail.com queryClient.ts:202:19
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:458:13
+Offline: Loading from cache: /api/implant-procedures queryClient.ts:198:15
+Offline: Loading from cache: /api/hospitals queryClient.ts:198:15
+Offline: Loading from cache: /api/products queryClient.ts:198:15
+Offline: Loaded 43 products from cache queryClient.ts:206:19
+apiRequest called: POST /api/implant-procedures Online: false Bypass: undefined queryClient.ts:44:11
+🔴 OFFLINE MODE: Queueing mutation POST /api/implant-procedures 
+Object { hospitalId: "736b7795-3b0c-440a-ac1b-9fc90212ee83", implantDate: "2025-10-12", procedureType: "ICD", deviceUsed: "91a4494d-6034-4bbd-bc6c-75952bad4229", deviceSerialNumber: "5586567", notes: "", materials: [] }
+queryClient.ts:51:13
+🔍 Checking mutation: 
+Object { method: "POST", endpoint: "/api/implant-procedures", signature: 'POST:/api/implant-procedures:{"hospitalId":"736b7795-3b0c-440a-ac1b-9fc90212ee83","implantDate":"202...' }
+syncManager.ts:79:13
+✅ Not a duplicate (in-memory check passed): POST /api/implant-procedures syncManager.ts:87:13
+✅ Mutation queued successfully queryClient.ts:69:15
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=c725b5b5:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=c725b5b5:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:196:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AAAWOXFP.js?v=c725b5b5:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:112:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx?t=1760228892308:35:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=c725b5b5:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c725b5b5:66:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?t=1760228892308&v=vCGhO0a_0_-q_LBtR1RDZ:672:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?t=1760228892308&v=vCGhO0a_0_-q_LBtR1RDZ:526:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c725b5b5:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=c725b5b5:1546:18
+App react-dom.development.js:86:30
+✅ Local cache updated queryClient.ts:73:15
+Offline: Loading from cache: /api/inventory/low-stock?location=home queryClient.ts:198:15
+Offline: Low stock queries not available offline, returning [] queryClient.ts:211:19
+Offline: Loading from cache: /api/inventory/low-stock?location=car queryClient.ts:198:15
+Offline: Low stock queries not available offline, returning [] queryClient.ts:211:19
+Offline: Loading from cache: /api/inventory?location=car queryClient.ts:198:15
+Offline: Loading CAR inventory from cache queryClient.ts:217:19
+Camera stopped BarcodeScanner.tsx:367:13
+Offline: Loading from cache: /api/implant-procedures queryClient.ts:198:15
+Navigating to: /inventory/car AppSidebar.tsx:33:13
+Navigated to: /inventory/car App.tsx:458:13
+Offline: Loading from cache: /api/inventory/summary?location=car queryClient.ts:198:15
+Offline: Loading CAR inventory from cache queryClient.ts:217:19
+Navigating to: /reports AppSidebar.tsx:33:13
+Navigated to: /reports App.tsx:458:13
+📡 Poll detected change: navigator.onLine = true , isOffline = true offlineState.ts:52:13
+🌐 App is now ONLINE (listeners: 1) offlineState.ts:17:15
+🔔 Calling listener #0 offlineState.ts:19:17
+🌐 Going ONLINE - cleaning up and refreshing from server OfflineIndicator.tsx:37:17
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:254:19
+Cached 43 products for offline use queryClient.ts:257:19
+🧹 Cleaning up temp IDs from cache... offlineStorage.ts:313:13
+✅ Temp ID cleanup complete offlineStorage.ts:353:15

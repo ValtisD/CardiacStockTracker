@@ -267,14 +267,24 @@ class SyncManager {
 
       console.log('✅ All pending changes synced successfully');
       
-      // CRITICAL: Refresh IndexedDB with latest server data after sync
-      // This ensures offline mode shows current data (with real IDs, not temp IDs)
-      console.log('🔄 Refreshing IndexedDB with latest server data...');
-      await this.refreshData();
+      // CRITICAL: Fetch and cache full data to IndexedDB after sync
+      // Location-specific queries don't cache, so we must fetch full queries
+      console.log('🔄 Fetching full data to refresh IndexedDB...');
+      try {
+        await Promise.all([
+          queryClient.fetchQuery({ queryKey: ['/api/products'] }),
+          queryClient.fetchQuery({ queryKey: ['/api/inventory'] }),
+          queryClient.fetchQuery({ queryKey: ['/api/hospitals'] }),
+          queryClient.fetchQuery({ queryKey: ['/api/implant-procedures'] }),
+        ]);
+        console.log('✅ IndexedDB refreshed with latest server data');
+      } catch (e) {
+        console.error('Failed to refresh IndexedDB:', e);
+      }
       
-      // Invalidate React Query cache to show fresh data in UI
+      // Invalidate all queries to show fresh data in UI
       await queryClient.invalidateQueries();
-      console.log('✅ Cache refreshed - UI now shows latest synced data');
+      console.log('✅ UI cache refreshed');
       
       this.updateStatus('idle');
     } catch (error) {
