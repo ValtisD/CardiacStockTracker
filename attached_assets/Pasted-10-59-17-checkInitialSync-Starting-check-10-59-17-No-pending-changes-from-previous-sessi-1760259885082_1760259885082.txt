@@ -1,0 +1,275 @@
+10:59:17 📝 🔍 checkInitialSync: Starting check
+
+10:59:17 ✅ ✅ No pending changes from previous session
+
+10:59:17 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=home",
+  "isOffline": false
+}
+
+10:59:17 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=car",
+  "isOffline": false
+}
+
+10:59:17 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=home",
+  "isOffline": false
+}
+
+10:59:17 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=car",
+  "isOffline": false
+}
+
+10:59:17 📝 🌐 getQueryFn called
+{
+  "url": "/api/implant-procedures",
+  "isOffline": false
+}
+
+10:59:17 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/language",
+  "isOffline": false
+}
+
+10:59:17 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/me",
+  "isOffline": false
+}
+
+10:59:17 📝 ℹ️ APP START: No pending changes to sync
+
+10:59:17 📝 Auto-caching data for offline use...
+
+10:59:17 📝 Fetching data from server...
+{
+  "hasAuthHeaders": true
+}
+
+10:59:18 ✅ Caching: 43 products, 31 inventory, 3 hospitals, 1 procedures
+
+10:59:18 ✅ Offline cache ready! You can now work offline.
+
+10:59:18 ✅ All data cached! You can now work offline.
+
+10:59:24 📝 🌐 getQueryFn called
+{
+  "url": "/api/hospitals",
+  "isOffline": false
+}
+
+10:59:24 📝 🌐 getQueryFn called
+{
+  "url": "/api/products",
+  "isOffline": false
+}
+
+10:59:52 ⚠️ 📴 Went offline
+
+11:00:03 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=car",
+  "isOffline": true
+}
+
+11:00:03 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory?location=car"
+}
+
+11:00:03 📝 Loading CAR inventory from IndexedDB...
+
+11:00:03 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=car",
+  "isOffline": true
+}
+
+11:00:03 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=car"
+}
+
+11:00:03 ⚠️ Low stock queries not available offline, returning []
+
+11:00:03 📝 🌐 getQueryFn called
+{
+  "url": "/api/user-product-settings",
+  "isOffline": true
+}
+
+11:00:03 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/user-product-settings"
+}
+
+11:00:03 ⚠️ User product settings not cached, returning []
+
+11:00:03 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/summary?location=car",
+  "isOffline": true
+}
+
+11:00:03 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/summary?location=car"
+}
+
+11:00:03 ⚠️ Inventory summary not available offline, returning []
+
+11:00:03 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/language",
+  "isOffline": true
+}
+
+11:00:03 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/user/language"
+}
+
+11:00:03 ⚠️ User language not cached, using default
+
+11:00:03 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/me",
+  "isOffline": true
+}
+
+11:00:03 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/user/me"
+}
+
+11:00:03 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=home",
+  "isOffline": true
+}
+
+11:00:03 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=home"
+}
+
+11:00:03 ⚠️ Low stock queries not available offline, returning []
+
+11:00:03 ✅ ✅ Loaded 2 CAR inventory items from cache
+{
+  "items": 2
+}
+
+11:00:03 ✅ Loaded user from cache
+{
+  "email": "valtisdimitris@gmail.com"
+}
+
+11:00:03 📝 Auto-caching data for offline use...
+
+11:00:03 ⚠️ Skipping data refresh - offline
+
+11:00:03 ✅ All data cached! You can now work offline.
+
+11:00:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/implant-procedures",
+  "isOffline": true
+}
+
+11:00:41 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/implant-procedures"
+}
+
+11:00:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/hospitals",
+  "isOffline": true
+}
+
+11:00:41 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/hospitals"
+}
+
+11:00:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/products",
+  "isOffline": true
+}
+
+11:00:41 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/products"
+}
+
+11:00:41 ✅ Loaded 1 procedures from cache
+
+11:00:41 ✅ Loaded 3 hospitals from cache
+
+11:00:41 ✅ Loaded 43 products from cache
+
+11:01:08 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=home",
+  "isOffline": true
+}
+
+11:01:08 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=home"
+}
+
+11:01:08 ⚠️ Low stock queries not available offline, returning []
+
+11:01:08 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=car",
+  "isOffline": true
+}
+
+11:01:08 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=car"
+}
+
+11:01:08 ⚠️ Low stock queries not available offline, returning []
+
+11:01:08 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=car",
+  "isOffline": true
+}
+
+11:01:08 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory?location=car"
+}
+
+11:01:08 📝 Loading CAR inventory from IndexedDB...
+
+11:01:08 📝 🌐 getQueryFn called
+{
+  "url": "/api/implant-procedures",
+  "isOffline": true
+}
+
+11:01:08 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/implant-procedures"
+}
+
+11:01:08 ✅ ✅ Loaded 2 CAR inventory items from cache
+{
+  "items": 2
+}
+
+11:01:08 ✅ Loaded 2 procedures from cache
