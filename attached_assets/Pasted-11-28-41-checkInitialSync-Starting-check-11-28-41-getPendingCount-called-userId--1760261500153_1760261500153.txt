@@ -1,0 +1,397 @@
+11:28:41 📝 🔍 checkInitialSync: Starting check
+
+11:28:41 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:28:41 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:28:41 ✅ ✅ No pending changes from previous session
+
+11:28:41 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:28:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=home",
+  "isOffline": false
+}
+
+11:28:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=car",
+  "isOffline": false
+}
+
+11:28:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=home",
+  "isOffline": false
+}
+
+11:28:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=car",
+  "isOffline": false
+}
+
+11:28:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/implant-procedures",
+  "isOffline": false
+}
+
+11:28:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/language",
+  "isOffline": false
+}
+
+11:28:41 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/me",
+  "isOffline": false
+}
+
+11:28:41 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:28:41 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:28:41 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:28:41 📝 ℹ️ APP START: No pending changes to sync
+
+11:28:42 📝 Auto-caching data for offline use...
+
+11:28:42 📝 Fetching data from server...
+{
+  "hasAuthHeaders": true
+}
+
+11:28:42 ✅ Caching: 43 products, 29 inventory, 3 hospitals, 0 procedures
+
+11:28:42 ✅ Offline cache ready! You can now work offline.
+
+11:28:42 ✅ All data cached! You can now work offline.
+
+11:29:03 ⚠️ 📴 Went offline
+
+11:29:03 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:03 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:03 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:03 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:05 📝 🌐 getQueryFn called
+{
+  "url": "/api/implant-procedures",
+  "isOffline": true
+}
+
+11:29:05 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/implant-procedures"
+}
+
+11:29:05 📝 🌐 getQueryFn called
+{
+  "url": "/api/hospitals",
+  "isOffline": true
+}
+
+11:29:05 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/hospitals"
+}
+
+11:29:05 📝 🌐 getQueryFn called
+{
+  "url": "/api/products",
+  "isOffline": true
+}
+
+11:29:05 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/products"
+}
+
+11:29:05 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/language",
+  "isOffline": true
+}
+
+11:29:05 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/user/language"
+}
+
+11:29:05 ⚠️ User language not cached, using default
+
+11:29:05 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/me",
+  "isOffline": true
+}
+
+11:29:05 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/user/me"
+}
+
+11:29:05 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=home",
+  "isOffline": true
+}
+
+11:29:05 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=home"
+}
+
+11:29:05 ⚠️ Low stock queries not available offline, returning []
+
+11:29:05 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=car",
+  "isOffline": true
+}
+
+11:29:05 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=car"
+}
+
+11:29:05 ⚠️ Low stock queries not available offline, returning []
+
+11:29:05 ✅ Loaded 0 procedures from cache
+
+11:29:05 ✅ Loaded 3 hospitals from cache
+
+11:29:05 ✅ Loaded 43 products from cache
+
+11:29:05 ✅ Loaded user from cache
+{
+  "email": "valtisdimitris@gmail.com"
+}
+
+11:29:05 📝 Auto-caching data for offline use...
+
+11:29:05 ⚠️ Skipping data refresh - offline
+
+11:29:05 ✅ All data cached! You can now work offline.
+
+11:29:06 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=car",
+  "isOffline": true
+}
+
+11:29:06 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory?location=car"
+}
+
+11:29:06 📝 Loading CAR inventory from IndexedDB...
+
+11:29:06 ✅ ✅ Loaded 4 CAR inventory items from cache
+{
+  "items": 4
+}
+
+11:29:19 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:19 📝 📊 getPendingCount result
+{
+  "count": 1,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:19 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=home",
+  "isOffline": true
+}
+
+11:29:19 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=home"
+}
+
+11:29:19 ⚠️ Low stock queries not available offline, returning []
+
+11:29:19 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=car",
+  "isOffline": true
+}
+
+11:29:19 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory/low-stock?location=car"
+}
+
+11:29:19 ⚠️ Low stock queries not available offline, returning []
+
+11:29:19 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=car",
+  "isOffline": true
+}
+
+11:29:19 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/inventory?location=car"
+}
+
+11:29:19 📝 Loading CAR inventory from IndexedDB...
+
+11:29:19 📝 🌐 getQueryFn called
+{
+  "url": "/api/implant-procedures",
+  "isOffline": true
+}
+
+11:29:19 📝 OFFLINE MODE: Loading from cache
+{
+  "url": "/api/implant-procedures"
+}
+
+11:29:19 ✅ ✅ Loaded 4 CAR inventory items from cache
+{
+  "items": 4
+}
+
+11:29:19 ✅ Loaded 1 procedures from cache
+
+11:29:48 📝 🔍 checkInitialSync: Starting check
+
+11:29:48 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:48 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:48 ✅ ✅ No pending changes from previous session
+
+11:29:48 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:48 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=home",
+  "isOffline": false
+}
+
+11:29:48 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory?location=car",
+  "isOffline": false
+}
+
+11:29:48 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=home",
+  "isOffline": false
+}
+
+11:29:48 📝 🌐 getQueryFn called
+{
+  "url": "/api/inventory/low-stock?location=car",
+  "isOffline": false
+}
+
+11:29:48 📝 🌐 getQueryFn called
+{
+  "url": "/api/implant-procedures",
+  "isOffline": false
+}
+
+11:29:48 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/language",
+  "isOffline": false
+}
+
+11:29:48 📝 🌐 getQueryFn called
+{
+  "url": "/api/user/me",
+  "isOffline": false
+}
+
+11:29:48 📝 📊 getPendingCount called
+{
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:48 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:48 📝 📊 getPendingCount result
+{
+  "count": 0,
+  "userId": "auth0|68e161f8d6c61b..."
+}
+
+11:29:48 📝 ℹ️ APP START: No pending changes to sync
+
+11:29:48 📝 Auto-caching data for offline use...
+
+11:29:48 📝 Fetching data from server...
+{
+  "hasAuthHeaders": true
+}
+
+11:29:49 ✅ Caching: 43 products, 29 inventory, 3 hospitals, 0 procedures
+
+11:29:49 ✅ Offline cache ready! You can now work offline.
+
+11:29:49 ✅ All data cached! You can now work offline.

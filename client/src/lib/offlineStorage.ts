@@ -50,6 +50,7 @@ class OfflineStorage {
     }
 
     return new Promise((resolve, reject) => {
+      console.log(`🔧 Opening IndexedDB "${DB_NAME}" version ${DB_VERSION}...`);
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
@@ -58,11 +59,33 @@ class OfflineStorage {
       };
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('IndexedDB initialized successfully');
+        console.log(`✅ IndexedDB initialized successfully (version ${this.db.version})`);
+        console.log(`📋 Available stores:`, Array.from(this.db.objectStoreNames));
+        
+        // CRITICAL: Validate that syncState store exists (v4 requirement)
+        if (this.db.version === 4 && !this.db.objectStoreNames.contains('syncState')) {
+          console.error('❌ Database v4 missing syncState store! Deleting and recreating...');
+          this.db.close();
+          this.db = null;
+          
+          // Delete corrupted database
+          const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+          deleteRequest.onsuccess = () => {
+            console.log('✅ Corrupted database deleted, reloading page...');
+            window.location.reload();
+          };
+          deleteRequest.onerror = () => {
+            console.error('❌ Failed to delete corrupted database:', deleteRequest.error);
+            reject(deleteRequest.error);
+          };
+          return;
+        }
+        
         resolve();
       };
 
       request.onupgradeneeded = (event) => {
+        console.log(`🔄 DB UPGRADE: v${event.oldVersion} → v${DB_VERSION}`);
         const db = (event.target as IDBOpenDBRequest).result;
         const transaction = (event.target as IDBOpenDBRequest).transaction!;
         const oldVersion = event.oldVersion;
