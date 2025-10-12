@@ -136,6 +136,19 @@ export function DebugPanel() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
+              variant="default"
+              onClick={() => {
+                debugLogger.info('Test log from button click!');
+                debugLogger.success('DebugLogger is working!');
+                debugLogger.warn('This is a warning');
+                debugLogger.error('This is an error', { test: true });
+              }}
+              data-testid="button-test-log"
+            >
+              Test
+            </Button>
+            <Button
+              size="sm"
               variant="ghost"
               onClick={() => {
                 debugLogger.clear();
