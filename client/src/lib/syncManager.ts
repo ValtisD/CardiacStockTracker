@@ -14,13 +14,23 @@ class SyncManager {
   private recentMutations: Map<string, number> = new Map();
 
   constructor() {
-    // Listen for online/offline events
-    window.addEventListener('online', () => {
-      this.sync();
-    });
-
-    window.addEventListener('offline', () => {
-      this.updateStatus('idle');
+    // Listen for online/offline changes using our reliable offlineState
+    offlineState.subscribe((isOffline) => {
+      if (!isOffline) {
+        // Just went ONLINE - autosync pending changes
+        console.log('🌐 Back online - checking for pending changes to sync...');
+        this.getPendingCount().then(count => {
+          if (count > 0) {
+            console.log(`🔄 Auto-syncing ${count} pending changes...`);
+            this.sync();
+          } else {
+            console.log('✅ No pending changes to sync');
+          }
+        });
+      } else {
+        // Went OFFLINE - reset status
+        this.updateStatus('idle');
+      }
     });
 
     // Listen for service worker sync messages
@@ -32,9 +42,16 @@ class SyncManager {
       });
     }
 
-    // Initial sync if online
+    // Initial sync if online (in case there are pending changes from previous session)
     if (!offlineState.isOffline()) {
-      setTimeout(() => this.sync(), 1000);
+      setTimeout(() => {
+        this.getPendingCount().then(count => {
+          if (count > 0) {
+            console.log(`🔄 Initial sync: ${count} pending changes from previous session`);
+            this.sync();
+          }
+        });
+      }, 1000);
     }
   }
   
