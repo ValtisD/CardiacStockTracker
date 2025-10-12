@@ -541,6 +541,94 @@ ${t('dashboard.emailClosing')}`;
             <Mail className="h-4 w-4" />
             {t('dashboard.homeStockReport')}
           </Button>
+          <Button 
+            variant="outline" 
+            className="justify-start gap-2 w-full" 
+            data-testid="button-total-inventory-export"
+            disabled={!allInventory || allInventory.length === 0}
+            onClick={() => {
+              if (!allInventory || allInventory.length === 0) {
+                return;
+              }
+              
+              const doc = new jsPDF();
+              
+              doc.setFontSize(18);
+              doc.text(t('dashboard.totalInventoryReportTitle'), 14, 20);
+              doc.setFontSize(11);
+              doc.text(`${t('dashboard.generated')} ${format(new Date(), "MMM dd, yyyy")}`, 14, 28);
+              
+              // Group inventory by location for better organization
+              const homeItems = allInventory.filter(item => item.location === 'home');
+              const carItems = allInventory.filter(item => item.location === 'car');
+              
+              let startY = 35;
+              
+              // Home Stock Section
+              if (homeItems.length > 0) {
+                doc.setFontSize(14);
+                doc.text(t('dashboard.homeStock'), 14, startY);
+                
+                const homeTableData = homeItems.map(item => [
+                  item.product?.name || '',
+                  item.product?.modelNumber || '',
+                  item.product?.gtin || '-',
+                  item.serialNumber || item.lotNumber || '-',
+                  item.quantity.toString(),
+                  item.expirationDate ? format(new Date(item.expirationDate), 'MMM dd, yyyy') : '-'
+                ]);
+                
+                autoTable(doc, {
+                  startY: startY + 5,
+                  head: [[t('dashboard.tableProduct'), t('dashboard.tableModel'), t('dashboard.tableGtin'), t('dashboard.tableSerialLot'), t('dashboard.tableQuantity'), t('dashboard.tableExpiry')]],
+                  body: homeTableData,
+                  theme: 'striped',
+                  headStyles: { fillColor: [59, 130, 246] },
+                  styles: { fontSize: 8 }
+                });
+                
+                startY = (doc as any).lastAutoTable.finalY + 10;
+              }
+              
+              // Car Stock Section
+              if (carItems.length > 0) {
+                doc.setFontSize(14);
+                doc.text(t('dashboard.carStock'), 14, startY);
+                
+                const carTableData = carItems.map(item => [
+                  item.product?.name || '',
+                  item.product?.modelNumber || '',
+                  item.product?.gtin || '-',
+                  item.serialNumber || item.lotNumber || '-',
+                  item.quantity.toString(),
+                  item.expirationDate ? format(new Date(item.expirationDate), 'MMM dd, yyyy') : '-'
+                ]);
+                
+                autoTable(doc, {
+                  startY: startY + 5,
+                  head: [[t('dashboard.tableProduct'), t('dashboard.tableModel'), t('dashboard.tableGtin'), t('dashboard.tableSerialLot'), t('dashboard.tableQuantity'), t('dashboard.tableExpiry')]],
+                  body: carTableData,
+                  theme: 'striped',
+                  headStyles: { fillColor: [34, 197, 94] },
+                  styles: { fontSize: 8 }
+                });
+              }
+              
+              // Summary section
+              const finalY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 15 : startY + 40;
+              doc.setFontSize(12);
+              doc.text(t('dashboard.summary'), 14, finalY);
+              doc.setFontSize(10);
+              doc.text(`${t('dashboard.totalHomeItems')}: ${homeItems.length} (${homeItems.reduce((sum, item) => sum + item.quantity, 0)} ${t('dashboard.units')})`, 14, finalY + 7);
+              doc.text(`${t('dashboard.totalCarItems')}: ${carItems.length} (${carItems.reduce((sum, item) => sum + item.quantity, 0)} ${t('dashboard.units')})`, 14, finalY + 14);
+              doc.text(`${t('dashboard.grandTotal')}: ${allInventory.length} ${t('dashboard.items')} (${allInventory.reduce((sum, item) => sum + item.quantity, 0)} ${t('dashboard.units')})`, 14, finalY + 21);
+              
+              doc.save(`total-inventory-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+            }}
+          >
+            <FileText className="h-4 w-4" />
+            {t('dashboard.totalInventoryReport')}
+          </Button>
         </CardContent>
       </Card>
 
