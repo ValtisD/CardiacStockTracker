@@ -198,6 +198,7 @@ export const getQueryFn: <T>(options: {
     if (offlineState.isOffline()) {
       debugLogger.info('OFFLINE MODE: Loading from cache', { url });
       try {
+        // Check specific endpoints first, then generic ones
         if (url.includes('/api/user/me')) {
           const user = await offlineStorage.getUser();
           debugLogger.success('Loaded user from cache', { email: user?.email });
@@ -207,31 +208,47 @@ export const getQueryFn: <T>(options: {
           debugLogger.success(`Loaded ${data?.length || 0} products from cache`);
           return data;
         } else if (url.includes('/api/inventory/low-stock')) {
-          // Low stock queries are NOT cached - return empty array offline
-          // The frontend will calculate from cached inventory
+          // IMPORTANT: Check /low-stock BEFORE /inventory (more specific first!)
           debugLogger.warn('Low stock queries not available offline, returning []');
           return [];
+        } else if (url.includes('/api/inventory/summary')) {
+          // IMPORTANT: Check /summary BEFORE /inventory
+          debugLogger.warn('Inventory summary not available offline, returning []');
+          return [];
         } else if (url.includes('/api/inventory') && url.includes('location=home')) {
+          debugLogger.info('Loading HOME inventory from IndexedDB...');
           const data = await offlineStorage.getInventoryByLocation('home');
-          debugLogger.success(`Loaded ${data?.length || 0} HOME inventory from cache`);
-          return data;
+          debugLogger.success(`✅ Loaded ${data?.length || 0} HOME inventory items from cache`, { items: data?.length });
+          return data || [];
         } else if (url.includes('/api/inventory') && url.includes('location=car')) {
+          debugLogger.info('Loading CAR inventory from IndexedDB...');
           const data = await offlineStorage.getInventoryByLocation('car');
-          debugLogger.success(`Loaded ${data?.length || 0} CAR inventory from cache`);
-          return data;
+          debugLogger.success(`✅ Loaded ${data?.length || 0} CAR inventory items from cache`, { items: data?.length });
+          return data || [];
         } else if (url.includes('/api/inventory')) {
+          debugLogger.info('Loading ALL inventory from IndexedDB...');
           const data = await offlineStorage.getInventory();
-          debugLogger.success(`Loaded ${data?.length || 0} ALL inventory from cache`);
-          return data;
+          debugLogger.success(`✅ Loaded ${data?.length || 0} ALL inventory items from cache`, { items: data?.length });
+          return data || [];
         } else if (url.includes('/api/hospitals')) {
           const data = await offlineStorage.getHospitals();
           debugLogger.success(`Loaded ${data?.length || 0} hospitals from cache`);
-          return data;
+          return data || [];
         } else if (url.includes('/api/implant-procedures')) {
           const data = await offlineStorage.getProcedures();
           debugLogger.success(`Loaded ${data?.length || 0} procedures from cache`);
-          return data;
+          return data || [];
+        } else if (url.includes('/api/user-product-settings')) {
+          debugLogger.warn('User product settings not cached, returning []');
+          return [];
+        } else if (url.includes('/api/user/language')) {
+          debugLogger.warn('User language not cached, using default');
+          return { language: 'en' };
         }
+        
+        // If nothing matched
+        debugLogger.warn('URL not matched for offline fallback', { url });
+        return [] as any;
       } catch (e) {
         debugLogger.error('Failed to get offline data', { error: e instanceof Error ? e.message : String(e), url });
         // Return empty array as fallback
