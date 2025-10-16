@@ -123,11 +123,17 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   };
 
   const transferInventoryMutation = useMutation({
-    mutationFn: async ({ inventoryId, quantity }: { inventoryId: string; quantity: number }) => {
-      const transferPayload = {
+    mutationFn: async ({ inventoryId, quantity, trackingMode }: { inventoryId: string; quantity: number; trackingMode: string | null }) => {
+      // For serial-tracked items, don't send quantity (always full transfer)
+      // For lot-tracked items, send quantity to allow partial transfers
+      const transferPayload: { toLocation: 'car'; quantity?: number } = {
         toLocation: 'car' as const,
-        quantity
       };
+      
+      if (trackingMode === 'lot') {
+        transferPayload.quantity = quantity;
+      }
+      
       return await apiRequest('POST', `/api/inventory/item/${inventoryId}/transfer`, transferPayload);
     },
     onSuccess: () => {
@@ -902,7 +908,8 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
                 if (homeStockMatch && pendingFormData) {
                   transferInventoryMutation.mutate({
                     inventoryId: homeStockMatch.id,
-                    quantity: pendingFormData.quantity
+                    quantity: pendingFormData.quantity,
+                    trackingMode: homeStockMatch.trackingMode
                   });
                 }
               }}
