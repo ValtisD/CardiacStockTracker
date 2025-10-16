@@ -485,6 +485,7 @@
     "lot": "Lot",
     "insufficientStockAvailable": "⚠️ Insufficient stock ({{qty}} available)",
     "availableInCar": "✓ {{qty}} available in car",
+    "noStockInCar": "⚠️ No stock in car",
     "implantProcedureReport": "Implant Procedure Report",
     "hospitalFacility": "Hospital/Facility",
     "procedureType": "Procedure Type",

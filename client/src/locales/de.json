@@ -485,6 +485,7 @@
     "lot": "Charge",
     "insufficientStockAvailable": "⚠️ Unzureichender Bestand ({{qty}} verfügbar)",
     "availableInCar": "✓ {{qty}} im Fahrzeug verfügbar",
+    "noStockInCar": "⚠️ Kein Bestand im Fahrzeug",
     "implantProcedureReport": "Implantat-Eingriffsbericht",
     "hospitalFacility": "Krankenhaus/Einrichtung",
     "procedureType": "Eingriffstyp",

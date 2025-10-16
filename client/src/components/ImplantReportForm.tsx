@@ -753,6 +753,26 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                           {t('procedures.serial')}: {form.watch('deviceSerialNumber')}
                         </div>
                       )}
+                      {field.value && (
+                        <div className="flex items-center gap-2 text-xs mt-1">
+                          {(() => {
+                            const carQty = getCarStockQuantity(field.value);
+                            const hasNoStock = carQty === 0;
+                            return hasNoStock ? (
+                              <>
+                                <AlertCircle className="h-3 w-3 text-destructive" />
+                                <span className="text-destructive" data-testid="text-stock-warning-device">
+                                  {t('procedures.noStockInCar')}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground" data-testid="text-stock-available-device">
+                                {t('procedures.availableInCar', { qty: carQty })}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
