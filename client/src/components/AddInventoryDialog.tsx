@@ -125,12 +125,10 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const transferInventoryMutation = useMutation({
     mutationFn: async ({ inventoryId, quantity }: { inventoryId: string; quantity: number }) => {
       const transferPayload = {
-        inventoryId,
-        fromLocation: 'home',
-        toLocation: 'car',
+        toLocation: 'car' as const,
         quantity
       };
-      return await apiRequest('POST', '/api/inventory/transfer', transferPayload);
+      return await apiRequest('POST', `/api/inventory/item/${inventoryId}/transfer`, transferPayload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
