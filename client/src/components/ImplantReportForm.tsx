@@ -826,15 +826,18 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         </CardContent>
       </Card>
       
-      <BarcodeScanner
-        isOpen={showBarcodeScanner}
-        onClose={() => {
-          setShowBarcodeScanner(false);
-          setScanningItem(null);
-        }}
-        onScanComplete={handleScanComplete}
-        title={t('procedures.scanProductBarcode')}
-      />
+      {/* Barcode Scanner - Only render when open to reset state */}
+      {showBarcodeScanner && (
+        <BarcodeScanner
+          isOpen={showBarcodeScanner}
+          onClose={() => {
+            setShowBarcodeScanner(false);
+            setScanningItem(null);
+          }}
+          onScanComplete={handleScanComplete}
+          title={t('procedures.scanProductBarcode')}
+        />
+      )}
 
       <Dialog open={isAddHospitalDialogOpen} onOpenChange={setIsAddHospitalDialogOpen}>
         <DialogContent className="max-w-2xl">
