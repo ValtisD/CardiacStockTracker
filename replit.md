@@ -47,6 +47,8 @@ The frontend is a React 18 SPA with TypeScript, built using Vite. It utilizes Sh
 - Separate inventory views (home/car)
 - Product and hospital management
 - Implant procedure reporting with stock warnings for primary device and all materials
+  - **Device Source Selection**: Primary device can be sourced from car stock, external supplier, or hospital stock
+  - **Smart Stock Warnings**: Warnings only display when device source is set to "car stock"
 - Stock transfer functionality (both item-level and bulk transfers)
   - **Car Stock Smart Transfer**: When adding to car stock, system checks home stock for matching items and asks user to transfer (reduces home quantity) or add separately
   - **Tracking Mode Aware**: Serial-tracked items always transfer fully; lot-tracked items support partial quantity transfers
