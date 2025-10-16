@@ -38,6 +38,23 @@ interface ImplantProcedureDetailDialogProps {
   onClose: () => void;
 }
 
+const getSourceLabel = (source: string | null | undefined, t: any): string => {
+  if (!source) return '';
+  
+  switch (source) {
+    case 'car':
+      return t('procedures.carStock');
+    case 'home':
+      return t('procedures.home');
+    case 'external':
+      return t('procedures.external');
+    case 'hospital':
+      return t('procedures.hospitalStock');
+    default:
+      return source; // Fallback to raw value if unknown
+  }
+};
+
 export default function ImplantProcedureDetailDialog({
   procedureId,
   isOpen,
@@ -106,9 +123,7 @@ export default function ImplantProcedureDetailDialog({
         yPos += 7;
       }
       if (procedure.deviceSource) {
-        const sourceLabel = procedure.deviceSource === 'car' ? t('procedures.carStock') : 
-                          procedure.deviceSource === 'external' ? t('procedures.external') : 
-                          t('procedures.hospitalStock');
+        const sourceLabel = getSourceLabel(procedure.deviceSource, t);
         doc.text(`${t('procedures.deviceSource')}: ${sourceLabel}`, 14, yPos);
         yPos += 7;
       }
@@ -255,6 +270,14 @@ export default function ImplantProcedureDetailDialog({
                         <p className="text-sm text-muted-foreground">
                           {t('procedures.serial')}: {procedure.deviceSerialNumber}
                         </p>
+                      )}
+                      {procedure.deviceSource && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground" data-testid="text-procedure-device-source">
+                            {getSourceLabel(procedure.deviceSource, t)}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
