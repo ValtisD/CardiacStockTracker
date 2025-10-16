@@ -550,7 +550,8 @@
     "materialsUsed": "Materials Used",
     "noMaterialsRecorded": "No materials recorded for this procedure",
     "serialLot": "Serial/Lot",
-    "pdf": "PDF"
+    "pdf": "PDF",
+    "deviceSource": "Device Source"
   },
   "transfers": {
     "title": "Stock Transfers",

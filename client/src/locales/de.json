@@ -550,7 +550,8 @@
     "materialsUsed": "Verwendete Materialien",
     "noMaterialsRecorded": "Keine Materialien für diesen Eingriff aufgezeichnet",
     "serialLot": "Serien-/Charge",
-    "pdf": "PDF"
+    "pdf": "PDF",
+    "deviceSource": "Gerätequelle"
   },
   "transfers": {
     "title": "Lagertransfers",
