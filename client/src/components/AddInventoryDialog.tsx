@@ -68,6 +68,9 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [showQuantityDialog, setShowQuantityDialog] = useState(false);
   const [quickAddQuantity, setQuickAddQuantity] = useState("1");
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [homeStockMatch, setHomeStockMatch] = useState<Inventory | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<AddInventoryFormData | null>(null);
   const { toast } = useToast();
 
   // No manual scroll lock manipulation - Dialog components handle this automatically
@@ -87,39 +90,70 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
 
   const trackingMode = form.watch("trackingMode");
 
+  const checkHomeStockAndProceed = async (data: AddInventoryFormData) => {
+    // Smart Car Stock Addition: Check home stock first when adding to car
+    if (data.location === 'car') {
+      try {
+        const response = await apiRequest('GET', '/api/inventory?location=home');
+        const homeInventory: Inventory[] = await response.json();
+        
+        // Find matching item in home stock (same product AND same serial/lot)
+        const matchingItem = homeInventory.find((item) => {
+          const productMatch = item.productId === data.productId;
+          const serialMatch = data.trackingMode === 'serial' && item.serialNumber === data.serialNumber;
+          const lotMatch = data.trackingMode === 'lot' && item.lotNumber === data.lotNumber;
+          return productMatch && (serialMatch || lotMatch);
+        });
+        
+        if (matchingItem) {
+          // Item exists in home - ASK user if they want to transfer
+          setHomeStockMatch(matchingItem);
+          setPendingFormData(data);
+          setShowTransferDialog(true);
+          return; // Stop here and wait for user decision
+        }
+      } catch (error) {
+        // If home stock check fails, proceed with normal add
+        console.error('Failed to check home stock:', error);
+      }
+    }
+    
+    // No match found in home or not adding to car - proceed with normal add
+    addInventoryMutation.mutate(data);
+  };
+
+  const transferInventoryMutation = useMutation({
+    mutationFn: async ({ inventoryId, quantity }: { inventoryId: string; quantity: number }) => {
+      const transferPayload = {
+        inventoryId,
+        fromLocation: 'home',
+        toLocation: 'car',
+        quantity
+      };
+      return await apiRequest('POST', '/api/inventory/transfer', transferPayload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
+      });
+      setShowTransferDialog(false);
+      setHomeStockMatch(null);
+      setPendingFormData(null);
+      handleClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('inventory.transferFailed'),
+        description: error.message || t('inventory.transferError'),
+        variant: "destructive",
+      });
+      setShowTransferDialog(false);
+    },
+  });
+
   const addInventoryMutation = useMutation({
     mutationFn: async (data: AddInventoryFormData) => {
-      // Smart Car Stock Addition: Check home stock first when adding to car
-      if (data.location === 'car') {
-        try {
-          const response = await apiRequest('GET', '/api/inventory?location=home');
-          const homeInventory: Inventory[] = await response.json();
-          
-          // Find matching item in home stock
-          const matchingItem = homeInventory.find((item) => {
-            const productMatch = item.productId === data.productId;
-            const serialMatch = data.trackingMode === 'serial' && item.serialNumber === data.serialNumber;
-            const lotMatch = data.trackingMode === 'lot' && item.lotNumber === data.lotNumber;
-            return productMatch && (serialMatch || lotMatch);
-          });
-          
-          if (matchingItem) {
-            // Item exists in home - transfer it instead of adding new
-            const transferPayload = {
-              inventoryId: matchingItem.id,
-              fromLocation: 'home',
-              toLocation: 'car',
-              quantity: data.quantity
-            };
-            return await apiRequest('POST', '/api/inventory/transfer', transferPayload);
-          }
-        } catch (error) {
-          // If home stock check fails, proceed with normal add
-          console.error('Failed to check home stock:', error);
-        }
-      }
-      
-      // Normal add flow (or if not found in home)
+      // Normal add flow - just add to inventory
       const payload = {
         ...data,
         serialNumber: data.trackingMode === 'serial' ? data.serialNumber : null,
@@ -337,7 +371,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
         quantity: 1,
         expirationDate: parsedGs1Data.expirationDate || undefined,
       };
-      addInventoryMutation.mutate(formData);
+      checkHomeStockAndProceed(formData);
     } else if (parsedGs1Data.lotNumber) {
       // Lot number detected → Ask for quantity only
       setSelectedProduct(foundProduct);
@@ -382,7 +416,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
     };
 
     setShowQuantityDialog(false);
-    addInventoryMutation.mutate(formData);
+    checkHomeStockAndProceed(formData);
   };
 
   const handleSubmit = (data: AddInventoryFormData) => {
@@ -419,7 +453,7 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
       data.quantity = 1;
     }
 
-    addInventoryMutation.mutate(data);
+    checkHomeStockAndProceed(data);
   };
 
   return (
@@ -803,6 +837,81 @@ export default function AddInventoryDialog({ open, onOpenChange, location }: Add
               data-testid="button-quantity-add"
             >
               {addInventoryMutation.isPending ? t('inventory.adding') : t('inventory.addToStock')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Confirmation Dialog */}
+      <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('inventory.transferConfirmTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('inventory.transferConfirmDescription')}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProduct && pendingFormData && (
+            <div className="py-4 space-y-3">
+              <Card className="p-3 bg-muted">
+                <div className="space-y-1">
+                  <p className="font-medium">{selectedProduct.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('inventory.model')}: {selectedProduct.modelNumber}
+                  </p>
+                  {pendingFormData.trackingMode === 'serial' && pendingFormData.serialNumber && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('inventory.serial')}: {pendingFormData.serialNumber}
+                    </p>
+                  )}
+                  {pendingFormData.trackingMode === 'lot' && pendingFormData.lotNumber && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('inventory.lot')}: {pendingFormData.lotNumber}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {t('inventory.quantity')}: {pendingFormData.quantity}
+                  </p>
+                </div>
+              </Card>
+              <p className="text-sm text-muted-foreground">
+                {t('inventory.transferWillReduceHome')}
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                // User says NO - just add to car stock without transferring
+                if (pendingFormData) {
+                  setShowTransferDialog(false);
+                  addInventoryMutation.mutate(pendingFormData);
+                }
+              }}
+              disabled={transferInventoryMutation.isPending || addInventoryMutation.isPending}
+              data-testid="button-transfer-no"
+            >
+              {t('inventory.noJustAdd')}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                // User says YES - transfer from home to car
+                if (homeStockMatch && pendingFormData) {
+                  transferInventoryMutation.mutate({
+                    inventoryId: homeStockMatch.id,
+                    quantity: pendingFormData.quantity
+                  });
+                }
+              }}
+              disabled={transferInventoryMutation.isPending || addInventoryMutation.isPending}
+              data-testid="button-transfer-yes"
+            >
+              {transferInventoryMutation.isPending ? t('inventory.transferring') : t('inventory.yesTransfer')}
             </Button>
           </div>
         </DialogContent>

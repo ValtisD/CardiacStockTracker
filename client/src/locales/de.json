@@ -317,7 +317,13 @@
     "transfer": "Transfer",
     "transferItem": "Artikel transferieren",
     "transferItemDescription": "Artikel an einen anderen Standort verschieben",
-    "transferring": "Transferiere..."
+    "transferring": "Transferiere...",
+    "transferConfirmTitle": "Von Heimbestand übertragen?",
+    "transferConfirmDescription": "Dieses Produkt existiert in Ihrem Heimbestand. Möchten Sie es übertragen anstatt ein Duplikat hinzuzufügen?",
+    "transferWillReduceHome": "Die Übertragung reduziert den Heimbestand und fügt zum Autobestand hinzu.",
+    "noJustAdd": "Nein, nur zum Auto hinzufügen",
+    "yesTransfer": "Ja, von Zuhause übertragen",
+    "transferError": "Übertragung konnte nicht abgeschlossen werden"
   },
   "products": {
     "title": "Produkte",

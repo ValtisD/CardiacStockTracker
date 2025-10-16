@@ -317,7 +317,13 @@
     "transfer": "Transfer",
     "transferItem": "Transfer item",
     "transferItemDescription": "Move item to another location",
-    "transferring": "Transferring..."
+    "transferring": "Transferring...",
+    "transferConfirmTitle": "Transfer from Home Stock?",
+    "transferConfirmDescription": "This product exists in your home stock. Do you want to transfer it instead of adding a duplicate?",
+    "transferWillReduceHome": "Transferring will reduce home stock and add to car stock.",
+    "noJustAdd": "No, just add to car",
+    "yesTransfer": "Yes, transfer from home",
+    "transferError": "Could not complete transfer"
   },
   "products": {
     "title": "Products",
