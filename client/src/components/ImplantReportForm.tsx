@@ -44,6 +44,7 @@ const getImplantReportSchema = (t: any) => z.object({
   procedureType: z.string().min(1, t('procedures.procedureTypeRequired')),
   deviceUsed: z.string().optional(),
   deviceSerialNumber: z.string().optional(),
+  deviceSource: z.enum(['car', 'external', 'hospital']).default('car'),
   notes: z.string().optional(),
 });
 
@@ -170,6 +171,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       implantDate: new Date().toISOString().split('T')[0],
       procedureType: "",
       deviceUsed: "",
+      deviceSource: "car",
       notes: "",
     },
   });
@@ -702,81 +704,111 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="deviceUsed"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('procedures.primaryDevice')}</FormLabel>
-                      <div className="flex gap-2">
-                        <Select 
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            // Auto-fetch and set serial number from inventory
-                            const { serialNumber, lotNumber } = getInventorySerialLot(value);
-                            if (serialNumber) {
-                              form.setValue('deviceSerialNumber', serialNumber);
-                            } else if (lotNumber) {
-                              form.setValue('deviceSerialNumber', `${t('procedures.lot')}: ${lotNumber}`);
-                            }
-                          }} 
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger data-testid="select-device">
-                              <SelectValue placeholder={t('procedures.selectDevice')} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {deviceProducts.map(device => {
-                              const carQty = getCarStockQuantity(device.id);
-                              return (
-                                <SelectItem key={device.id} value={device.id}>
-                                  {device.name} ({device.modelNumber}) - {t('procedures.car')}: {carQty}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="outline"
-                          onClick={() => scanBarcode('device', 'primary-device')}
-                          data-testid="button-scan-device"
-                        >
-                          <Scan className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {form.watch('deviceSerialNumber') && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {t('procedures.serial')}: {form.watch('deviceSerialNumber')}
-                        </div>
-                      )}
-                      {field.value && (
-                        <div className="flex items-center gap-2 text-xs mt-1">
-                          {(() => {
-                            const carQty = getCarStockQuantity(field.value);
-                            const hasNoStock = carQty === 0;
-                            return hasNoStock ? (
-                              <>
-                                <AlertCircle className="h-3 w-3 text-destructive" />
-                                <span className="text-destructive" data-testid="text-stock-warning-device">
-                                  {t('procedures.noStockInCar')}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-muted-foreground" data-testid="text-stock-available-device">
-                                {t('procedures.availableInCar', { qty: carQty })}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
+                <div className="space-y-3">
+                  <FormLabel>{t('procedures.primaryDevice')}</FormLabel>
+                  <div className="grid grid-cols-12 gap-2 items-start">
+                    <div className="col-span-7">
+                      <FormField
+                        control={form.control}
+                        name="deviceUsed"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                // Auto-fetch and set serial number from inventory
+                                const { serialNumber, lotNumber } = getInventorySerialLot(value);
+                                if (serialNumber) {
+                                  form.setValue('deviceSerialNumber', serialNumber);
+                                } else if (lotNumber) {
+                                  form.setValue('deviceSerialNumber', `${t('procedures.lot')}: ${lotNumber}`);
+                                }
+                              }} 
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="h-8" data-testid="select-device">
+                                  <SelectValue placeholder={t('procedures.selectDevice')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {deviceProducts.map(device => {
+                                  const carQty = getCarStockQuantity(device.id);
+                                  return (
+                                    <SelectItem key={device.id} value={device.id}>
+                                      {device.name} ({device.modelNumber}) - {t('procedures.car')}: {carQty}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <FormField
+                        control={form.control}
+                        name="deviceSource"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="h-8" data-testid="select-device-source">
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="car">{t('procedures.carStock')}</SelectItem>
+                                <SelectItem value="external">{t('procedures.external')}</SelectItem>
+                                <SelectItem value="hospital">{t('procedures.hospitalStock')}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="col-span-2 flex gap-1">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        onClick={() => scanBarcode('device', 'primary-device')}
+                        data-testid="button-scan-device"
+                        className="h-8 w-8"
+                      >
+                        <Scan className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {form.watch('deviceSerialNumber') && (
+                    <div className="text-xs text-muted-foreground ml-1">
+                      {t('procedures.serial')}: {form.watch('deviceSerialNumber')}
+                    </div>
                   )}
-                />
+                  {form.watch('deviceUsed') && form.watch('deviceSource') === 'car' && (
+                    <div className="flex items-center gap-2 text-xs ml-1">
+                      {(() => {
+                        const carQty = getCarStockQuantity(form.watch('deviceUsed') || '');
+                        const hasNoStock = carQty === 0;
+                        return hasNoStock ? (
+                          <>
+                            <AlertCircle className="h-3 w-3 text-destructive" />
+                            <span className="text-destructive" data-testid="text-stock-warning-device">
+                              {t('procedures.noStockInCar')}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground" data-testid="text-stock-available-device">
+                            {t('procedures.availableInCar', { qty: carQty })}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">

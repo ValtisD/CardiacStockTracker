@@ -64,6 +64,7 @@ export const implantProcedures = pgTable("implant_procedures", {
   procedureType: text("procedure_type").notNull(), // Pacemaker, ICD, CRT
   deviceUsed: varchar("device_used"), // Product ID
   deviceSerialNumber: text("device_serial_number"), // Serial number of the implanted device
+  deviceSource: text("device_source").notNull().default('car'), // 'car', 'external', 'hospital'
   notes: text("notes"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
