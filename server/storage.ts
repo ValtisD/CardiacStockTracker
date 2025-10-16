@@ -794,8 +794,8 @@ export class DatabaseStorage implements IStorage {
     materials: InsertProcedureMaterial[]
   ): Promise<ImplantProcedure> {
     // Validate stock availability before proceeding
-    // Check primary device stock if specified
-    if (procedure.deviceUsed) {
+    // Check primary device stock if specified AND source is car (or undefined for backwards compatibility)
+    if (procedure.deviceUsed && (!procedure.deviceSource || procedure.deviceSource === 'car')) {
       const deviceInventory = await this.getInventoryItem(procedure.userId, procedure.deviceUsed, 'car');
       if (!deviceInventory || deviceInventory.quantity < 1) {
         const product = await this.getProduct(procedure.deviceUsed);
@@ -826,8 +826,8 @@ export class DatabaseStorage implements IStorage {
         .returning();
       const createdProcedure = procedureResult[0];
 
-      // Deduct primary device from car inventory if specified
-      if (procedure.deviceUsed) {
+      // Deduct primary device from car inventory if specified AND source is car (or undefined for backwards compatibility)
+      if (procedure.deviceUsed && (!procedure.deviceSource || procedure.deviceSource === 'car')) {
         const deviceInventory = await this.getInventoryItem(procedure.userId, procedure.deviceUsed, 'car');
         if (deviceInventory) {
           const newQuantity = deviceInventory.quantity - 1;
