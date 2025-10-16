@@ -105,6 +105,13 @@ export default function ImplantProcedureDetailDialog({
         doc.text(`${t('procedures.serialNumber')}: ${procedure.deviceSerialNumber}`, 14, yPos);
         yPos += 7;
       }
+      if (procedure.deviceSource) {
+        const sourceLabel = procedure.deviceSource === 'car' ? t('procedures.carStock') : 
+                          procedure.deviceSource === 'external' ? t('procedures.external') : 
+                          t('procedures.hospitalStock');
+        doc.text(`${t('procedures.deviceSource')}: ${sourceLabel}`, 14, yPos);
+        yPos += 7;
+      }
     }
     
     // Notes
