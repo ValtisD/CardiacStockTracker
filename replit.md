@@ -46,8 +46,10 @@ The frontend is a React 18 SPA with TypeScript, built using Vite. It utilizes Sh
 - Dashboard overview
 - Separate inventory views (home/car)
 - Product and hospital management
-- Implant procedure reporting
+- Implant procedure reporting with stock warnings for primary device and all materials
 - Stock transfer functionality (both item-level and bulk transfers)
+  - **Car Stock Smart Transfer**: When adding to car stock, system checks home stock for matching items and asks user to transfer (reduces home quantity) or add separately
+  - **Tracking Mode Aware**: Serial-tracked items always transfer fully; lot-tracked items support partial quantity transfers
 - Global search
 - Low stock alerts
 - PDF exports for expiring products and stock reports
@@ -56,6 +58,7 @@ The frontend is a React 18 SPA with TypeScript, built using Vite. It utilizes Sh
   - **Lot Number Scans**: Quick quantity dialog appears → User enters quantity → Auto-submit (errors automatically reopen quantity dialog with preserved value for easy retry)
   - **Error Recovery**: All form state preserved (product, serial/lot, expiration, quantity) so users can retry failed submissions without re-entering data
   - **Duplicate Prevention**: Detects duplicate serial numbers and shows specific error message
+  - **Procedure Form Scanning**: Conditional rendering ensures barcode scanner state resets between scans (unmount/remount pattern)
 - PDF Export for Expiring Products Report, Car Stock Report, and Home Stock Reorder Report (with automatic German email text copy to clipboard).
 - Individual item transfer buttons ("Move to Car" / "Move to Home") in inventory tables for quick location changes.
 - **Progressive Web App (PWA)** with full offline capabilities for field use in hospitals with poor connectivity.
