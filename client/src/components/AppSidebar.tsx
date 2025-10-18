@@ -60,6 +60,12 @@ export default function AppSidebar({
       alert: lowStockAlerts.car > 0 ? lowStockAlerts.car : undefined,
     },
     {
+      title: t('nav.stockOverview'),
+      url: "/stock-overview",
+      icon: BarChart,
+      active: currentPath === '/stock-overview',
+    },
+    {
       title: t('sidebar.hospitals'),
       url: "/hospitals",
       icon: Hospital,
