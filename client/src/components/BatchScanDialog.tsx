@@ -83,7 +83,13 @@ export default function BatchScanDialog({ open, onOpenChange }: BatchScanDialogP
 
     setIsLoadingProduct(true);
     try {
-      const response = await apiRequest('GET', `/api/products/multi-search/${encodeURIComponent(manualBarcode.trim())}`);
+      // Parse GS1 barcode first to extract GTIN and other data
+      const gs1Data = parseGS1Barcode(manualBarcode.trim());
+      
+      // Use GTIN from parsed data if available, otherwise use the full barcode
+      const searchQuery = gs1Data.gtin || manualBarcode.trim();
+      
+      const response = await apiRequest('GET', `/api/products/multi-search/${encodeURIComponent(searchQuery)}`);
       const foundProducts: Product[] = await response.json();
 
       if (foundProducts.length === 0) {
@@ -98,7 +104,6 @@ export default function BatchScanDialog({ open, onOpenChange }: BatchScanDialogP
       }
 
       const product = foundProducts[0];
-      const gs1Data = parseGS1Barcode(manualBarcode.trim());
 
       // Check if item already in list
       const itemKey = gs1Data.serialNumber || gs1Data.lotNumber;
