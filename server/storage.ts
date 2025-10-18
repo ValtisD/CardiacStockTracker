@@ -42,7 +42,7 @@ export interface IStorage {
   getInventory(userId: string, location?: string): Promise<(Inventory & { product: Product })[]>;
   getInventoryItem(userId: string, productId: string, location: string): Promise<Inventory | undefined>;
   getInventorySummary(userId: string, location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]>;
-  getStockOverview(userId: string): Promise<{ product: Product; homeQty: number; carQty: number; totalQty: number; items: Inventory[] }[]>;
+  getStockOverview(userId: string): Promise<{ gtin: string; modelNumber: string; productName: string; homeQty: number; carQty: number; totalQty: number; items: Inventory[] }[]>;
   getLowStockItems(userId: string, location?: string): Promise<(Inventory & { product: Product; userSettings?: UserProductSettings })[]>;
   createInventoryItem(item: InsertInventory): Promise<Inventory>;
   updateInventoryQuantity(userId: string, productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
@@ -296,10 +296,21 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getStockOverview(userId: string): Promise<{ product: Product; homeQty: number; carQty: number; totalQty: number; items: Inventory[] }[]> {
+  async getStockOverview(userId: string): Promise<{ gtin: string; modelNumber: string; productName: string; homeQty: number; carQty: number; totalQty: number; items: Inventory[] }[]> {
     // Get all inventory items for the user with product info
     const allInventory = await db
-      .select()
+      .select({
+        inventory: inventory,
+        product: {
+          id: products.id,
+          gtin: products.gtin,
+          modelNumber: products.modelNumber,
+          name: products.name,
+          boxGtin: products.boxGtin,
+          boxQuantity: products.boxQuantity,
+          createdAt: products.createdAt,
+        }
+      })
       .from(inventory)
       .leftJoin(products, eq(inventory.productId, products.id))
       .where(and(
@@ -316,12 +327,12 @@ export class DatabaseStorage implements IStorage {
     }>();
 
     for (const row of allInventory) {
-      if (!row.products) continue;
+      if (!row.product) continue;
       
-      const productId = row.products.id;
+      const productId = row.product.id;
       if (!productMap.has(productId)) {
         productMap.set(productId, {
-          product: row.products,
+          product: row.product,
           homeQty: 0,
           carQty: 0,
           items: []
@@ -338,9 +349,11 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    // Convert to array and add totalQty
+    // Convert to array, flatten product data, and add totalQty
     const overview = Array.from(productMap.values()).map(data => ({
-      product: data.product,
+      gtin: data.product.gtin,
+      modelNumber: data.product.modelNumber,
+      productName: data.product.name,
       homeQty: data.homeQty,
       carQty: data.carQty,
       totalQty: data.homeQty + data.carQty,
@@ -349,8 +362,8 @@ export class DatabaseStorage implements IStorage {
 
     // Sort by model number
     overview.sort((a, b) => {
-      const modelA = a.product.modelNumber.toLowerCase();
-      const modelB = b.product.modelNumber.toLowerCase();
+      const modelA = a.modelNumber.toLowerCase();
+      const modelB = b.modelNumber.toLowerCase();
       return modelA.localeCompare(modelB);
     });
 

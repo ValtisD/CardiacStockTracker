@@ -330,6 +330,8 @@
   "stockOverview": {
     "title": "Bestandsübersicht",
     "description": "Gesamtbestand über alle Standorte",
+    "searchPlaceholder": "Nach Modellnummer oder Produktname suchen...",
+    "noResults": "Keine Produkte gefunden, die Ihrer Suche entsprechen",
     "modelNumber": "Modellnummer",
     "productName": "Produktname",
     "homeQty": "Zuhause",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Eye, Search } from "lucide-react";
 import { format } from "date-fns";
 
 interface InventoryItem {
@@ -44,11 +45,24 @@ export default function StockOverview() {
   const { t } = useTranslation();
   const [selectedProduct, setSelectedProduct] = useState<StockOverviewItem | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: stockData, isLoading } = useQuery<StockOverviewItem[]>({
     queryKey: ['/api/inventory/overview'],
     refetchOnWindowFocus: true,
   });
+
+  // Filter stock data based on search query
+  const filteredStockData = useMemo(() => {
+    if (!stockData) return [];
+    if (!searchQuery.trim()) return stockData;
+
+    const query = searchQuery.toLowerCase().trim();
+    return stockData.filter(item => 
+      item.modelNumber.toLowerCase().includes(query) ||
+      item.productName.toLowerCase().includes(query)
+    );
+  }, [stockData, searchQuery]);
 
   const handleViewDetails = (item: StockOverviewItem) => {
     setSelectedProduct(item);
@@ -59,8 +73,22 @@ export default function StockOverview() {
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle data-testid="text-stock-overview-title">{t('stockOverview.title')}</CardTitle>
-          <CardDescription>{t('stockOverview.description')}</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex-1">
+              <CardTitle data-testid="text-stock-overview-title">{t('stockOverview.title')}</CardTitle>
+              <CardDescription>{t('stockOverview.description')}</CardDescription>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('stockOverview.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+                data-testid="input-search-stock"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -70,6 +98,10 @@ export default function StockOverview() {
           ) : !stockData || stockData.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground" data-testid="text-no-stock">
               {t('stockOverview.noStock')}
+            </div>
+          ) : filteredStockData.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-results">
+              {t('stockOverview.noResults')}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -85,7 +117,7 @@ export default function StockOverview() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {stockData.map((item) => (
+                  {filteredStockData.map((item) => (
                     <TableRow key={item.gtin} data-testid={`row-product-${item.gtin}`}>
                       <TableCell className="font-medium" data-testid={`text-model-${item.gtin}`}>
                         {item.modelNumber}
