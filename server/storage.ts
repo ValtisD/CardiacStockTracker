@@ -125,7 +125,15 @@ export class DatabaseStorage implements IStorage {
     // If not found in products, search by serial number in user's inventory (exact match)
     const inventoryResults = await db
       .select({
-        product: products
+        product: {
+          id: products.id,
+          gtin: products.gtin,
+          modelNumber: products.modelNumber,
+          name: products.name,
+          boxGtin: products.boxGtin,
+          boxQuantity: products.boxQuantity,
+          createdAt: products.createdAt,
+        }
       })
       .from(inventory)
       .innerJoin(products, eq(inventory.productId, products.id))
@@ -189,7 +197,15 @@ export class DatabaseStorage implements IStorage {
         lotNumber: inventory.lotNumber,
         expirationDate: inventory.expirationDate,
         updatedAt: inventory.updatedAt,
-        product: products,
+        product: {
+          id: products.id,
+          gtin: products.gtin,
+          modelNumber: products.modelNumber,
+          name: products.name,
+          boxGtin: products.boxGtin,
+          boxQuantity: products.boxQuantity,
+          createdAt: products.createdAt,
+        },
       })
       .from(inventory)
       .innerJoin(products, eq(inventory.productId, products.id));
@@ -935,7 +951,15 @@ export class DatabaseStorage implements IStorage {
         source: procedureMaterials.source,
         serialNumber: procedureMaterials.serialNumber,
         lotNumber: procedureMaterials.lotNumber,
-        product: products,
+        product: {
+          id: products.id,
+          gtin: products.gtin,
+          modelNumber: products.modelNumber,
+          name: products.name,
+          boxGtin: products.boxGtin,
+          boxQuantity: products.boxQuantity,
+          createdAt: products.createdAt,
+        },
       })
       .from(procedureMaterials)
       .leftJoin(products, eq(procedureMaterials.productId, products.id))
