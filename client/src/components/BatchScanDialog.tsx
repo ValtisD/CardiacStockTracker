@@ -104,27 +104,57 @@ export default function BatchScanDialog({ open, onOpenChange }: BatchScanDialogP
       }
 
       const product = foundProducts[0];
+      
+      // Normalize GS1 data fields to null if undefined (for consistent comparison)
+      const scannedSerial = gs1Data.serialNumber ?? null;
+      const scannedLot = gs1Data.lotNumber ?? null;
+      const scannedExpiration = gs1Data.expirationDate ?? null;
+      
+      const trackingMode = scannedSerial ? 'serial' : (scannedLot ? 'lot' : null);
 
       // Check if item already in list
-      const itemKey = gs1Data.serialNumber || gs1Data.lotNumber;
-      const existingItem = scannedItems.find(item => 
-        item.productId === product.id && 
-        (item.serialNumber === gs1Data.serialNumber || item.lotNumber === gs1Data.lotNumber)
-      );
-
-      if (existingItem) {
-        toast({
-          title: t('batchScan.itemAlreadyScanned'),
-          description: t('batchScan.itemAlreadyInList'),
-          variant: "destructive",
-        });
-        setManualBarcode('');
-        setIsLoadingProduct(false);
-        return;
+      // For serial-tracked items: duplicate serial is an error (serials are unique)
+      // For lot-tracked or no tracking: increment quantity instead
+      if (trackingMode === 'serial' && scannedSerial) {
+        const existingSerialItem = scannedItems.find(item => 
+          item.productId === product.id && 
+          item.serialNumber === scannedSerial
+        );
+        
+        if (existingSerialItem) {
+          toast({
+            title: t('batchScan.itemAlreadyScanned'),
+            description: t('batchScan.serialAlreadyInList'),
+            variant: "destructive",
+          });
+          setManualBarcode('');
+          setIsLoadingProduct(false);
+          return;
+        }
       }
 
-      const trackingMode = gs1Data.serialNumber ? 'serial' : (gs1Data.lotNumber ? 'lot' : null);
+      // For lot-tracked or non-tracked items, check if we can increment existing item
+      if (trackingMode !== 'serial') {
+        const existingLotItem = scannedItems.find(item => 
+          item.productId === product.id && 
+          item.lotNumber === scannedLot &&
+          item.expirationDate === scannedExpiration
+        );
+        
+        if (existingLotItem) {
+          // Increment quantity for existing lot/non-tracked item
+          setScannedItems(scannedItems.map(item => 
+            item.id === existingLotItem.id 
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          ));
+          setManualBarcode('');
+          setIsLoadingProduct(false);
+          return;
+        }
+      }
       
+      // Add new item
       const newItem: ScannedItem = {
         id: `${Date.now()}-${Math.random()}`,
         productId: product.id,
@@ -132,9 +162,9 @@ export default function BatchScanDialog({ open, onOpenChange }: BatchScanDialogP
         productModel: product.modelNumber,
         gtin: product.gtin,
         trackingMode,
-        serialNumber: gs1Data.serialNumber ?? null,
-        lotNumber: gs1Data.lotNumber ?? null,
-        expirationDate: gs1Data.expirationDate ?? null,
+        serialNumber: scannedSerial,
+        lotNumber: scannedLot,
+        expirationDate: scannedExpiration,
         quantity: 1,
       };
 

@@ -302,6 +302,7 @@
     "transferToHome": "Transfer to home",
     "increaseQuantity": "Increase quantity",
     "transferFromHome": "Transfer from home",
+    "qty": "Qty",
     "addError": "Error adding item",
     "adding": "Adding...",
     "duplicateSerialNumber": "Duplicate Serial Number",
@@ -734,6 +735,7 @@
     "addAllToHome": "Add All to Home Stock",
     "itemAlreadyScanned": "Item Already Scanned",
     "itemAlreadyInList": "This item is already in the batch list",
+    "serialAlreadyInList": "This serial number is already in the batch list (serials must be unique)",
     "scanFailed": "Failed to scan barcode"
   }
 }

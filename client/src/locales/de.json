@@ -302,6 +302,7 @@
     "transferToHome": "Zu Zuhause verschieben",
     "increaseQuantity": "Menge erhöhen",
     "transferFromHome": "Von Zuhause verschieben",
+    "qty": "Mge",
     "addError": "Fehler beim Hinzufügen",
     "adding": "Füge hinzu...",
     "duplicateSerialNumber": "Doppelte Seriennummer",
@@ -734,6 +735,7 @@
     "addAllToHome": "Alle zum Heimbestand hinzufügen",
     "itemAlreadyScanned": "Artikel bereits gescannt",
     "itemAlreadyInList": "Dieser Artikel ist bereits in der Stapelliste",
+    "serialAlreadyInList": "Diese Seriennummer ist bereits in der Stapelliste (Seriennummern müssen eindeutig sein)",
     "scanFailed": "Barcode-Scan fehlgeschlagen"
   }
 }
