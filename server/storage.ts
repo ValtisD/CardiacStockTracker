@@ -42,6 +42,7 @@ export interface IStorage {
   getInventory(userId: string, location?: string): Promise<(Inventory & { product: Product })[]>;
   getInventoryItem(userId: string, productId: string, location: string): Promise<Inventory | undefined>;
   getInventorySummary(userId: string, location?: string): Promise<{ product: Product; totalQuantity: number; location?: string }[]>;
+  getStockOverview(userId: string): Promise<{ product: Product; homeQty: number; carQty: number; totalQty: number; items: Inventory[] }[]>;
   getLowStockItems(userId: string, location?: string): Promise<(Inventory & { product: Product; userSettings?: UserProductSettings })[]>;
   createInventoryItem(item: InsertInventory): Promise<Inventory>;
   updateInventoryQuantity(userId: string, productId: string, location: string, quantity: number): Promise<Inventory | undefined>;
@@ -277,6 +278,67 @@ export class DatabaseStorage implements IStorage {
       totalQuantity: inventoryMap.get(product.id) || 0,
       location,
     }));
+  }
+
+  async getStockOverview(userId: string): Promise<{ product: Product; homeQty: number; carQty: number; totalQty: number; items: Inventory[] }[]> {
+    // Get all inventory items for the user with product info
+    const allInventory = await db
+      .select()
+      .from(inventory)
+      .leftJoin(products, eq(inventory.productId, products.id))
+      .where(and(
+        eq(inventory.userId, userId),
+        gt(inventory.quantity, 0)
+      ));
+
+    // Group by product
+    const productMap = new Map<string, {
+      product: Product;
+      homeQty: number;
+      carQty: number;
+      items: Inventory[];
+    }>();
+
+    for (const row of allInventory) {
+      if (!row.products) continue;
+      
+      const productId = row.products.id;
+      if (!productMap.has(productId)) {
+        productMap.set(productId, {
+          product: row.products,
+          homeQty: 0,
+          carQty: 0,
+          items: []
+        });
+      }
+
+      const data = productMap.get(productId)!;
+      data.items.push(row.inventory);
+      
+      if (row.inventory.location === 'home') {
+        data.homeQty += row.inventory.quantity;
+      } else if (row.inventory.location === 'car') {
+        data.carQty += row.inventory.quantity;
+      }
+    }
+
+    // Convert to array and add totalQty
+    const overview = Array.from(productMap.values()).map(data => ({
+      product: data.product,
+      homeQty: data.homeQty,
+      carQty: data.carQty,
+      totalQty: data.homeQty + data.carQty,
+      items: data.items
+    }));
+
+    // Sort by model number
+    overview.sort((a, b) => {
+      const modelA = a.product.modelNumber.toLowerCase();
+      const modelB = b.product.modelNumber.toLowerCase();
+      return modelA.localeCompare(modelB);
+    });
+
+    return overview;
   }
 
   async createInventoryItem(item: InsertInventory): Promise<Inventory> {

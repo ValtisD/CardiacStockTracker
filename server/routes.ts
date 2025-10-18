@@ -289,6 +289,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/inventory/overview", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const overview = await storage.getStockOverview(userId);
+      res.json(overview);
+    } catch (error) {
+      console.error("Error fetching stock overview:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to fetch stock overview" });
+    }
+  });
+
   // Quick search by serial or lot number
   app.get("/api/quick-search/:query", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
