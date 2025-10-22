@@ -44,6 +44,7 @@ const getImplantReportSchema = (t: any) => z.object({
   procedureType: z.string().min(1, t('procedures.procedureTypeRequired')),
   deviceUsed: z.string().optional(),
   deviceSerialNumber: z.string().optional(),
+  deviceLotNumber: z.string().optional(),
   deviceSource: z.enum(['car', 'external', 'hospital']).default('car'),
   notes: z.string().optional(),
 });
@@ -354,9 +355,17 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         form.setValue('deviceUsed', productInfo.id);
         setScannedDeviceId(productInfo.id);
         
-        // Set device serial number if present in GS1 data
+        // Set device serial/lot number from GS1 data (clear the opposite field)
         if (gs1Data?.serialNumber) {
           form.setValue('deviceSerialNumber', gs1Data.serialNumber);
+          form.setValue('deviceLotNumber', ''); // Clear lot when setting serial
+        } else if (gs1Data?.lotNumber) {
+          form.setValue('deviceLotNumber', gs1Data.lotNumber);
+          form.setValue('deviceSerialNumber', ''); // Clear serial when setting lot
+        } else {
+          // No serial or lot in GS1 data - clear both
+          form.setValue('deviceSerialNumber', '');
+          form.setValue('deviceLotNumber', '');
         }
       } else {
         toast({
@@ -743,12 +752,18 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                             <Select 
                               onValueChange={(value) => {
                                 field.onChange(value);
-                                // Auto-fetch and set serial number from inventory
+                                // Auto-fetch and set serial/lot number from inventory
                                 const { serialNumber, lotNumber } = getInventorySerialLot(value);
                                 if (serialNumber) {
                                   form.setValue('deviceSerialNumber', serialNumber);
+                                  form.setValue('deviceLotNumber', ''); // Clear lot if serial is present
                                 } else if (lotNumber) {
-                                  form.setValue('deviceSerialNumber', `${t('procedures.lot')}: ${lotNumber}`);
+                                  form.setValue('deviceSerialNumber', ''); // Clear serial if lot is present
+                                  form.setValue('deviceLotNumber', lotNumber);
+                                } else {
+                                  // Clear both if neither is present
+                                  form.setValue('deviceSerialNumber', '');
+                                  form.setValue('deviceLotNumber', '');
                                 }
                               }} 
                               value={field.value}
@@ -815,10 +830,18 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                       {t('procedures.serial')}: {form.watch('deviceSerialNumber')}
                     </div>
                   )}
+                  {form.watch('deviceLotNumber') && !form.watch('deviceSerialNumber') && (
+                    <div className="text-xs text-muted-foreground ml-1">
+                      {t('procedures.lot')}: {form.watch('deviceLotNumber')}
+                    </div>
+                  )}
                   {form.watch('deviceUsed') && form.watch('deviceSource') === 'car' && (
                     <div className="flex items-center gap-2 text-xs ml-1">
                       {(() => {
-                        const carQty = getCarStockQuantity(form.watch('deviceUsed') || '');
+                        const deviceId = form.watch('deviceUsed') || '';
+                        const deviceSerial = form.watch('deviceSerialNumber') || undefined;
+                        const deviceLot = form.watch('deviceLotNumber') || undefined;
+                        const carQty = getCarStockQuantityForLotSerial(deviceId, deviceSerial, deviceLot);
                         const hasNoStock = carQty === 0;
                         return hasNoStock ? (
                           <>
