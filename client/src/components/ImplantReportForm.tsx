@@ -179,7 +179,33 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
   const deviceProducts = products; // All products can be used as devices
 
   // Helper function to get available quantity for a product in car stock
+  // For lot-tracked items, this returns total quantity across all lots
   const getCarStockQuantity = (productId: string): number => {
+    const inventoryItems = carInventory.filter(inv => inv.productId === productId);
+    return inventoryItems.reduce((total, item) => total + item.quantity, 0);
+  };
+  
+  // Helper function to check if specific lot/serial exists in car stock
+  const getCarStockQuantityForLotSerial = (productId: string, serialNumber?: string, lotNumber?: string): number => {
+    if (!productId) return 0;
+    
+    // For serial-tracked items: match both productId AND serialNumber
+    if (serialNumber) {
+      const inventoryItem = carInventory.find(
+        inv => inv.productId === productId && inv.serialNumber === serialNumber
+      );
+      return inventoryItem?.quantity || 0;
+    }
+    
+    // For lot-tracked items: match both productId AND lotNumber
+    if (lotNumber) {
+      const inventoryItems = carInventory.filter(
+        inv => inv.productId === productId && inv.lotNumber === lotNumber
+      );
+      return inventoryItems.reduce((total, item) => total + item.quantity, 0);
+    }
+    
+    // For non-tracked items: match productId only (sum all quantities)
     const inventoryItems = carInventory.filter(inv => inv.productId === productId);
     return inventoryItems.reduce((total, item) => total + item.quantity, 0);
   };
@@ -377,10 +403,11 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
     setShowBarcodeScanner(false);
   };
 
-  const getInventoryQuantity = (productId?: string): number => {
+  const getInventoryQuantity = (productId?: string, serialNumber?: string, lotNumber?: string): number => {
     if (!productId) return 0;
-    const inventoryItem = carInventory.find(inv => inv.productId === productId);
-    return inventoryItem?.quantity || 0;
+    
+    // Use the lot/serial-aware function
+    return getCarStockQuantityForLotSerial(productId, serialNumber, lotNumber);
   };
 
   const getInventorySerialLot = (productId?: string): { serialNumber?: string; lotNumber?: string } => {
@@ -432,7 +459,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         </CardHeader>
         <CardContent className="space-y-3">
           {items.map((item, index) => {
-            const availableQty = getInventoryQuantity(item.productId);
+            const availableQty = getInventoryQuantity(item.productId, item.serialNumber, item.lotNumber);
             const isLowStock = item.source === 'car' && item.productId && availableQty < item.quantity;
 
             return (

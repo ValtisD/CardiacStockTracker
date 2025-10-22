@@ -165,10 +165,12 @@ function ImplantReportsPage() {
 
   if (showNewReport) {
     return (
-      <ImplantReportForm 
-        onSubmit={handleSubmitSuccess}
-        onCancel={() => setShowNewReport(false)}
-      />
+      <div className="p-3 md:p-6">
+        <ImplantReportForm 
+          onSubmit={handleSubmitSuccess}
+          onCancel={() => setShowNewReport(false)}
+        />
+      </div>
     );
   }
 
