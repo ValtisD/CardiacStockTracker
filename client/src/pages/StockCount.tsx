@@ -30,7 +30,7 @@ export default function StockCount() {
   // Start session mutation
   const startSessionMutation = useMutation({
     mutationFn: async (countType: CountType) => {
-      return await apiRequest("/api/stock-count/sessions", "POST", {
+      return await apiRequest("POST", "/api/stock-count/sessions", {
         countType,
         status: "in_progress",
       });
@@ -49,7 +49,7 @@ export default function StockCount() {
   // Cancel session mutation
   const cancelSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
-      return await apiRequest(`/api/stock-count/sessions/${sessionId}/cancel`, "POST");
+      return await apiRequest("POST", `/api/stock-count/sessions/${sessionId}/cancel`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stock-count/sessions/active"] });

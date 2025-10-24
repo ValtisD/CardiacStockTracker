@@ -41,7 +41,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
   // Apply adjustments mutation
   const applyMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/stock-count/sessions/${session.id}/apply`, "POST", adjustments);
+      return await apiRequest("POST", `/api/stock-count/sessions/${session.id}/apply`, adjustments);
     },
     onSuccess: () => {
       toast({
