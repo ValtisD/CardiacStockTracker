@@ -30,6 +30,7 @@ import { DebugPanel } from "@/components/DebugPanel";
 import Settings from "@/pages/Settings";
 import RegistrationGate from "@/pages/RegistrationGate";
 import StockOverview from "@/pages/StockOverview";
+import StockCount from "@/pages/StockCount";
 import NotFound from "@/pages/not-found";
 import { syncManager } from "@/lib/syncManager";
 import { debugLogger } from "@/lib/debugLogger";
@@ -256,6 +257,7 @@ function Router() {
       <Route path="/inventory/home" component={HomeInventoryPage} />
       <Route path="/inventory/car" component={CarInventoryPage} />
       <Route path="/stock-overview" component={StockOverview} />
+      <Route path="/stock-count" component={StockCount} />
       <Route path="/hospitals" component={HospitalsPage} />
       <Route path="/reports" component={ImplantReportsPage} />
       <Route path="/products" component={ProductsPage} />

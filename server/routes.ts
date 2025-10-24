@@ -14,6 +14,8 @@ import {
   transferInventoryItemSchema,
   languageSchema,
   toggleAdminSchema,
+  insertStockCountSessionSchema,
+  insertStockCountItemSchema,
 } from "@shared/schema";
 import { requireAuth, requireAdmin, type AuthRequest } from "./middleware/auth";
 
@@ -699,6 +701,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid language. Must be 'de' or 'en'", details: error.errors });
       }
       res.status(500).json({ error: "Failed to update user language" });
+    }
+  });
+
+  // Stock Count Routes
+  
+  // Create new stock count session
+  app.post("/api/stock-count/sessions", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const validatedData = insertStockCountSessionSchema.parse({ ...req.body, userId });
+      
+      // Check if there's already an active session
+      const activeSession = await storage.getActiveStockCountSession(userId);
+      if (activeSession) {
+        return res.status(400).json({ error: "There is already an active stock count session" });
+      }
+
+      const session = await storage.createStockCountSession(validatedData);
+      res.json(session);
+    } catch (error: any) {
+      console.error("Error creating stock count session:", error instanceof Error ? error.message : 'Unknown error');
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create stock count session" });
+    }
+  });
+
+  // Get active stock count session
+  app.get("/api/stock-count/sessions/active", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const session = await storage.getActiveStockCountSession(userId);
+      res.json(session || null);
+    } catch (error) {
+      console.error("Error fetching active session:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to fetch active session" });
+    }
+  });
+
+  // Get specific stock count session
+  app.get("/api/stock-count/sessions/:sessionId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const sessionId = req.params.sessionId;
+      const session = await storage.getStockCountSession(userId, sessionId);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      res.json(session);
+    } catch (error) {
+      console.error("Error fetching session:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to fetch session" });
+    }
+  });
+
+  // Add item to stock count
+  app.post("/api/stock-count/sessions/:sessionId/items", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const sessionId = req.params.sessionId;
+      
+      // Verify session belongs to user
+      const session = await storage.getStockCountSession(userId, sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      if (session.status !== 'in_progress') {
+        return res.status(400).json({ error: "Session is not active" });
+      }
+
+      const validatedData = insertStockCountItemSchema.parse({ ...req.body, sessionId });
+      const item = await storage.addStockCountItem(validatedData);
+      res.json(item);
+    } catch (error: any) {
+      console.error("Error adding stock count item:", error instanceof Error ? error.message : 'Unknown error');
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add item" });
+    }
+  });
+
+  // Get all items in stock count
+  app.get("/api/stock-count/sessions/:sessionId/items", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const sessionId = req.params.sessionId;
+      
+      // Verify session belongs to user
+      const session = await storage.getStockCountSession(userId, sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      const items = await storage.getStockCountItems(sessionId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching stock count items:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to fetch items" });
+    }
+  });
+
+  // Calculate discrepancies
+  app.get("/api/stock-count/sessions/:sessionId/discrepancies", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const sessionId = req.params.sessionId;
+      
+      const discrepancies = await storage.calculateDiscrepancies(userId, sessionId);
+      res.json(discrepancies);
+    } catch (error) {
+      console.error("Error calculating discrepancies:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to calculate discrepancies" });
+    }
+  });
+
+  // Apply stock count adjustments
+  app.post("/api/stock-count/sessions/:sessionId/apply", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const sessionId = req.params.sessionId;
+      
+      // Verify session belongs to user
+      const session = await storage.getStockCountSession(userId, sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      await storage.applyStockCountAdjustments(userId, sessionId, req.body);
+      await storage.completeStockCountSession(userId, sessionId);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error applying adjustments:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to apply adjustments" });
+    }
+  });
+
+  // Cancel stock count session
+  app.post("/api/stock-count/sessions/:sessionId/cancel", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const sessionId = req.params.sessionId;
+      
+      await storage.cancelStockCountSession(userId, sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error cancelling session:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to cancel session" });
     }
   });
 

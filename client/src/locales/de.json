@@ -351,6 +351,99 @@
     "car": "Auto",
     "items": "Artikel"
   },
+  "stockCount": {
+    "title": {
+      "main": "Bestandszählung",
+      "carCount": "Fahrzeugbestandszählung",
+      "totalCount": "Gesamtbestandszählung",
+      "reconciliation": "Bestandszählung Abgleich"
+    },
+    "description": {
+      "main": "Führen Sie physische Inventurzählungen durch und gleichen Sie Abweichungen ab",
+      "scanning": "Scannen Sie Artikel, um Ihr physisches Inventar zu zählen",
+      "reconciliation": "Überprüfen und lösen Sie Inventarabweichungen"
+    },
+    "countTypes": {
+      "car": {
+        "title": "Fahrzeugbestandszählung",
+        "description": "Nur Artikel im Fahrzeuginventar zählen",
+        "features": [
+          "Schnellzählung für mobiles Inventar",
+          "Fahrzeugbestandsniveaus überprüfen",
+          "Abweichungen unterwegs abgleichen"
+        ]
+      },
+      "total": {
+        "title": "Gesamtbestandszählung",
+        "description": "Vollständige Zählung von Heim- und Fahrzeuginventar",
+        "features": [
+          "Umfassende Inventurprüfung",
+          "Heim- und Fahrzeugbestand separat zählen",
+          "Vollständiger Abgleich aller Standorte"
+        ]
+      }
+    },
+    "labels": {
+      "currentLocation": "Aktueller Standort",
+      "scannedItems": "Gescannte Artikel",
+      "qty": "Mge",
+      "enterGtin": "GTIN manuell eingeben"
+    },
+    "locations": {
+      "home": "Zuhause",
+      "car": "Fahrzeug"
+    },
+    "actions": {
+      "scanBarcode": "Barcode scannen",
+      "add": "Hinzufügen",
+      "cancel": "Zählung abbrechen",
+      "proceedToReconciliation": "Zum Abgleich fortfahren",
+      "backToScanning": "Zurück zum Scannen",
+      "applyAdjustments": "Anpassungen übernehmen"
+    },
+    "status": {
+      "starting": "Starte Bestandszählung..."
+    },
+    "messages": {
+      "noItemsScanned": "Noch keine Artikel gescannt. Beginnen Sie mit dem Scannen, um Ihre Zählung zu starten.",
+      "reconciliationComplete": "Bestandszählung Abgleich erfolgreich abgeschlossen",
+      "andMore": "+{{count}} weitere"
+    },
+    "errors": {
+      "startFailed": "Bestandszählung konnte nicht gestartet werden",
+      "noGtin": "Keine GTIN in Barcode-Daten gefunden",
+      "productNotFound": "Produkt nicht in Datenbank gefunden",
+      "scanFailed": "Barcode-Scan fehlgeschlagen",
+      "addItemFailed": "Artikel konnte nicht zur Zählung hinzugefügt werden",
+      "reconciliationFailed": "Abgleich-Anpassungen konnten nicht übernommen werden"
+    },
+    "reconciliation": {
+      "title": "Bestandszählung Abgleich",
+      "description": "Überprüfen Sie Abweichungen und wenden Sie Anpassungen an",
+      "selectAction": "Aktion auswählen...",
+      "andMore": "+{{count}} weitere",
+      "matched": {
+        "title": "Übereinstimmende Artikel",
+        "description": "Artikel an erwarteten Standorten gefunden"
+      },
+      "found": {
+        "title": "Gefundene Artikel",
+        "description": "Gescannte Artikel, die nicht an erwarteten Standorten sind oder neue Artikel",
+        "scannedIn": "Gescannt in"
+      },
+      "missing": {
+        "title": "Fehlende Artikel",
+        "description": "Artikel im System, aber während der Zählung nicht gescannt"
+      },
+      "actions": {
+        "addNew": "Als neuen Artikel hinzufügen",
+        "transferToCar": "Zum Fahrzeug verschieben",
+        "transferToHome": "Nach Zuhause verschieben",
+        "keepForInvestigation": "Zur Untersuchung behalten",
+        "markDerecognized": "Als deaktiviert markieren"
+      }
+    }
+  },
   "products": {
     "title": "Produkte",
     "addProduct": "Produkt hinzufügen",

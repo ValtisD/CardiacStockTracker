@@ -183,3 +183,48 @@ export type UserProductSettings = typeof userProductSettings.$inferSelect;
 export type InsertUserProductSettings = z.infer<typeof insertUserProductSettingsSchema>;
 
 export type AdminUser = typeof adminUsers.$inferSelect;
+
+// Stock Count Sessions - tracks physical inventory counts
+export const stockCountSessions = pgTable("stock_count_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(), // Auth0 user ID
+  countType: text("count_type").notNull(), // 'car' or 'total'
+  status: text("status").notNull().default('in_progress'), // 'in_progress', 'completed', 'cancelled'
+  startedAt: timestamp("started_at").default(sql`now()`).notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+// Scanned items during stock count - aggregates lot-tracked items automatically
+export const stockCountItems = pgTable("stock_count_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => stockCountSessions.id),
+  productId: varchar("product_id").notNull().references(() => products.id),
+  scannedLocation: text("scanned_location").notNull(), // 'home' or 'car' - where user found the item during count
+  trackingMode: text("tracking_mode"), // 'serial' or 'lot'
+  serialNumber: text("serial_number"), // For serial-tracked items
+  lotNumber: text("lot_number"), // For lot-tracked items
+  expirationDate: date("expiration_date"),
+  quantity: integer("quantity").notNull().default(1), // Aggregated count for lot-tracked items
+  scannedAt: timestamp("scanned_at").default(sql`now()`).notNull(),
+});
+
+// Insert schemas for stock count
+export const insertStockCountSessionSchema = createInsertSchema(stockCountSessions).omit({
+  id: true,
+  startedAt: true,
+});
+
+export const insertStockCountItemSchema = createInsertSchema(stockCountItems).omit({
+  id: true,
+  scannedAt: true,
+});
+
+export const clientInsertStockCountSessionSchema = insertStockCountSessionSchema.omit({ userId: true });
+export const clientInsertStockCountItemSchema = insertStockCountItemSchema.omit({ sessionId: true });
+
+// Types
+export type StockCountSession = typeof stockCountSessions.$inferSelect;
+export type InsertStockCountSession = z.infer<typeof insertStockCountSessionSchema>;
+
+export type StockCountItem = typeof stockCountItems.$inferSelect;
+export type InsertStockCountItem = z.infer<typeof insertStockCountItemSchema>;

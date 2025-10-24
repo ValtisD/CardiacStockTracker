@@ -1,4 +1,4 @@
-import { Home, Package, Car, Hospital, FileText, Settings, BarChart, Users } from "lucide-react";
+import { Home, Package, Car, Hospital, FileText, Settings, BarChart, Users, ClipboardCheck } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -64,6 +64,12 @@ export default function AppSidebar({
       url: "/stock-overview",
       icon: BarChart,
       active: currentPath === '/stock-overview',
+    },
+    {
+      title: t('nav.stockCount'),
+      url: "/stock-count",
+      icon: ClipboardCheck,
+      active: currentPath === '/stock-count',
     },
     {
       title: t('sidebar.hospitals'),

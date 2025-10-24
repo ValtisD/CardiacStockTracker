@@ -9,6 +9,8 @@ import {
   userProductSettings,
   users,
   adminUsers,
+  stockCountSessions,
+  stockCountItems,
   type Product,
   type InsertProduct,
   type Inventory,
@@ -21,6 +23,10 @@ import {
   type InsertProcedureMaterial,
   type UserProductSettings,
   type InsertUserProductSettings,
+  type StockCountSession,
+  type InsertStockCountSession,
+  type StockCountItem,
+  type InsertStockCountItem,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -82,6 +88,30 @@ export interface IStorage {
   // User Preferences
   getUserLanguage(userId: string): Promise<string>;
   updateUserLanguage(userId: string, language: string): Promise<void>;
+  
+  // Stock Count
+  createStockCountSession(session: InsertStockCountSession): Promise<StockCountSession>;
+  getActiveStockCountSession(userId: string): Promise<StockCountSession | undefined>;
+  getStockCountSession(userId: string, sessionId: string): Promise<StockCountSession | undefined>;
+  addStockCountItem(item: InsertStockCountItem): Promise<StockCountItem>;
+  getStockCountItems(sessionId: string): Promise<(StockCountItem & { product: Product })[]>;
+  completeStockCountSession(userId: string, sessionId: string): Promise<void>;
+  cancelStockCountSession(userId: string, sessionId: string): Promise<void>;
+  calculateDiscrepancies(userId: string, sessionId: string): Promise<{
+    missing: (Inventory & { product: Product })[];
+    found: (StockCountItem & { product: Product })[];
+    matched: (StockCountItem & { product: Product; inventoryId: string })[];
+  }>;
+  applyStockCountAdjustments(
+    userId: string,
+    sessionId: string,
+    adjustments: {
+      transfers: { itemId: string; fromLocation: string; toLocation: string; quantity?: number }[];
+      missing: { inventoryId: string; action: 'mark_missing' | 'derecognized' }[];
+      newItems: { scannedItemId: string; location: string }[];
+      deleteInvestigated: string[]; // IDs of items to delete from investigation
+    }
+  ): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -841,6 +871,7 @@ export class DatabaseStorage implements IStorage {
         procedureType: implantProcedures.procedureType,
         deviceUsed: implantProcedures.deviceUsed,
         deviceSerialNumber: implantProcedures.deviceSerialNumber,
+        deviceLotNumber: implantProcedures.deviceLotNumber,
         deviceSource: implantProcedures.deviceSource,
         notes: implantProcedures.notes,
         createdAt: implantProcedures.createdAt,
@@ -864,6 +895,7 @@ export class DatabaseStorage implements IStorage {
         procedureType: implantProcedures.procedureType,
         deviceUsed: implantProcedures.deviceUsed,
         deviceSerialNumber: implantProcedures.deviceSerialNumber,
+        deviceLotNumber: implantProcedures.deviceLotNumber,
         deviceSource: implantProcedures.deviceSource,
         notes: implantProcedures.notes,
         createdAt: implantProcedures.createdAt,
@@ -1248,6 +1280,328 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ language })
       .where(eq(users.userId, userId));
+  }
+
+  // Stock Count Methods
+  async createStockCountSession(session: InsertStockCountSession): Promise<StockCountSession> {
+    const result = await db.insert(stockCountSessions).values(session).returning();
+    return result[0];
+  }
+
+  async getActiveStockCountSession(userId: string): Promise<StockCountSession | undefined> {
+    const result = await db
+      .select()
+      .from(stockCountSessions)
+      .where(
+        and(
+          eq(stockCountSessions.userId, userId),
+          eq(stockCountSessions.status, 'in_progress')
+        )
+      )
+      .orderBy(desc(stockCountSessions.startedAt))
+      .limit(1);
+    
+    return result[0];
+  }
+
+  async getStockCountSession(userId: string, sessionId: string): Promise<StockCountSession | undefined> {
+    const result = await db
+      .select()
+      .from(stockCountSessions)
+      .where(
+        and(
+          eq(stockCountSessions.id, sessionId),
+          eq(stockCountSessions.userId, userId)
+        )
+      )
+      .limit(1);
+    
+    return result[0];
+  }
+
+  async addStockCountItem(item: InsertStockCountItem): Promise<StockCountItem> {
+    // For lot-tracked items, check if same lot already scanned in this session
+    if (item.trackingMode === 'lot' && item.lotNumber) {
+      const existing = await db
+        .select()
+        .from(stockCountItems)
+        .where(
+          and(
+            eq(stockCountItems.sessionId, item.sessionId),
+            eq(stockCountItems.productId, item.productId),
+            eq(stockCountItems.lotNumber, item.lotNumber),
+            eq(stockCountItems.scannedLocation, item.scannedLocation)
+          )
+        )
+        .limit(1);
+      
+      // If exists, increment quantity
+      if (existing[0]) {
+        const updated = await db
+          .update(stockCountItems)
+          .set({ quantity: existing[0].quantity + (item.quantity || 1) })
+          .where(eq(stockCountItems.id, existing[0].id))
+          .returning();
+        
+        return updated[0];
+      }
+    }
+    
+    // Otherwise insert new item
+    const result = await db.insert(stockCountItems).values(item).returning();
+    return result[0];
+  }
+
+  async getStockCountItems(sessionId: string): Promise<(StockCountItem & { product: Product })[]> {
+    const result = await db
+      .select()
+      .from(stockCountItems)
+      .innerJoin(products, eq(stockCountItems.productId, products.id))
+      .where(eq(stockCountItems.sessionId, sessionId))
+      .orderBy(desc(stockCountItems.scannedAt));
+    
+    return result.map(row => ({
+      ...row.stock_count_items,
+      product: row.products
+    }));
+  }
+
+  async completeStockCountSession(userId: string, sessionId: string): Promise<void> {
+    await db
+      .update(stockCountSessions)
+      .set({ 
+        status: 'completed',
+        completedAt: sql`now()`
+      })
+      .where(
+        and(
+          eq(stockCountSessions.id, sessionId),
+          eq(stockCountSessions.userId, userId)
+        )
+      );
+  }
+
+  async cancelStockCountSession(userId: string, sessionId: string): Promise<void> {
+    await db
+      .update(stockCountSessions)
+      .set({ status: 'cancelled' })
+      .where(
+        and(
+          eq(stockCountSessions.id, sessionId),
+          eq(stockCountSessions.userId, userId)
+        )
+      );
+  }
+
+  async calculateDiscrepancies(userId: string, sessionId: string): Promise<{
+    missing: (Inventory & { product: Product })[];
+    found: (StockCountItem & { product: Product })[];
+    matched: (StockCountItem & { product: Product; inventoryId: string })[];
+  }> {
+    const session = await this.getStockCountSession(userId, sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    // Get all scanned items
+    const scannedItems = await this.getStockCountItems(sessionId);
+
+    // Get current inventory based on count type
+    const locations = session.countType === 'car' ? ['car'] : ['home', 'car'];
+    const currentInventory = await db
+      .select()
+      .from(inventory)
+      .innerJoin(products, eq(inventory.productId, products.id))
+      .where(
+        and(
+          eq(inventory.userId, userId),
+          inArray(inventory.location, locations)
+        )
+      );
+
+    const inventoryWithProduct = currentInventory.map(row => ({
+      ...row.inventory,
+      product: row.products
+    }));
+
+    // Match scanned items to inventory
+    const matched: (StockCountItem & { product: Product; inventoryId: string })[] = [];
+    const found: (StockCountItem & { product: Product })[] = [];
+
+    for (const scanned of scannedItems) {
+      let matchedInv: typeof inventoryWithProduct[0] | undefined;
+
+      if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
+        // Match by serial number
+        matchedInv = inventoryWithProduct.find(
+          inv => inv.serialNumber === scanned.serialNumber
+        );
+      } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
+        // Match by lot number
+        matchedInv = inventoryWithProduct.find(
+          inv => inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId
+        );
+      } else {
+        // Non-tracked: match by product only
+        matchedInv = inventoryWithProduct.find(
+          inv => inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber
+        );
+      }
+
+      if (matchedInv) {
+        // Check if location matches
+        if (matchedInv.location === scanned.scannedLocation) {
+          matched.push({ ...scanned, inventoryId: matchedInv.id });
+        } else {
+          // Found in different location than system thinks
+          found.push(scanned);
+        }
+      } else {
+        // Not in system at all
+        found.push(scanned);
+      }
+    }
+
+    // Find missing items (in system but not scanned)
+    const missing = inventoryWithProduct.filter(inv => {
+      const wasScanned = matched.some(m => m.inventoryId === inv.id);
+      return !wasScanned;
+    });
+
+    return { missing, found, matched };
+  }
+
+  async applyStockCountAdjustments(
+    userId: string,
+    sessionId: string,
+    adjustments: {
+      transfers: { itemId: string; fromLocation: string; toLocation: string; quantity?: number }[];
+      missing: { inventoryId: string; action: 'mark_missing' | 'derecognized' }[];
+      newItems: { scannedItemId: string; location: string }[];
+      deleteInvestigated: string[];
+    }
+  ): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Apply transfers
+      for (const transfer of adjustments.transfers) {
+        const scannedItem = await tx
+          .select()
+          .from(stockCountItems)
+          .where(eq(stockCountItems.id, transfer.itemId))
+          .limit(1);
+
+        if (scannedItem[0]) {
+          // Find the inventory item in wrong location
+          let invItem;
+          if (scannedItem[0].trackingMode === 'serial' && scannedItem[0].serialNumber) {
+            const result = await tx
+              .select()
+              .from(inventory)
+              .where(
+                and(
+                  eq(inventory.userId, userId),
+                  eq(inventory.serialNumber, scannedItem[0].serialNumber)
+                )
+              )
+              .limit(1);
+            invItem = result[0];
+          } else if (scannedItem[0].trackingMode === 'lot' && scannedItem[0].lotNumber) {
+            const result = await tx
+              .select()
+              .from(inventory)
+              .where(
+                and(
+                  eq(inventory.userId, userId),
+                  eq(inventory.productId, scannedItem[0].productId),
+                  eq(inventory.lotNumber, scannedItem[0].lotNumber),
+                  eq(inventory.location, transfer.fromLocation)
+                )
+              )
+              .limit(1);
+            invItem = result[0];
+          }
+
+          if (invItem) {
+            const transferQty = transfer.quantity || invItem.quantity;
+
+            if (transferQty >= invItem.quantity) {
+              // Transfer entire item
+              await tx
+                .update(inventory)
+                .set({ location: transfer.toLocation, updatedAt: sql`now()` })
+                .where(eq(inventory.id, invItem.id));
+            } else {
+              // Partial transfer for lot-tracked items
+              await tx
+                .update(inventory)
+                .set({ quantity: invItem.quantity - transferQty, updatedAt: sql`now()` })
+                .where(eq(inventory.id, invItem.id));
+
+              // Create new item in target location
+              await tx.insert(inventory).values({
+                userId,
+                productId: invItem.productId,
+                location: transfer.toLocation,
+                quantity: transferQty,
+                trackingMode: invItem.trackingMode,
+                lotNumber: invItem.lotNumber,
+                expirationDate: invItem.expirationDate,
+              });
+            }
+          }
+        }
+      }
+
+      // Handle missing items
+      for (const missing of adjustments.missing) {
+        if (missing.action === 'derecognized') {
+          // Delete immediately
+          await tx
+            .delete(inventory)
+            .where(
+              and(
+                eq(inventory.id, missing.inventoryId),
+                eq(inventory.userId, userId)
+              )
+            );
+        }
+        // For 'mark_missing', we just leave them in system for investigation
+      }
+
+      // Add new items from scanned
+      for (const newItem of adjustments.newItems) {
+        const scannedItem = await tx
+          .select()
+          .from(stockCountItems)
+          .where(eq(stockCountItems.id, newItem.scannedItemId))
+          .limit(1);
+
+        if (scannedItem[0]) {
+          await tx.insert(inventory).values({
+            userId,
+            productId: scannedItem[0].productId,
+            location: newItem.location,
+            quantity: scannedItem[0].quantity,
+            trackingMode: scannedItem[0].trackingMode,
+            serialNumber: scannedItem[0].serialNumber,
+            lotNumber: scannedItem[0].lotNumber,
+            expirationDate: scannedItem[0].expirationDate,
+          });
+        }
+      }
+
+      // Delete investigated items user confirmed to remove
+      if (adjustments.deleteInvestigated.length > 0) {
+        await tx
+          .delete(inventory)
+          .where(
+            and(
+              eq(inventory.userId, userId),
+              inArray(inventory.id, adjustments.deleteInvestigated)
+            )
+          );
+      }
+    });
   }
 }
 

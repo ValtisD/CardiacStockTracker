@@ -73,6 +73,7 @@
     "homeStock": "Home Stock",
     "carStock": "Car Stock",
     "stockOverview": "Stock Overview",
+    "stockCount": "Stock Count",
     "products": "Products",
     "hospitals": "Hospitals",
     "procedures": "Procedures",
@@ -350,6 +351,99 @@
     "home": "Home",
     "car": "Car",
     "items": "items"
+  },
+  "stockCount": {
+    "title": {
+      "main": "Stock Count",
+      "carCount": "Car Stock Count",
+      "totalCount": "Total Stock Count",
+      "reconciliation": "Stock Count Reconciliation"
+    },
+    "description": {
+      "main": "Perform physical inventory counts and reconcile discrepancies",
+      "scanning": "Scan items to count your physical inventory",
+      "reconciliation": "Review and resolve inventory discrepancies"
+    },
+    "countTypes": {
+      "car": {
+        "title": "Car Stock Count",
+        "description": "Count only items in your car inventory",
+        "features": [
+          "Quick count for mobile inventory",
+          "Verify car stock levels",
+          "Reconcile discrepancies on the go"
+        ]
+      },
+      "total": {
+        "title": "Total Stock Count",
+        "description": "Complete count of both home and car inventory",
+        "features": [
+          "Comprehensive inventory audit",
+          "Count home and car stock separately",
+          "Full reconciliation of all locations"
+        ]
+      }
+    },
+    "labels": {
+      "currentLocation": "Current Location",
+      "scannedItems": "Scanned Items",
+      "qty": "Qty",
+      "enterGtin": "Enter GTIN manually"
+    },
+    "locations": {
+      "home": "Home",
+      "car": "Car"
+    },
+    "actions": {
+      "scanBarcode": "Scan Barcode",
+      "add": "Add",
+      "cancel": "Cancel Count",
+      "proceedToReconciliation": "Proceed to Reconciliation",
+      "backToScanning": "Back to Scanning",
+      "applyAdjustments": "Apply Adjustments"
+    },
+    "status": {
+      "starting": "Starting stock count..."
+    },
+    "messages": {
+      "noItemsScanned": "No items scanned yet. Start scanning to begin your count.",
+      "reconciliationComplete": "Stock count reconciliation completed successfully",
+      "andMore": "+{{count}} more"
+    },
+    "errors": {
+      "startFailed": "Failed to start stock count session",
+      "noGtin": "No GTIN found in barcode data",
+      "productNotFound": "Product not found in database",
+      "scanFailed": "Failed to scan barcode",
+      "addItemFailed": "Failed to add item to count",
+      "reconciliationFailed": "Failed to apply reconciliation adjustments"
+    },
+    "reconciliation": {
+      "title": "Stock Count Reconciliation",
+      "description": "Review discrepancies and apply adjustments",
+      "selectAction": "Select action...",
+      "andMore": "+{{count}} more",
+      "matched": {
+        "title": "Matched Items",
+        "description": "Items found in expected locations"
+      },
+      "found": {
+        "title": "Items Found",
+        "description": "Items scanned but not in expected locations or new items",
+        "scannedIn": "Scanned in"
+      },
+      "missing": {
+        "title": "Missing Items",
+        "description": "Items in system but not scanned during count"
+      },
+      "actions": {
+        "addNew": "Add as new item",
+        "transferToCar": "Transfer to car",
+        "transferToHome": "Transfer to home",
+        "keepForInvestigation": "Keep for investigation",
+        "markDerecognized": "Mark as derecognized"
+      }
+    }
   },
   "products": {
     "title": "Products",
