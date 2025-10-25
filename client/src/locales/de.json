@@ -400,7 +400,8 @@
       "cancel": "Zählung abbrechen",
       "proceedToReconciliation": "Zum Abgleich fortfahren",
       "backToScanning": "Zurück zum Scannen",
-      "applyAdjustments": "Anpassungen übernehmen"
+      "applyAdjustments": "Anpassungen übernehmen",
+      "viewHistory": "Verlauf anzeigen"
     },
     "status": {
       "starting": "Starte Bestandszählung..."
@@ -443,6 +444,24 @@
         "keepForInvestigation": "Zur Untersuchung behalten",
         "markDerecognized": "Als ausgebucht markieren"
       }
+    },
+    "history": {
+      "title": "Bestandszählung Verlauf",
+      "description": "Vergangene Bestandszählungen und Abgleichsergebnisse ansehen",
+      "noHistory": "Kein Bestandszählung Verlauf verfügbar",
+      "completed": "Abgeschlossen",
+      "completedOn": "Abgeschlossen am",
+      "completedBy": "Abgeschlossen von"
+    },
+    "summary": {
+      "title": "Bestandszählung abgeschlossen",
+      "countType": "Zählungstyp",
+      "matched": "Übereinstimmend",
+      "transferred": "Verschoben",
+      "newItems": "Neue Artikel",
+      "markedMissing": "Als fehlend markiert",
+      "derecognized": "Ausgebucht",
+      "totalAdjustments": "Gesamt Anpassungen"
     }
   },
   "products": {

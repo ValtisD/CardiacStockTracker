@@ -860,6 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stock-count/sessions/:sessionId/apply", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.userId!;
+      const userEmail = req.userEmail!;
       const sessionId = req.params.sessionId;
       
       // Verify session belongs to user
@@ -868,10 +869,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Session not found" });
       }
 
-      await storage.applyStockCountAdjustments(userId, sessionId, req.body);
-      await storage.completeStockCountSession(userId, sessionId);
+      // Calculate discrepancies to get matched count
+      const discrepancies = await storage.calculateDiscrepancies(userId, sessionId);
+      const matchedCount = discrepancies.matched.length;
+
+      // Apply adjustments and get summary
+      const summary = await storage.applyStockCountAdjustments(
+        userId, 
+        sessionId, 
+        req.body, 
+        matchedCount
+      );
+
+      // Complete session with summary
+      await storage.completeStockCountSession(userId, sessionId, userEmail, summary);
       
-      res.json({ success: true });
+      res.json({ success: true, summary });
     } catch (error) {
       console.error("Error applying adjustments:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to apply adjustments" });
@@ -889,6 +902,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error cancelling session:", error instanceof Error ? error.message : 'Unknown error');
       res.status(500).json({ error: "Failed to cancel session" });
+    }
+  });
+
+  // Get stock count history
+  app.get("/api/stock-count/history", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      
+      const history = await storage.getStockCountHistory(userId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching stock count history:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to fetch history" });
+    }
+  });
+
+  // Cleanup old stock counts (admin only)
+  app.post("/api/stock-count/cleanup", requireAuth, requireAdmin, async (_req: AuthRequest, res: Response) => {
+    try {
+      const deletedCount = await storage.cleanupOldStockCounts();
+      res.json({ success: true, deletedCount });
+    } catch (error) {
+      console.error("Error cleaning up old stock counts:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to cleanup" });
     }
   });
 

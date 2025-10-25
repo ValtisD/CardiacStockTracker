@@ -400,7 +400,8 @@
       "cancel": "Cancel Count",
       "proceedToReconciliation": "Proceed to Reconciliation",
       "backToScanning": "Back to Scanning",
-      "applyAdjustments": "Apply Adjustments"
+      "applyAdjustments": "Apply Adjustments",
+      "viewHistory": "View History"
     },
     "status": {
       "starting": "Starting stock count..."
@@ -443,6 +444,24 @@
         "keepForInvestigation": "Keep for investigation",
         "markDerecognized": "Mark as derecognized"
       }
+    },
+    "history": {
+      "title": "Stock Count History",
+      "description": "View past stock counts and reconciliation results",
+      "noHistory": "No stock count history available",
+      "completed": "Completed",
+      "completedOn": "Completed on",
+      "completedBy": "Completed by"
+    },
+    "summary": {
+      "title": "Stock Count Complete",
+      "countType": "Count Type",
+      "matched": "Matched",
+      "transferred": "Transferred",
+      "newItems": "New Items",
+      "markedMissing": "Marked Missing",
+      "derecognized": "Derecognized",
+      "totalAdjustments": "Total Adjustments"
     }
   },
   "products": {

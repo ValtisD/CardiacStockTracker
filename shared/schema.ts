@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, date, boolean, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, date, boolean, timestamp, unique, json, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -192,7 +192,17 @@ export const stockCountSessions = pgTable("stock_count_sessions", {
   status: text("status").notNull().default('in_progress'), // 'in_progress', 'completed', 'cancelled'
   startedAt: timestamp("started_at").default(sql`now()`).notNull(),
   completedAt: timestamp("completed_at"),
-});
+  completedBy: text("completed_by"), // Email of user who completed the count
+  completionSummary: json("completion_summary").$type<{
+    matched: number;
+    transferred: number;
+    newItems: number;
+    markedMissing: number;
+    derecognized: number;
+  }>(),
+}, (table) => ({
+  completedAtIdx: index("stock_count_sessions_completed_at_idx").on(table.completedAt),
+}));
 
 // Scanned items during stock count - aggregates lot-tracked items automatically
 export const stockCountItems = pgTable("stock_count_items", {

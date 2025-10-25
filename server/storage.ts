@@ -96,7 +96,18 @@ export interface IStorage {
   addStockCountItem(item: InsertStockCountItem): Promise<StockCountItem>;
   getStockCountItems(sessionId: string): Promise<(StockCountItem & { product: Product })[]>;
   deleteStockCountItem(itemId: string): Promise<void>;
-  completeStockCountSession(userId: string, sessionId: string): Promise<void>;
+  completeStockCountSession(
+    userId: string, 
+    sessionId: string, 
+    completedBy: string,
+    summary: {
+      matched: number;
+      transferred: number;
+      newItems: number;
+      markedMissing: number;
+      derecognized: number;
+    }
+  ): Promise<void>;
   cancelStockCountSession(userId: string, sessionId: string): Promise<void>;
   calculateDiscrepancies(userId: string, sessionId: string): Promise<{
     missing: (Inventory & { product: Product })[];
@@ -111,8 +122,17 @@ export interface IStorage {
       missing: { inventoryId: string; action: 'mark_missing' | 'derecognized' }[];
       newItems: { scannedItemId: string; location: string }[];
       deleteInvestigated: string[]; // IDs of items to delete from investigation
-    }
-  ): Promise<void>;
+    },
+    matchedCount: number
+  ): Promise<{
+    matched: number;
+    transferred: number;
+    newItems: number;
+    markedMissing: number;
+    derecognized: number;
+  }>;
+  getStockCountHistory(userId: string, limit?: number): Promise<StockCountSession[]>;
+  cleanupOldStockCounts(): Promise<number>; // Returns number of deleted sessions
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1373,12 +1393,25 @@ export class DatabaseStorage implements IStorage {
       .where(eq(stockCountItems.id, itemId));
   }
 
-  async completeStockCountSession(userId: string, sessionId: string): Promise<void> {
+  async completeStockCountSession(
+    userId: string, 
+    sessionId: string, 
+    completedBy: string,
+    summary: {
+      matched: number;
+      transferred: number;
+      newItems: number;
+      markedMissing: number;
+      derecognized: number;
+    }
+  ): Promise<void> {
     await db
       .update(stockCountSessions)
       .set({ 
         status: 'completed',
-        completedAt: sql`now()`
+        completedAt: sql`now()`,
+        completedBy,
+        completionSummary: summary,
       })
       .where(
         and(
@@ -1523,8 +1556,18 @@ export class DatabaseStorage implements IStorage {
       missing: { inventoryId: string; action: 'mark_missing' | 'derecognized' }[];
       newItems: { scannedItemId: string; location: string }[];
       deleteInvestigated: string[];
-    }
-  ): Promise<void> {
+    },
+    matchedCount: number
+  ): Promise<{
+    matched: number;
+    transferred: number;
+    newItems: number;
+    markedMissing: number;
+    derecognized: number;
+  }> {
+    let markedMissingCount = 0;
+    let derecognizedCount = 0;
+
     await db.transaction(async (tx) => {
       // Apply transfers
       for (const transfer of adjustments.transfers) {
@@ -1599,6 +1642,7 @@ export class DatabaseStorage implements IStorage {
       // Handle missing items
       for (const missing of adjustments.missing) {
         if (missing.action === 'derecognized') {
+          derecognizedCount++;
           // Delete immediately
           await tx
             .delete(inventory)
@@ -1608,6 +1652,8 @@ export class DatabaseStorage implements IStorage {
                 eq(inventory.userId, userId)
               )
             );
+        } else {
+          markedMissingCount++;
         }
         // For 'mark_missing', we just leave them in system for investigation
       }
@@ -1646,6 +1692,66 @@ export class DatabaseStorage implements IStorage {
           );
       }
     });
+
+    return {
+      matched: matchedCount,
+      transferred: adjustments.transfers.length,
+      newItems: adjustments.newItems.length,
+      markedMissing: markedMissingCount,
+      derecognized: derecognizedCount,
+    };
+  }
+
+  async getStockCountHistory(userId: string, limit: number = 50): Promise<StockCountSession[]> {
+    const sessions = await db
+      .select()
+      .from(stockCountSessions)
+      .where(
+        and(
+          eq(stockCountSessions.userId, userId),
+          eq(stockCountSessions.status, 'completed')
+        )
+      )
+      .orderBy(desc(stockCountSessions.completedAt))
+      .limit(limit);
+    
+    return sessions;
+  }
+
+  async cleanupOldStockCounts(): Promise<number> {
+    // Delete stock count sessions older than 12 months
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+    // First delete stock count items for these sessions
+    const oldSessions = await db
+      .select({ id: stockCountSessions.id })
+      .from(stockCountSessions)
+      .where(
+        and(
+          eq(stockCountSessions.status, 'completed'),
+          sql`${stockCountSessions.completedAt} < ${twelveMonthsAgo.toISOString()}`
+        )
+      );
+
+    if (oldSessions.length > 0) {
+      const sessionIds = oldSessions.map(s => s.id);
+      
+      // Delete items first (foreign key constraint)
+      await db
+        .delete(stockCountItems)
+        .where(inArray(stockCountItems.sessionId, sessionIds));
+      
+      // Then delete sessions
+      const result = await db
+        .delete(stockCountSessions)
+        .where(inArray(stockCountSessions.id, sessionIds))
+        .returning();
+      
+      return result.length;
+    }
+
+    return 0;
   }
 }
 

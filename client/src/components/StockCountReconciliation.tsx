@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertTriangle, CheckCircle2, Package, ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { StockCountCompletionSummary } from "@/components/StockCountCompletionSummary";
 import type { StockCountSession } from "@shared/schema";
 
 interface StockCountReconciliationProps {
@@ -32,6 +33,14 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
     newItems: [],
     deleteInvestigated: [],
   });
+  const [showSummary, setShowSummary] = useState(false);
+  const [completionSummary, setCompletionSummary] = useState<{
+    matched: number;
+    transferred: number;
+    newItems: number;
+    markedMissing: number;
+    derecognized: number;
+  } | null>(null);
 
   // Fetch discrepancies
   const { data: discrepancies, isLoading } = useQuery({
@@ -43,11 +52,9 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
     mutationFn: async () => {
       return await apiRequest("POST", `/api/stock-count/sessions/${session.id}/apply`, adjustments);
     },
-    onSuccess: () => {
-      toast({
-        description: t("stockCount.messages.reconciliationComplete"),
-      });
-      onComplete();
+    onSuccess: (data: any) => {
+      setCompletionSummary(data.summary);
+      setShowSummary(true);
     },
     onError: () => {
       toast({
@@ -56,6 +63,11 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
       });
     },
   });
+
+  const handleSummaryClose = () => {
+    setShowSummary(false);
+    onComplete();
+  };
 
   const handleTransferItem = (scannedItemId: string, fromLocation: string, toLocation: string) => {
     setAdjustments((prev) => ({
@@ -356,6 +368,16 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
           </Card>
         )}
       </div>
+
+      {/* Completion Summary Modal */}
+      {completionSummary && (
+        <StockCountCompletionSummary
+          isOpen={showSummary}
+          onClose={handleSummaryClose}
+          summary={completionSummary}
+          countType={session.countType as "car" | "total"}
+        />
+      )}
     </div>
   );
 }
