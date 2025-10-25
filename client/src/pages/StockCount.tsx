@@ -116,10 +116,10 @@ export default function StockCount() {
   if (activeSession) {
     return (
       <div className="h-full flex flex-col">
-        <div className="p-6 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold" data-testid="text-stock-count-title">
+        <div className="px-4 py-4 md:px-6 md:py-6 border-b">
+          <div className="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex-1">
+              <h1 className="text-xl md:text-2xl font-bold" data-testid="text-stock-count-title">
                 {activeSession.countType === "car"
                   ? t("stockCount.title.carCount")
                   : activeSession.countType === "serialized"
@@ -136,12 +136,14 @@ export default function StockCount() {
                 onClick={handleCancelSession}
                 disabled={cancelSessionMutation.isPending}
                 data-testid="button-cancel-count"
+                className="flex-1 md:flex-none"
               >
                 {t("stockCount.actions.cancel")}
               </Button>
               <Button
                 onClick={handleProceedToReconciliation}
                 data-testid="button-proceed-reconciliation"
+                className="flex-1 md:flex-none"
               >
                 {t("stockCount.actions.proceedToReconciliation")}
               </Button>
@@ -149,8 +151,8 @@ export default function StockCount() {
           </div>
 
           {(activeSession.countType === "total" || activeSession.countType === "serialized") && (
-            <div className="flex items-center gap-3 p-3 bg-card border rounded-lg">
-              <span className="text-sm font-medium">{t("stockCount.labels.currentLocation")}:</span>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-card border rounded-lg">
+              <span className="text-sm font-medium whitespace-nowrap">{t("stockCount.labels.currentLocation")}:</span>
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-medium ${currentLocation === "home" ? "text-foreground" : "text-muted-foreground"}`}>
                   {t("stockCount.locations.home")}
@@ -180,17 +182,17 @@ export default function StockCount() {
 
   // Show count type selection
   return (
-    <div className="container max-w-4xl mx-auto p-6">
-      <div className="mb-8">
-        <div className="flex items-start justify-between gap-4 mb-2">
+    <div className="container max-w-4xl mx-auto px-4 py-4 md:px-6 md:py-6">
+      <div className="mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-2">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold" data-testid="text-stock-count-title">
+            <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-stock-count-title">
               {t("stockCount.title.main")}
             </h1>
             <p className="text-muted-foreground mt-2">{t("stockCount.description.main")}</p>
           </div>
           <Link href="/stock-count/history">
-            <Button variant="outline" data-testid="button-view-history">
+            <Button variant="outline" data-testid="button-view-history" className="w-full sm:w-auto">
               <History className="h-4 w-4 mr-2" />
               {t("stockCount.actions.viewHistory")}
             </Button>
