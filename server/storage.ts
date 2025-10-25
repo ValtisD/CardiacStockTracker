@@ -1502,23 +1502,49 @@ export class DatabaseStorage implements IStorage {
           inv => inv.serialNumber === scanned.serialNumber && !matchedInventoryIds.has(inv.id)
         );
       } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
-        // Match by lot number - check quantity hasn't been exceeded
+        // Match by lot number - prioritize items in the scanned location
         matchedInv = inventoryWithProduct.find(inv => {
-          if (inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId) {
+          if (inv.location === scanned.scannedLocation && 
+              inv.lotNumber === scanned.lotNumber && 
+              inv.productId === scanned.productId) {
             const alreadyMatched = matchedQuantities.get(inv.id) || 0;
             return alreadyMatched < inv.quantity;
           }
           return false;
         });
+        
+        // If no match in scanned location, try other locations
+        if (!matchedInv) {
+          matchedInv = inventoryWithProduct.find(inv => {
+            if (inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId) {
+              const alreadyMatched = matchedQuantities.get(inv.id) || 0;
+              return alreadyMatched < inv.quantity;
+            }
+            return false;
+          });
+        }
       } else {
-        // Non-tracked: match by product only - check quantity hasn't been exceeded
+        // Non-tracked: match by product only - prioritize items in the scanned location
         matchedInv = inventoryWithProduct.find(inv => {
-          if (inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber) {
+          if (inv.location === scanned.scannedLocation &&
+              inv.productId === scanned.productId && 
+              !inv.serialNumber && !inv.lotNumber) {
             const alreadyMatched = matchedQuantities.get(inv.id) || 0;
             return alreadyMatched < inv.quantity;
           }
           return false;
         });
+        
+        // If no match in scanned location, try other locations
+        if (!matchedInv) {
+          matchedInv = inventoryWithProduct.find(inv => {
+            if (inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber) {
+              const alreadyMatched = matchedQuantities.get(inv.id) || 0;
+              return alreadyMatched < inv.quantity;
+            }
+            return false;
+          });
+        }
       }
 
       if (matchedInv) {
