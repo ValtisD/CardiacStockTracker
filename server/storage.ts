@@ -1525,16 +1525,38 @@ export class DatabaseStorage implements IStorage {
         // Check if location matches
         if (matchedInv.location === scanned.scannedLocation) {
           console.log(`✅ MATCHED: Scanned item (${scanned.trackingMode}, qty=${scanned.quantity}) matched to inventory (id=${matchedInv.id}, qty=${matchedInv.quantity})`);
-          matched.push({ ...scanned, inventoryId: matchedInv.id });
           
           // Track quantity matched for lot-tracked and non-tracked items
           if (scanned.trackingMode === 'lot' || !scanned.trackingMode) {
             const currentMatched = matchedQuantities.get(matchedInv.id) || 0;
-            const newMatched = currentMatched + scanned.quantity;
-            console.log(`  📊 Quantity tracking: ${currentMatched} + ${scanned.quantity} = ${newMatched} (inv has ${matchedInv.quantity})`);
-            matchedQuantities.set(matchedInv.id, newMatched);
+            const availableToMatch = matchedInv.quantity - currentMatched;
+            const actuallyMatched = Math.min(scanned.quantity, availableToMatch);
+            const surplus = scanned.quantity - actuallyMatched;
+            
+            console.log(`  📊 Quantity tracking: ${currentMatched} + ${scanned.quantity} = ${currentMatched + scanned.quantity} (inv has ${matchedInv.quantity}, available=${availableToMatch})`);
+            console.log(`  📊 Split: ${actuallyMatched} matched, ${surplus} surplus`);
+            
+            if (actuallyMatched > 0) {
+              // Add matched portion
+              matched.push({ ...scanned, quantity: actuallyMatched, inventoryId: matchedInv.id });
+              matchedQuantities.set(matchedInv.id, currentMatched + actuallyMatched);
+            }
+            
+            if (surplus > 0) {
+              // Add surplus portion to found items
+              console.log(`  ⚠️ SURPLUS: ${surplus} units exceed inventory`);
+              const existsInHome = allHomeInventory.some(homeInv => {
+                if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
+                  return homeInv.lotNumber === scanned.lotNumber && homeInv.productId === scanned.productId;
+                } else {
+                  return homeInv.productId === scanned.productId && !homeInv.serialNumber && !homeInv.lotNumber;
+                }
+              });
+              found.push({ ...scanned, quantity: surplus, existsInHome });
+            }
           } else {
-            // Only add to matchedInventoryIds for serial-tracked items (1:1 matching)
+            // Serial-tracked items: 1:1 matching
+            matched.push({ ...scanned, inventoryId: matchedInv.id });
             matchedInventoryIds.add(matchedInv.id);
           }
         } else {
