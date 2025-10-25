@@ -398,6 +398,7 @@
       "currentLocation": "Current Location",
       "scannedItems": "Scanned Items",
       "qty": "Qty",
+      "items": "items",
       "enterGtin": "Enter GTIN manually"
     },
     "locations": {
@@ -419,7 +420,8 @@
     "messages": {
       "noItemsScanned": "No items scanned yet. Start scanning to begin your count.",
       "reconciliationComplete": "Stock count reconciliation completed successfully",
-      "andMore": "+{{count}} more"
+      "andMore": "+{{count}} more",
+      "boxBarcodeDetected": "Box barcode detected - adding"
     },
     "errors": {
       "startFailed": "Failed to start stock count session",

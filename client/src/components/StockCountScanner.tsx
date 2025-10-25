@@ -111,6 +111,17 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
     // Determine tracking mode
     const trackingMode = parsedGs1Data.serialNumber ? "serial" : parsedGs1Data.lotNumber ? "lot" : null;
 
+    // Use quantity from barcode if present (box barcode), otherwise default to 1
+    const quantity = parsedGs1Data.quantity || 1;
+
+    // Log box barcode detection
+    if (parsedGs1Data.quantity && parsedGs1Data.quantity > 1) {
+      console.log(`📦 Box barcode detected - adding ${quantity} items`);
+      toast({
+        description: `${t("stockCount.messages.boxBarcodeDetected")}: ${quantity} ${t("stockCount.labels.items")}`,
+      });
+    }
+
     // Add item to count
     await addItemMutation.mutateAsync({
       productId: product.id,
@@ -119,7 +130,7 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
       serialNumber: parsedGs1Data.serialNumber || null,
       lotNumber: parsedGs1Data.lotNumber || null,
       expirationDate: parsedGs1Data.expirationDate || null,
-      quantity: 1,
+      quantity,
     });
   };
 

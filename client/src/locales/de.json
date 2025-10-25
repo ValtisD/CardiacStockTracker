@@ -398,6 +398,7 @@
       "currentLocation": "Aktueller Standort",
       "scannedItems": "Gescannte Artikel",
       "qty": "Mge",
+      "items": "Artikel",
       "enterGtin": "GTIN manuell eingeben"
     },
     "locations": {
@@ -419,7 +420,8 @@
     "messages": {
       "noItemsScanned": "Noch keine Artikel gescannt. Beginnen Sie mit dem Scannen, um Ihre Zählung zu starten.",
       "reconciliationComplete": "Bestandszählung Abgleich erfolgreich abgeschlossen",
-      "andMore": "+{{count}} weitere"
+      "andMore": "+{{count}} weitere",
+      "boxBarcodeDetected": "Karton-Barcode erkannt - hinzufügen"
     },
     "errors": {
       "startFailed": "Bestandszählung konnte nicht gestartet werden",

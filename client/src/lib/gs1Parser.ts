@@ -7,6 +7,8 @@
  * - (17) Expiration Date - 6 digits (YYMMDD)
  * - (21) Serial Number - Variable length
  * - (10) Lot/Batch Number - Variable length
+ * - (30) Variable count - Variable length (quantity in variable measure trade item)
+ * - (37) Count of trade items - Variable length (number of units in a box/case)
  */
 
 export interface GS1Data {
@@ -14,6 +16,7 @@ export interface GS1Data {
   expirationDate?: string; // (17) Parsed to YYYY-MM-DD format
   serialNumber?: string;   // (21) Serial number
   lotNumber?: string;      // (10) Lot/batch number
+  quantity?: number;       // (30) or (37) Quantity/count of items in box
   raw: string;             // Original barcode
 }
 
@@ -131,6 +134,14 @@ export function parseGS1Barcode(barcode: string): GS1Data {
         break;
       case '10':
         result.lotNumber = data;
+        break;
+      case '30':
+      case '37':
+        // Parse quantity (variable count or count of trade items)
+        const qty = parseInt(data, 10);
+        if (!isNaN(qty) && qty > 0) {
+          result.quantity = qty;
+        }
         break;
     }
   }
