@@ -807,6 +807,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete scanned item from stock count
+  app.delete("/api/stock-count/sessions/:sessionId/items/:itemId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const sessionId = req.params.sessionId;
+      const itemId = req.params.itemId;
+      
+      // Verify session belongs to user
+      const session = await storage.getStockCountSession(userId, sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      if (session.status !== 'in_progress') {
+        return res.status(400).json({ error: "Session is not active" });
+      }
+
+      await storage.deleteStockCountItem(itemId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting stock count item:", error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).json({ error: "Failed to delete item" });
+    }
+  });
+
   // Calculate discrepancies
   app.get("/api/stock-count/sessions/:sessionId/discrepancies", requireAuth, async (req: AuthRequest, res: Response) => {
     try {

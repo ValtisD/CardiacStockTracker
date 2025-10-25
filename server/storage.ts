@@ -95,6 +95,7 @@ export interface IStorage {
   getStockCountSession(userId: string, sessionId: string): Promise<StockCountSession | undefined>;
   addStockCountItem(item: InsertStockCountItem): Promise<StockCountItem>;
   getStockCountItems(sessionId: string): Promise<(StockCountItem & { product: Product })[]>;
+  deleteStockCountItem(itemId: string): Promise<void>;
   completeStockCountSession(userId: string, sessionId: string): Promise<void>;
   cancelStockCountSession(userId: string, sessionId: string): Promise<void>;
   calculateDiscrepancies(userId: string, sessionId: string): Promise<{
@@ -1364,6 +1365,12 @@ export class DatabaseStorage implements IStorage {
       ...row.stock_count_items,
       product: row.products
     }));
+  }
+
+  async deleteStockCountItem(itemId: string): Promise<void> {
+    await db
+      .delete(stockCountItems)
+      .where(eq(stockCountItems.id, itemId));
   }
 
   async completeStockCountSession(userId: string, sessionId: string): Promise<void> {

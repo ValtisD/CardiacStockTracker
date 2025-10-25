@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Scan, Package, Calendar, Hash } from "lucide-react";
+import { Scan, Package, Calendar, Hash, Trash2 } from "lucide-react";
 import { StockCountBarcodeScanner } from "@/components/StockCountBarcodeScanner";
 import { parseGS1Barcode } from "@/lib/gs1Parser";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -45,6 +45,24 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
       toast({
         variant: "destructive",
         description: error.message || t("stockCount.errors.addItemFailed"),
+      });
+    },
+  });
+
+  // Delete item mutation
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      return await apiRequest("DELETE", `/api/stock-count/sessions/${sessionId}/items/${itemId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/stock-count/sessions", sessionId, "items"],
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        description: error.message || t("common.deleteFailed"),
       });
     },
   });
@@ -211,30 +229,42 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
                         className="flex items-center gap-4 text-sm p-2 rounded-md bg-muted/50"
                         data-testid={`item-scanned-${item.id}`}
                       >
-                        {item.serialNumber && (
-                          <div className="flex items-center gap-1">
-                            <Hash className="h-3 w-3 text-muted-foreground" />
-                            <span className="font-mono">{item.serialNumber}</span>
-                          </div>
-                        )}
-                        {item.lotNumber && (
-                          <div className="flex items-center gap-1">
-                            <Package className="h-3 w-3 text-muted-foreground" />
-                            <span className="font-mono">{item.lotNumber}</span>
-                            {item.quantity > 1 && (
-                              <Badge variant="outline" className="ml-2">x{item.quantity}</Badge>
-                            )}
-                          </div>
-                        )}
-                        {item.expirationDate && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            <span>{new Date(item.expirationDate).toLocaleDateString()}</span>
-                          </div>
-                        )}
-                        <Badge variant="outline" className="ml-auto">
-                          {item.scannedLocation === "car" ? t("stockCount.locations.car") : t("stockCount.locations.home")}
-                        </Badge>
+                        <div className="flex items-center gap-4 flex-1">
+                          {item.serialNumber && (
+                            <div className="flex items-center gap-1">
+                              <Hash className="h-3 w-3 text-muted-foreground" />
+                              <span className="font-mono">{item.serialNumber}</span>
+                            </div>
+                          )}
+                          {item.lotNumber && (
+                            <div className="flex items-center gap-1">
+                              <Package className="h-3 w-3 text-muted-foreground" />
+                              <span className="font-mono">{item.lotNumber}</span>
+                              {item.quantity > 1 && (
+                                <Badge variant="outline" className="ml-2">x{item.quantity}</Badge>
+                              )}
+                            </div>
+                          )}
+                          {item.expirationDate && (
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              <span>{new Date(item.expirationDate).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                          <Badge variant="outline">
+                            {item.scannedLocation === "car" ? t("stockCount.locations.car") : t("stockCount.locations.home")}
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteItemMutation.mutate(item.id)}
+                          disabled={deleteItemMutation.isPending}
+                          className="h-8 w-8 shrink-0"
+                          data-testid={`button-delete-item-${item.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     ))}
                   </div>
