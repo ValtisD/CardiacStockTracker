@@ -1716,7 +1716,9 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Add new items from scanned
+    console.log(`\n📦 Adding ${adjustments.newItems.length} new items to inventory...`);
     for (const newItem of adjustments.newItems) {
+      console.log(`  Processing scannedItemId: ${newItem.scannedItemId}, location: ${newItem.location}`);
       const scannedItem = await db
         .select()
         .from(stockCountItems)
@@ -1724,6 +1726,14 @@ export class DatabaseStorage implements IStorage {
         .limit(1);
 
       if (scannedItem[0]) {
+        console.log(`  Found scanned item:`, {
+          productId: scannedItem[0].productId,
+          qty: scannedItem[0].quantity,
+          tracking: scannedItem[0].trackingMode,
+          serial: scannedItem[0].serialNumber,
+          lot: scannedItem[0].lotNumber
+        });
+        
         await db.insert(inventory).values({
           userId,
           productId: scannedItem[0].productId,
@@ -1734,8 +1744,14 @@ export class DatabaseStorage implements IStorage {
           lotNumber: scannedItem[0].lotNumber,
           expirationDate: scannedItem[0].expirationDate,
         });
+        
+        console.log(`  ✅ Added to inventory at ${newItem.location}`);
+      } else {
+        console.log(`  ⚠️ Scanned item not found!`);
       }
     }
+    console.log(`📦 Finished adding new items`);
+
 
     // Delete investigated items user confirmed to remove
     if (adjustments.deleteInvestigated.length > 0) {
