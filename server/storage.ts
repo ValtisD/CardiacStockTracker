@@ -1494,6 +1494,7 @@ export class DatabaseStorage implements IStorage {
     const found: (StockCountItem & { product: Product; existsInHome?: boolean })[] = [];
 
     for (const scanned of scannedItems) {
+      console.log(`🔍 Matching scanned item: Product=${scanned.productId}, Lot=${scanned.lotNumber}, Qty=${scanned.quantity}, ScannedLocation=${scanned.scannedLocation}`);
       let matchedInv: typeof inventoryWithProduct[0] | undefined;
 
       if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
