@@ -263,7 +263,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                               size="sm"
                               onClick={() => {
                                 const otherLocation = item.scannedLocation === "car" ? "home" : "car";
-                                handleTransfer(item.id, otherLocation, item.scannedLocation);
+                                handleTransferItem(item.id, otherLocation, item.scannedLocation);
                               }}
                               data-testid={`button-transfer-${item.id}`}
                             >
