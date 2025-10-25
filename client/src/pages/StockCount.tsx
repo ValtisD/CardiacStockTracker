@@ -13,7 +13,7 @@ import { StockCountScanner } from "@/components/StockCountScanner";
 import { StockCountReconciliation } from "@/components/StockCountReconciliation";
 import type { StockCountSession } from "@shared/schema";
 
-type CountType = "car" | "total";
+type CountType = "car" | "total" | "serialized";
 
 export default function StockCount() {
   const { t } = useTranslation();
@@ -122,6 +122,8 @@ export default function StockCount() {
               <h1 className="text-2xl font-bold" data-testid="text-stock-count-title">
                 {activeSession.countType === "car"
                   ? t("stockCount.title.carCount")
+                  : activeSession.countType === "serialized"
+                  ? t("stockCount.title.serializedCount")
                   : t("stockCount.title.totalCount")}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -146,7 +148,7 @@ export default function StockCount() {
             </div>
           </div>
 
-          {activeSession.countType === "total" && (
+          {(activeSession.countType === "total" || activeSession.countType === "serialized") && (
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{t("stockCount.labels.currentLocation")}:</span>
               <Select
@@ -199,7 +201,7 @@ export default function StockCount() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card
           className="hover-elevate active-elevate-2 cursor-pointer"
           onClick={() => !startSessionMutation.isPending && handleStartSession("car")}
@@ -259,6 +261,38 @@ export default function StockCount() {
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <span>{t("stockCount.countTypes.total.features.2")}</span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="hover-elevate active-elevate-2 cursor-pointer"
+          onClick={() => !startSessionMutation.isPending && handleStartSession("serialized")}
+          data-testid="card-count-type-serialized"
+        >
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle>{t("stockCount.countTypes.serialized.title")}</CardTitle>
+            </div>
+            <CardDescription>{t("stockCount.countTypes.serialized.description")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>{t("stockCount.countTypes.serialized.features.0")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>{t("stockCount.countTypes.serialized.features.1")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>{t("stockCount.countTypes.serialized.features.2")}</span>
               </li>
             </ul>
           </CardContent>
