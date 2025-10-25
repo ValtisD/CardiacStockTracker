@@ -24,7 +24,7 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
   const [manualGtin, setManualGtin] = useState("");
 
   // Fetch scanned items
-  const { data: scannedItems = [] } = useQuery({
+  const { data: scannedItems = [] } = useQuery<any[]>({
     queryKey: ["/api/stock-count/sessions", sessionId, "items"],
     refetchInterval: 2000,
   });
@@ -49,11 +49,12 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
     },
   });
 
-  const handleBarcodeScan = async (barcodeData: string) => {
+  const handleBarcodeScan = async (barcodeData: string, productInfo?: Product, gs1Data?: any) => {
     try {
-      const gs1Data = parseGS1Barcode(barcodeData);
+      // If we don't have GS1 data, parse it
+      const parsedGs1Data = gs1Data || parseGS1Barcode(barcodeData);
       
-      if (!gs1Data.gtin) {
+      if (!parsedGs1Data.gtin && !productInfo) {
         toast({
           variant: "destructive",
           description: t("stockCount.errors.noGtin"),
@@ -61,9 +62,13 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
         return;
       }
 
-      // Fetch product by GTIN
-      const products = await apiRequest<Product[]>(`/api/products?gtin=${gs1Data.gtin}`) as Product[];
-      const product = products?.[0];
+      // Use provided product or fetch by GTIN
+      let product = productInfo;
+      if (!product && parsedGs1Data.gtin) {
+        const response = await apiRequest("GET", `/api/products?gtin=${parsedGs1Data.gtin}`);
+        const products = await response.json();
+        product = products?.[0];
+      }
 
       if (!product) {
         toast({
@@ -74,18 +79,20 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
       }
 
       // Determine tracking mode
-      const trackingMode = gs1Data.serialNumber ? "serial" : gs1Data.lotNumber ? "lot" : null;
+      const trackingMode = parsedGs1Data.serialNumber ? "serial" : parsedGs1Data.lotNumber ? "lot" : null;
 
       // Add item to count
       await addItemMutation.mutateAsync({
         productId: product.id,
         scannedLocation,
         trackingMode,
-        serialNumber: gs1Data.serialNumber || null,
-        lotNumber: gs1Data.lotNumber || null,
-        expirationDate: gs1Data.expirationDate || null,
+        serialNumber: parsedGs1Data.serialNumber || null,
+        lotNumber: parsedGs1Data.lotNumber || null,
+        expirationDate: parsedGs1Data.expirationDate || null,
         quantity: 1,
       });
+      
+      setShowScanner(false);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -99,7 +106,8 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
     
     try {
       // Fetch product by GTIN
-      const products = await apiRequest<Product[]>(`/api/products?gtin=${manualGtin.trim()}`) as Product[];
+      const response = await apiRequest("GET", `/api/products?gtin=${manualGtin.trim()}`);
+      const products = await response.json();
       const product = products?.[0];
 
       if (!product) {
@@ -172,12 +180,12 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
         </div>
       </div>
 
-      {showScanner && (
-        <BarcodeScanner
-          onScan={handleBarcodeScan}
-          onClose={() => setShowScanner(false)}
-        />
-      )}
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScanComplete={handleBarcodeScan}
+        title={t("stockCount.actions.scanBarcode")}
+      />
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold" data-testid="text-scanned-items-title">
