@@ -1,0 +1,154 @@
+[vite] connecting... client:495:9
+[vite] connected. client:618:15
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools react-dom.development.js:29895:17
+🔧 offlineState initialized, isOffline: false offlineState.ts:8:9
+➕ Listener subscribed, total: 1 offlineState.ts:34:13
+🔐 SyncManager userId set: null syncManager.ts:192:13
+📦 Storage persistence: GRANTED offlineStorage.ts:46:15
+🔧 Opening IndexedDB "crm-stock-offline" version 4... offlineStorage.ts:53:15
+✅ IndexedDB initialized successfully (version 4) offlineStorage.ts:62:17
+📋 Available stores: 
+Array(7) [ "hospitals", "inventory", "procedures", "products", "syncQueue", "syncState", "user" ]
+offlineStorage.ts:63:17
+⚠️ Service Worker not available (requires HTTPS): SecurityError main.tsx:24:17
+✅ Offline data persistence via IndexedDB is still active! main.tsx:25:17
+🔐 SyncManager userId set: auth0|68e1... syncManager.ts:192:13
+📝 🔍 checkInitialSync: Starting check debugLogger.ts:55:15
+📦 Storage persistence: GRANTED offlineStorage.ts:46:15
+🔧 Opening IndexedDB "crm-stock-offline" version 4... offlineStorage.ts:53:15
+✅ IndexedDB initialized successfully (version 4) offlineStorage.ts:62:17
+📋 Available stores: 
+Array(7) [ "hospitals", "inventory", "procedures", "products", "syncQueue", "syncState", "user" ]
+offlineStorage.ts:63:17
+📝 📊 getPendingCount called 
+Object { userId: "auth0|68e161f8d6c61b..." }
+debugLogger.ts:53:15
+🔍 getSyncQueue called with userId: auth0|68e161f8d6c61b... offlineStorage.ts:245:13
+🔍 getSyncQueue (userId: auth0|68e161f8d6c61b...) found items: 0 offlineStorage.ts:262:17
+📝 📊 getPendingCount result 
+Object { count: 0, userId: "auth0|68e161f8d6c61b..." }
+debugLogger.ts:53:15
+✅ ✅ No pending changes from previous session debugLogger.ts:55:15
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `Primitive.button.SlotClone`.
+Badge@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/badge.tsx:36:15
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=63e6c77f:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=63e6c77f:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D7OHDVF4.js?v=63e6c77f:42:44
+createSlotClone/SlotClone<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=63e6c77f:79:40
+createSlot/Slot2<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=63e6c77f:56:40
+Primitive</Node<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D7OHDVF4.js?v=63e6c77f:42:44
+PopperAnchor<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VTE3DDWQ.js?v=63e6c77f:1929:59
+TooltipTrigger<@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=63e6c77f:198:49
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=63e6c77f:38:47
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=63e6c77f:38:47
+Popper@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VTE3DDWQ.js?v=63e6c77f:1921:39
+Tooltip@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=63e6c77f:114:7
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=63e6c77f:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=63e6c77f:68:7
+OfflineIndicator@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/OfflineIndicator.tsx:35:17
+div
+header
+div
+div
+div
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=63e6c77f:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=63e6c77f:68:7
+SidebarProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/components/ui/sidebar.tsx:58:25
+Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=63e6c77f:38:47
+TooltipProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=63e6c77f:68:7
+AuthenticatedApp@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=l3KfHJitBcfCfa-U4dBej:736:49
+AppContent@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/src/App.tsx?v=l3KfHJitBcfCfa-U4dBej:546:80
+QueryClientProvider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=63e6c77f:2804:27
+Auth0Provider@https://0134ad3c-08ac-45eb-8bb1-79bc160b496b-00-1qt8dyugnh7va.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@auth0_auth0-react.js?v=63e6c77f:1546:18
+App 2 react-dom.development.js:86:30
+📱 OfflineIndicator useEffect running OfflineIndicator.tsx:27:13
+📱 PWA Mode: NO OfflineIndicator.tsx:35:15
+➕ Listener subscribed, total: 2 offlineState.ts:34:13
+📝 📊 getPendingCount called 
+Object { userId: "auth0|68e161f8d6c61b..." }
+debugLogger.ts:53:15
+🔍 getSyncQueue called with userId: auth0|68e161f8d6c61b... offlineStorage.ts:245:13
+📝 🌐 getQueryFn called 
+Object { url: "/api/products", isOffline: false }
+debugLogger.ts:53:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/inventory?location=home", isOffline: false }
+debugLogger.ts:53:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/inventory?location=car", isOffline: false }
+debugLogger.ts:53:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/inventory/low-stock?location=home", isOffline: false }
+debugLogger.ts:53:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/inventory/low-stock?location=car", isOffline: false }
+debugLogger.ts:53:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/implant-procedures", isOffline: false }
+debugLogger.ts:53:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/user/language", isOffline: false }
+debugLogger.ts:53:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/user/me", isOffline: false }
+debugLogger.ts:53:15
+💾 Storage Persisted: YES OfflineIndicator.tsx:43:17
+🔍 getSyncQueue (userId: auth0|68e161f8d6c61b...) found items: 0 offlineStorage.ts:262:17
+📝 📊 getPendingCount result 
+Object { count: 0, userId: "auth0|68e161f8d6c61b..." }
+debugLogger.ts:53:15
+📝 📊 getPendingCount called 
+Object { userId: "auth0|68e161f8d6c61b..." }
+debugLogger.ts:53:15
+🔍 getSyncQueue called with userId: auth0|68e161f8d6c61b... offlineStorage.ts:245:13
+🔍 getSyncQueue (userId: auth0|68e161f8d6c61b...) found items: 0 offlineStorage.ts:262:17
+📝 📊 getPendingCount result 
+Object { count: 0, userId: "auth0|68e161f8d6c61b..." }
+debugLogger.ts:53:15
+📝 ℹ️ APP START: No pending changes to sync debugLogger.ts:55:15
+Cached 94 products for offline use queryClient.ts:285:19
+Cached user for offline use: valtisdimitris@gmail.com queryClient.ts:282:19
+➕ Listener subscribed, total: 3 offlineState.ts:34:13
+🐛 Debug panel received new logs: 18 DebugPanel.tsx:40:15
+📝 Auto-caching data for offline use... debugLogger.ts:55:15
+🐛 Debug panel received new logs: 19 DebugPanel.tsx:40:15
+📝 Fetching data from server... 
+Object { hasAuthHeaders: true }
+debugLogger.ts:53:15
+🐛 Debug panel received new logs: 20 DebugPanel.tsx:40:15
+✅ Caching: 94 products, 188 inventory, 3 hospitals, 1 procedures debugLogger.ts:55:15
+📦 Caching inventory: clearing store, then adding 188 items offlineStorage.ts:339:13
+✅ Cached 188 inventory items to IndexedDB offlineStorage.ts:343:15
+🐛 Debug panel received new logs: 21 DebugPanel.tsx:40:15
+✅ Offline cache ready! You can now work offline. debugLogger.ts:55:15
+🐛 Debug panel received new logs: 22 DebugPanel.tsx:40:15
+✅ All data cached! You can now work offline. debugLogger.ts:55:15
+Navigating to: /stock-overview AppSidebar.tsx:33:13
+Navigated to: /stock-overview App.tsx:580:13
+🐛 Debug panel received new logs: 23 DebugPanel.tsx:40:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/inventory/overview", isOffline: false }
+debugLogger.ts:53:15
+Navigating to: /stock-count AppSidebar.tsx:33:13
+Navigated to: /stock-count App.tsx:580:13
+🐛 Debug panel received new logs: 24 DebugPanel.tsx:40:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/stock-count/sessions/active", isOffline: false }
+debugLogger.ts:53:15
+🐛 Debug panel received new logs: 25 DebugPanel.tsx:40:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/stock-count/sessions/f993f447-6447-46d5-80cc-3b43e0c669e6/items", isOffline: false }
+debugLogger.ts:53:15
+🐛 Debug panel received new logs: 26 DebugPanel.tsx:40:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/stock-count/sessions/f993f447-6447-46d5-80cc-3b43e0c669e6/items", isOffline: false }
+debugLogger.ts:53:15
+apiRequest called: DELETE /api/stock-count/sessions/f993f447-6447-46d5-80cc-3b43e0c669e6/items/77d447bf-eac6-4a77-8600-085e3222c8a3 Online: true Bypass: undefined queryClient.ts:45:11
+🐛 Debug panel received new logs: 27 DebugPanel.tsx:40:15
+📝 🌐 getQueryFn called 
+Object { url: "/api/stock-count/sessions/f993f447-6447-46d5-80cc-3b43e0c669e6/items", isOffline: false }
+debugLogger.ts:53:15
+apiRequest called: DELETE /api/stock-count/sessions/f993f447-6447-46d5-80cc-3b43e0c669e6/items/f0cafbc8-5293-486a-823d-8b59fce12f87 Online: true Bypass: undefined queryClient.ts:45:11
