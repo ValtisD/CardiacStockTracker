@@ -100,7 +100,7 @@ export interface IStorage {
   cancelStockCountSession(userId: string, sessionId: string): Promise<void>;
   calculateDiscrepancies(userId: string, sessionId: string): Promise<{
     missing: (Inventory & { product: Product })[];
-    found: (StockCountItem & { product: Product })[];
+    found: (StockCountItem & { product: Product; existsInHome?: boolean })[];
     matched: (StockCountItem & { product: Product; inventoryId: string })[];
   }>;
   applyStockCountAdjustments(
@@ -1402,7 +1402,7 @@ export class DatabaseStorage implements IStorage {
 
   async calculateDiscrepancies(userId: string, sessionId: string): Promise<{
     missing: (Inventory & { product: Product })[];
-    found: (StockCountItem & { product: Product })[];
+    found: (StockCountItem & { product: Product; existsInHome?: boolean })[];
     matched: (StockCountItem & { product: Product; inventoryId: string })[];
   }> {
     const session = await this.getStockCountSession(userId, sessionId);
@@ -1431,27 +1431,46 @@ export class DatabaseStorage implements IStorage {
       product: row.products
     }));
 
+    // Get ALL home inventory for checking if items exist in home
+    const allHomeInventory = await db
+      .select()
+      .from(inventory)
+      .where(
+        and(
+          eq(inventory.userId, userId),
+          eq(inventory.location, 'home')
+        )
+      );
+
+    // Track which inventory items have been matched (to prevent double-matching)
+    const matchedInventoryIds = new Set<string>();
+
     // Match scanned items to inventory
     const matched: (StockCountItem & { product: Product; inventoryId: string })[] = [];
-    const found: (StockCountItem & { product: Product })[] = [];
+    const found: (StockCountItem & { product: Product; existsInHome?: boolean })[] = [];
 
     for (const scanned of scannedItems) {
       let matchedInv: typeof inventoryWithProduct[0] | undefined;
 
       if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
-        // Match by serial number
+        // Match by serial number (find unmatched item)
         matchedInv = inventoryWithProduct.find(
-          inv => inv.serialNumber === scanned.serialNumber
+          inv => inv.serialNumber === scanned.serialNumber && !matchedInventoryIds.has(inv.id)
         );
       } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
-        // Match by lot number
+        // Match by lot number (find unmatched item)
         matchedInv = inventoryWithProduct.find(
-          inv => inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId
+          inv => inv.lotNumber === scanned.lotNumber && 
+                 inv.productId === scanned.productId && 
+                 !matchedInventoryIds.has(inv.id)
         );
       } else {
-        // Non-tracked: match by product only
+        // Non-tracked: match by product only (find unmatched item)
         matchedInv = inventoryWithProduct.find(
-          inv => inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber
+          inv => inv.productId === scanned.productId && 
+                 !inv.serialNumber && 
+                 !inv.lotNumber && 
+                 !matchedInventoryIds.has(inv.id)
         );
       }
 
@@ -1459,20 +1478,38 @@ export class DatabaseStorage implements IStorage {
         // Check if location matches
         if (matchedInv.location === scanned.scannedLocation) {
           matched.push({ ...scanned, inventoryId: matchedInv.id });
+          matchedInventoryIds.add(matchedInv.id);
         } else {
           // Found in different location than system thinks
-          found.push(scanned);
+          const existsInHome = allHomeInventory.some(homeInv => {
+            if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
+              return homeInv.serialNumber === scanned.serialNumber;
+            } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
+              return homeInv.lotNumber === scanned.lotNumber && homeInv.productId === scanned.productId;
+            } else {
+              return homeInv.productId === scanned.productId && !homeInv.serialNumber && !homeInv.lotNumber;
+            }
+          });
+          found.push({ ...scanned, existsInHome });
         }
       } else {
-        // Not in system at all
-        found.push(scanned);
+        // Not in system at all - check if exists in home
+        const existsInHome = allHomeInventory.some(homeInv => {
+          if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
+            return homeInv.serialNumber === scanned.serialNumber;
+          } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
+            return homeInv.lotNumber === scanned.lotNumber && homeInv.productId === scanned.productId;
+          } else {
+            return homeInv.productId === scanned.productId && !homeInv.serialNumber && !homeInv.lotNumber;
+          }
+        });
+        found.push({ ...scanned, existsInHome });
       }
     }
 
     // Find missing items (in system but not scanned)
     const missing = inventoryWithProduct.filter(inv => {
-      const wasScanned = matched.some(m => m.inventoryId === inv.id);
-      return !wasScanned;
+      return !matchedInventoryIds.has(inv.id);
     });
 
     return { missing, found, matched };

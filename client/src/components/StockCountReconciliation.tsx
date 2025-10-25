@@ -102,7 +102,11 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
     );
   }
 
-  const { missing = [], found = [], matched = [] } = discrepancies || {};
+  const { missing = [], found = [], matched = [] } = (discrepancies || {}) as {
+    missing?: any[];
+    found?: any[];
+    matched?: any[];
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -206,8 +210,15 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                       data-testid={`item-found-${item.id}`}
                     >
                       <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">{item.product.name}</p>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{item.product.name}</p>
+                            {item.existsInHome && (
+                              <Badge variant="outline" className="text-xs">
+                                📦 In Home Stock
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground">{item.product.modelNumber}</p>
                           {item.serialNumber && (
                             <p className="text-sm font-mono mt-1">S/N: {item.serialNumber}</p>
