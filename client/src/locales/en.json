@@ -357,6 +357,7 @@
       "main": "Stock Count",
       "carCount": "Car Stock Count",
       "totalCount": "Total Stock Count",
+      "serializedCount": "Serialized Items Count",
       "reconciliation": "Stock Count Reconciliation"
     },
     "description": {
@@ -381,6 +382,15 @@
           "Comprehensive inventory audit",
           "Count home and car stock separately",
           "Full reconciliation of all locations"
+        ]
+      },
+      "serialized": {
+        "title": "Serialized Items Count",
+        "description": "Monthly audit of high-value serial-tracked items",
+        "features": [
+          "Count only serial-tracked products",
+          "Both home and car locations",
+          "Verify existence of valuable items"
         ]
       }
     },

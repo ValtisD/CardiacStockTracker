@@ -357,6 +357,7 @@
       "main": "Bestandszählung",
       "carCount": "Fahrzeugbestandszählung",
       "totalCount": "Gesamtbestandszählung",
+      "serializedCount": "Serialisierte Artikel Zählung",
       "reconciliation": "Bestandszählung Abgleich"
     },
     "description": {
@@ -381,6 +382,15 @@
           "Umfassende Inventurprüfung",
           "Heim- und Fahrzeugbestand separat zählen",
           "Vollständiger Abgleich aller Standorte"
+        ]
+      },
+      "serialized": {
+        "title": "Serialisierte Artikel Zählung",
+        "description": "Monatliche Prüfung hochwertiger serienverfolgter Artikel",
+        "features": [
+          "Nur serienverfolgente Produkte zählen",
+          "Beide Standorte (Zuhause und Fahrzeug)",
+          "Existenz wertvoller Artikel verifizieren"
         ]
       }
     },
