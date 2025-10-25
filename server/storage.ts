@@ -1544,15 +1544,18 @@ export class DatabaseStorage implements IStorage {
             
             if (surplus > 0) {
               // Add surplus portion to found items
+              // Check if item exists in the OTHER location (not the one being scanned)
               console.log(`  ⚠️ SURPLUS: ${surplus} units exceed inventory`);
-              const existsInHome = allHomeInventory.some(homeInv => {
+              const otherLocation = scanned.scannedLocation === 'car' ? 'home' : 'car';
+              const existsInOtherLocation = inventoryWithProduct.some(inv => {
+                if (inv.location !== otherLocation) return false;
                 if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
-                  return homeInv.lotNumber === scanned.lotNumber && homeInv.productId === scanned.productId;
+                  return inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId;
                 } else {
-                  return homeInv.productId === scanned.productId && !homeInv.serialNumber && !homeInv.lotNumber;
+                  return inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber;
                 }
               });
-              found.push({ ...scanned, quantity: surplus, existsInHome });
+              found.push({ ...scanned, quantity: surplus, existsInHome: existsInOtherLocation });
             }
           } else {
             // Serial-tracked items: 1:1 matching
@@ -1561,31 +1564,36 @@ export class DatabaseStorage implements IStorage {
           }
         } else {
           // Found in different location than system thinks
-          const existsInHome = allHomeInventory.some(homeInv => {
+          // Check if item exists in the OTHER location (where we're NOT scanning)
+          const otherLocation = scanned.scannedLocation === 'car' ? 'home' : 'car';
+          const existsInOtherLocation = inventoryWithProduct.some(inv => {
+            if (inv.location !== otherLocation) return false;
             if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
-              return homeInv.serialNumber === scanned.serialNumber;
+              return inv.serialNumber === scanned.serialNumber;
             } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
-              return homeInv.lotNumber === scanned.lotNumber && homeInv.productId === scanned.productId;
+              return inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId;
             } else {
-              return homeInv.productId === scanned.productId && !homeInv.serialNumber && !homeInv.lotNumber;
+              return inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber;
             }
           });
-          found.push({ ...scanned, existsInHome });
+          found.push({ ...scanned, existsInHome: existsInOtherLocation });
         }
       } else {
-        // Not in system at all (or quantity exceeded) - check if exists in home
+        // Not in system at all (or quantity exceeded) - check if exists in OTHER location
         console.log(`⚠️ NOT MATCHED: Scanned item (${scanned.trackingMode}, qty=${scanned.quantity}) - marking as found`);
-        const existsInHome = allHomeInventory.some(homeInv => {
+        const otherLocation = scanned.scannedLocation === 'car' ? 'home' : 'car';
+        const existsInOtherLocation = inventoryWithProduct.some(inv => {
+          if (inv.location !== otherLocation) return false;
           if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
-            return homeInv.serialNumber === scanned.serialNumber;
+            return inv.serialNumber === scanned.serialNumber;
           } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
-            return homeInv.lotNumber === scanned.lotNumber && homeInv.productId === scanned.productId;
+            return inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId;
           } else {
-            return homeInv.productId === scanned.productId && !homeInv.serialNumber && !homeInv.lotNumber;
+            return inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber;
           }
         });
-        console.log(`  📦 Exists in home: ${existsInHome}`);
-        found.push({ ...scanned, existsInHome });
+        console.log(`  📦 Exists in other location (${otherLocation}): ${existsInOtherLocation}`);
+        found.push({ ...scanned, existsInHome: existsInOtherLocation });
       }
     }
     

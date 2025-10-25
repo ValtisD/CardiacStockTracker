@@ -443,8 +443,14 @@
         "addNewInCar": "Add as new item in Car",
         "transferToCar": "Transfer to car",
         "transferToHome": "Transfer to home",
+        "transferFromHome": "Transfer from Home",
+        "transferFromCar": "Transfer from Car",
         "keepForInvestigation": "Keep for investigation",
         "markDerecognized": "Mark as derecognized"
+      },
+      "badges": {
+        "inHomeStock": "In Home Stock",
+        "inCarStock": "In Car Stock"
       }
     },
     "history": {

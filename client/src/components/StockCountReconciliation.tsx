@@ -232,7 +232,9 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                             <p className="font-medium">{item.product.name}</p>
                             {item.existsInHome && (
                               <Badge variant="outline" className="text-xs">
-                                📦 In Home Stock
+                                📦 {item.scannedLocation === "car" 
+                                  ? t("stockCount.reconciliation.badges.inHomeStock")
+                                  : t("stockCount.reconciliation.badges.inCarStock")}
                               </Badge>
                             )}
                           </div>
@@ -253,30 +255,58 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                       </div>
 
                       <div className="flex gap-2">
-                        <Select
-                          value={adjustment?.location || ""}
-                          onValueChange={(value) => {
-                            // Found items should always be added as new (not transferred)
-                            // User just selects which location to add them to
-                            handleAddNewItem(item.id, value, item.quantity);
-                          }}
-                        >
-                          <SelectTrigger data-testid={`select-action-${item.id}`}>
-                            <SelectValue placeholder={t("stockCount.reconciliation.selectAction")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={item.scannedLocation}>
+                        {item.existsInHome ? (
+                          // Item exists in other location - offer transfer or add new
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const otherLocation = item.scannedLocation === "car" ? "home" : "car";
+                                handleTransfer(item.id, otherLocation, item.scannedLocation);
+                              }}
+                              data-testid={`button-transfer-${item.id}`}
+                            >
+                              {item.scannedLocation === "car"
+                                ? t("stockCount.reconciliation.actions.transferFromHome")
+                                : t("stockCount.reconciliation.actions.transferFromCar")}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddNewItem(item.id, item.scannedLocation, item.quantity)}
+                              data-testid={`button-addnew-${item.id}`}
+                            >
                               {item.scannedLocation === "car" 
                                 ? t("stockCount.reconciliation.actions.addNewInCar")
                                 : t("stockCount.reconciliation.actions.addNewInHome")}
-                            </SelectItem>
-                            <SelectItem value={item.scannedLocation === "car" ? "home" : "car"}>
-                              {item.scannedLocation === "car"
-                                ? t("stockCount.reconciliation.actions.addNewInHome")
-                                : t("stockCount.reconciliation.actions.addNewInCar")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                            </Button>
+                          </>
+                        ) : (
+                          // Item doesn't exist elsewhere - only offer add new
+                          <Select
+                            value={adjustment?.location || ""}
+                            onValueChange={(value) => {
+                              handleAddNewItem(item.id, value, item.quantity);
+                            }}
+                          >
+                            <SelectTrigger data-testid={`select-action-${item.id}`}>
+                              <SelectValue placeholder={t("stockCount.reconciliation.selectAction")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={item.scannedLocation}>
+                                {item.scannedLocation === "car" 
+                                  ? t("stockCount.reconciliation.actions.addNewInCar")
+                                  : t("stockCount.reconciliation.actions.addNewInHome")}
+                              </SelectItem>
+                              <SelectItem value={item.scannedLocation === "car" ? "home" : "car"}>
+                                {item.scannedLocation === "car"
+                                  ? t("stockCount.reconciliation.actions.addNewInHome")
+                                  : t("stockCount.reconciliation.actions.addNewInCar")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                     </div>
                   );

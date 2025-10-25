@@ -443,8 +443,14 @@
         "addNewInCar": "Als neuen Artikel im Fahrzeug hinzufügen",
         "transferToCar": "Zum Fahrzeug verschieben",
         "transferToHome": "Nach Zuhause verschieben",
+        "transferFromHome": "Von Zuhause verschieben",
+        "transferFromCar": "Vom Fahrzeug verschieben",
         "keepForInvestigation": "Zur Untersuchung behalten",
         "markDerecognized": "Als ausgebucht markieren"
+      },
+      "badges": {
+        "inHomeStock": "Im Zuhause Bestand",
+        "inCarStock": "Im Fahrzeugbestand"
       }
     },
     "history": {
