@@ -168,12 +168,12 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
   }, {});
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 py-4 md:px-6 md:py-6 space-y-4 md:space-y-6">
       {/* Scanner Input Section */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 md:pt-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <div className="flex-1">
                 <div className="relative">
                   <Input
@@ -183,7 +183,7 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
                     onChange={(e) => setScannerInput(e.target.value)}
                     onKeyDown={handleScannerInput}
                     placeholder="Scan barcode or enter GTIN..."
-                    className="font-mono text-lg pr-10"
+                    className="font-mono text-base md:text-lg pr-10"
                     data-testid="input-scanner"
                     autoFocus
                     disabled={isProcessing}
@@ -202,7 +202,7 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
                 onClick={() => setShowCameraScanner(true)}
                 variant="outline"
                 size="icon"
-                className="shrink-0 h-[52px] w-[52px]"
+                className="shrink-0 h-[52px] w-full sm:w-[52px]"
                 data-testid="button-camera-scan"
               >
                 <Camera className="h-5 w-5" />
@@ -225,24 +225,24 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
 
         {Object.values(groupedItems).length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <CardContent className="flex flex-col items-center justify-center py-8 md:py-12 text-muted-foreground">
               <Package className="h-12 w-12 mb-4 opacity-50" />
-              <p>{t("stockCount.messages.noItemsScanned")}</p>
+              <p className="text-sm md:text-base">{t("stockCount.messages.noItemsScanned")}</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3 md:gap-4">
             {Object.values(groupedItems).map((group: any) => (
               <Card key={group.product.id} data-testid={`card-scanned-product-${group.product.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
                     <div className="flex-1">
-                      <CardTitle className="text-base">{group.product.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <CardTitle className="text-sm md:text-base">{group.product.name}</CardTitle>
+                      <p className="text-xs md:text-sm text-muted-foreground mt-1">
                         {group.product.modelNumber}
                       </p>
                     </div>
-                    <Badge variant="secondary" data-testid={`badge-quantity-${group.product.id}`}>
+                    <Badge variant="secondary" data-testid={`badge-quantity-${group.product.id}`} className="shrink-0">
                       {t("stockCount.labels.qty")}: {group.totalQuantity}
                     </Badge>
                   </div>
@@ -252,32 +252,32 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
                     {group.items.map((item: any) => (
                       <div
                         key={item.id}
-                        className="flex items-center gap-4 text-sm p-2 rounded-md bg-muted/50"
+                        className="flex items-start sm:items-center gap-2 sm:gap-4 text-xs md:text-sm p-2 rounded-md bg-muted/50"
                         data-testid={`item-scanned-${item.id}`}
                       >
-                        <div className="flex items-center gap-4 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 flex-1 min-w-0">
                           {item.serialNumber && (
                             <div className="flex items-center gap-1">
-                              <Hash className="h-3 w-3 text-muted-foreground" />
-                              <span className="font-mono">{item.serialNumber}</span>
+                              <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <span className="font-mono truncate">{item.serialNumber}</span>
                             </div>
                           )}
                           {item.lotNumber && (
-                            <div className="flex items-center gap-1">
-                              <Package className="h-3 w-3 text-muted-foreground" />
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <Package className="h-3 w-3 text-muted-foreground shrink-0" />
                               <span className="font-mono">{item.lotNumber}</span>
                               {item.quantity > 1 && (
-                                <Badge variant="outline" className="ml-2">x{item.quantity}</Badge>
+                                <Badge variant="outline" className="ml-1 text-xs">x{item.quantity}</Badge>
                               )}
                             </div>
                           )}
                           {item.expirationDate && (
                             <div className="flex items-center gap-1 text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              <span>{new Date(item.expirationDate).toLocaleDateString()}</span>
+                              <Calendar className="h-3 w-3 shrink-0" />
+                              <span className="text-xs">{new Date(item.expirationDate).toLocaleDateString()}</span>
                             </div>
                           )}
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">
                             {item.scannedLocation === "car" ? t("stockCount.locations.car") : t("stockCount.locations.home")}
                           </Badge>
                         </div>
