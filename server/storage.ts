@@ -1477,6 +1477,8 @@ export class DatabaseStorage implements IStorage {
 
     // Track which inventory items have been matched (to prevent double-matching)
     const matchedInventoryIds = new Set<string>();
+    // Track matched quantities for lot-tracked items
+    const matchedQuantities = new Map<string, number>();
 
     // Match scanned items to inventory
     const matched: (StockCountItem & { product: Product; inventoryId: string })[] = [];
@@ -1491,20 +1493,23 @@ export class DatabaseStorage implements IStorage {
           inv => inv.serialNumber === scanned.serialNumber && !matchedInventoryIds.has(inv.id)
         );
       } else if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
-        // Match by lot number (find unmatched item)
-        matchedInv = inventoryWithProduct.find(
-          inv => inv.lotNumber === scanned.lotNumber && 
-                 inv.productId === scanned.productId && 
-                 !matchedInventoryIds.has(inv.id)
-        );
+        // Match by lot number - check quantity hasn't been exceeded
+        matchedInv = inventoryWithProduct.find(inv => {
+          if (inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId) {
+            const alreadyMatched = matchedQuantities.get(inv.id) || 0;
+            return alreadyMatched < inv.quantity;
+          }
+          return false;
+        });
       } else {
-        // Non-tracked: match by product only (find unmatched item)
-        matchedInv = inventoryWithProduct.find(
-          inv => inv.productId === scanned.productId && 
-                 !inv.serialNumber && 
-                 !inv.lotNumber && 
-                 !matchedInventoryIds.has(inv.id)
-        );
+        // Non-tracked: match by product only - check quantity hasn't been exceeded
+        matchedInv = inventoryWithProduct.find(inv => {
+          if (inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber) {
+            const alreadyMatched = matchedQuantities.get(inv.id) || 0;
+            return alreadyMatched < inv.quantity;
+          }
+          return false;
+        });
       }
 
       if (matchedInv) {
@@ -1512,6 +1517,12 @@ export class DatabaseStorage implements IStorage {
         if (matchedInv.location === scanned.scannedLocation) {
           matched.push({ ...scanned, inventoryId: matchedInv.id });
           matchedInventoryIds.add(matchedInv.id);
+          
+          // Track quantity matched for lot-tracked and non-tracked items
+          if (scanned.trackingMode === 'lot' || !scanned.trackingMode) {
+            const currentMatched = matchedQuantities.get(matchedInv.id) || 0;
+            matchedQuantities.set(matchedInv.id, currentMatched + scanned.quantity);
+          }
         } else {
           // Found in different location than system thinks
           const existsInHome = allHomeInventory.some(homeInv => {
@@ -1526,7 +1537,7 @@ export class DatabaseStorage implements IStorage {
           found.push({ ...scanned, existsInHome });
         }
       } else {
-        // Not in system at all - check if exists in home
+        // Not in system at all (or quantity exceeded) - check if exists in home
         const existsInHome = allHomeInventory.some(homeInv => {
           if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
             return homeInv.serialNumber === scanned.serialNumber;
