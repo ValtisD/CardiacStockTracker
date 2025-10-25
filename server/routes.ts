@@ -128,6 +128,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products (read operations are public, mutations require admin)
   app.get("/api/products", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
+      const gtin = req.query.gtin as string | undefined;
+      
+      if (gtin) {
+        // Filter by GTIN if provided
+        const allProducts = await storage.getProducts();
+        const filteredProducts = allProducts.filter(p => p.gtin === gtin);
+        return res.json(filteredProducts);
+      }
+      
+      // Return all products if no filter
       const products = await storage.getProducts();
       res.json(products);
     } catch (error) {
