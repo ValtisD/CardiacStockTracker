@@ -188,7 +188,7 @@ export type AdminUser = typeof adminUsers.$inferSelect;
 export const stockCountSessions = pgTable("stock_count_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: text("user_id").notNull(), // Auth0 user ID
-  countType: text("count_type").notNull(), // 'car' or 'total'
+  countType: text("count_type").notNull(), // 'car', 'total', or 'serialized'
   status: text("status").notNull().default('in_progress'), // 'in_progress', 'completed', 'cancelled'
   startedAt: timestamp("started_at").default(sql`now()`).notNull(),
   completedAt: timestamp("completed_at"),
