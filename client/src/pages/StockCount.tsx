@@ -77,6 +77,12 @@ export default function StockCount() {
   };
 
   const handleProceedToReconciliation = () => {
+    // Invalidate discrepancies query to ensure fresh data
+    if (activeSession) {
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/stock-count/sessions", activeSession.id, "discrepancies"] 
+      });
+    }
     setShowReconciliation(true);
   };
 
