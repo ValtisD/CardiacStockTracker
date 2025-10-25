@@ -131,6 +131,67 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
     matched?: any[];
   };
 
+  // Helper function to check if a missing item is explained by transfer action(s)
+  const isMissingItemExplainedByTransfer = (missingItem: any): boolean => {
+    // Aggregate all transfers that match this missing item
+    let totalTransferred = 0;
+
+    for (const transfer of adjustments.transfers) {
+      // Find the found item that's being transferred
+      const foundItem = found.find((f: any) => f.id === transfer.itemId);
+      if (!foundItem) continue;
+
+      // Check if the transfer is FROM the missing item's location
+      if (transfer.fromLocation !== missingItem.location) continue;
+
+      let matches = false;
+
+      // Match by serial number (most specific) - serial items are 1:1 matches
+      if (missingItem.serialNumber) {
+        // If missing item has serial, found item must also have the same serial
+        if (foundItem.serialNumber && missingItem.serialNumber === foundItem.serialNumber) {
+          // Serial items are 1:1, so any match means it's fully explained
+          return true;
+        }
+      }
+      // Match by lot number and product (for lot-tracked items)
+      else if (missingItem.lotNumber) {
+        // If missing item has lot, found item must also have the same lot
+        if (
+          foundItem.lotNumber &&
+          missingItem.lotNumber === foundItem.lotNumber &&
+          missingItem.product.id === foundItem.product.id
+        ) {
+          matches = true;
+        }
+      }
+      // For non-tracked items, match by product only
+      else if (missingItem.product.id === foundItem.product.id) {
+        // For non-tracked, check if both items have no serial/lot
+        if (!foundItem.serialNumber && !foundItem.lotNumber) {
+          matches = true;
+        }
+      }
+
+      if (matches) {
+        const transferQty = transfer.quantity || foundItem.quantity || 1;
+        totalTransferred += transferQty;
+      }
+    }
+
+    // For lot-tracked and non-tracked items, only hide if total transferred >= missing quantity
+    if (missingItem.lotNumber || (!missingItem.serialNumber && !missingItem.lotNumber)) {
+      return totalTransferred >= missingItem.quantity;
+    }
+
+    return false;
+  };
+
+  // Filter missing items to exclude those explained by transfers
+  const visibleMissingItems = missing.filter(
+    (item: any) => !isMissingItemExplainedByTransfer(item)
+  );
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -331,7 +392,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
         )}
 
         {/* Missing Items */}
-        {missing.length > 0 && (
+        {visibleMissingItems.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -339,12 +400,12 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                 <CardTitle>{t("stockCount.reconciliation.missing.title")}</CardTitle>
               </div>
               <CardDescription>
-                {t("stockCount.reconciliation.missing.description")}
+                {t("stockCount.reconciliation.missing.description")} ({visibleMissingItems.length})
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {missing.map((item: any) => {
+                {visibleMissingItems.map((item: any) => {
                   const adjustment = adjustments.missing.find((a) => a.inventoryId === item.id);
                   const isDeleted = adjustments.deleteInvestigated.includes(item.id);
 
