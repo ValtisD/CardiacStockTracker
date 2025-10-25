@@ -50,21 +50,29 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
   });
 
   const handleBarcodeScan = async (barcodeData: string) => {
+    console.log('📦 Stock Count - Raw barcode data:', barcodeData);
+    
     // Parse GS1 data
     const parsedGs1Data = parseGS1Barcode(barcodeData);
+    console.log('📦 Stock Count - Parsed GS1 data:', parsedGs1Data);
     
     if (!parsedGs1Data.gtin) {
       throw new Error(t("stockCount.errors.noGtin"));
     }
 
+    console.log('📦 Stock Count - Looking up product with GTIN:', parsedGs1Data.gtin);
+
     // Fetch product by GTIN
     const response = await apiRequest("GET", `/api/products?gtin=${parsedGs1Data.gtin}`);
     const products = await response.json();
+    console.log('📦 Stock Count - Products found:', products);
     const product = products?.[0];
 
     if (!product) {
       throw new Error(t("stockCount.errors.productNotFound"));
     }
+
+    console.log('📦 Stock Count - Selected product:', product);
 
     // Determine tracking mode
     const trackingMode = parsedGs1Data.serialNumber ? "serial" : parsedGs1Data.lotNumber ? "lot" : null;
