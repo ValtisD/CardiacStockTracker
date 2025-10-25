@@ -1452,16 +1452,20 @@ export class DatabaseStorage implements IStorage {
 
     // Get current inventory based on count type
     const locations = session.countType === 'car' ? ['car'] : ['home', 'car'];
-    const currentInventory = await db
+    const inventoryQuery = db
       .select()
       .from(inventory)
       .innerJoin(products, eq(inventory.productId, products.id))
       .where(
         and(
           eq(inventory.userId, userId),
-          inArray(inventory.location, locations)
+          inArray(inventory.location, locations),
+          // For serialized counts, only include serial-tracked items
+          session.countType === 'serialized' ? eq(inventory.trackingMode, 'serial') : undefined
         )
       );
+    
+    const currentInventory = await inventoryQuery;
 
     const inventoryWithProduct = currentInventory.map(row => ({
       ...row.inventory,
