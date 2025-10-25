@@ -130,20 +130,18 @@ export default function StockCount() {
                 {t("stockCount.description.scanning")}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={handleCancelSession}
                 disabled={cancelSessionMutation.isPending}
                 data-testid="button-cancel-count"
-                className="flex-1 md:flex-none"
               >
                 {t("stockCount.actions.cancel")}
               </Button>
               <Button
                 onClick={handleProceedToReconciliation}
                 data-testid="button-proceed-reconciliation"
-                className="flex-1 md:flex-none"
               >
                 {t("stockCount.actions.proceedToReconciliation")}
               </Button>

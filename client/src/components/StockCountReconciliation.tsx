@@ -203,12 +203,11 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
             {t("stockCount.reconciliation.description")}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col md:flex-row gap-2">
           <Button 
             variant="outline" 
             onClick={onCancel} 
             data-testid="button-back-to-scanning"
-            className="flex-1 md:flex-none"
           >
             {t("stockCount.actions.backToScanning")}
           </Button>
@@ -216,7 +215,6 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
             onClick={() => applyMutation.mutate()}
             disabled={applyMutation.isPending}
             data-testid="button-apply-adjustments"
-            className="flex-1 md:flex-none"
           >
             {applyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t("stockCount.actions.applyAdjustments")}
