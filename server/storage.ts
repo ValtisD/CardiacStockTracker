@@ -1576,8 +1576,13 @@ export class DatabaseStorage implements IStorage {
               const otherLocation = scanned.scannedLocation === 'car' ? 'home' : 'car';
               
               // Calculate available quantity in other location
+              // For car counts, check allHomeInventory; for total counts, use inventoryWithProduct
+              const inventoryToCheck = (session.countType === 'car' && otherLocation === 'home') 
+                ? allHomeInventory 
+                : inventoryWithProduct;
+              
               let availableInOther = 0;
-              for (const inv of inventoryWithProduct) {
+              for (const inv of inventoryToCheck) {
                 if (inv.location !== otherLocation) continue;
                 
                 const matches = scanned.trackingMode === 'lot' && scanned.lotNumber
@@ -1615,7 +1620,13 @@ export class DatabaseStorage implements IStorage {
           // Found in different location than system thinks
           // Check if item exists in the OTHER location (where we're NOT scanning)
           const otherLocation = scanned.scannedLocation === 'car' ? 'home' : 'car';
-          const existsInOtherLocation = inventoryWithProduct.some(inv => {
+          
+          // For car counts, check allHomeInventory; for total counts, use inventoryWithProduct
+          const inventoryToCheck = (session.countType === 'car' && otherLocation === 'home') 
+            ? allHomeInventory 
+            : inventoryWithProduct;
+          
+          const existsInOtherLocation = inventoryToCheck.some(inv => {
             if (inv.location !== otherLocation) return false;
             if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
               return inv.serialNumber === scanned.serialNumber;
@@ -1631,7 +1642,13 @@ export class DatabaseStorage implements IStorage {
         // Not in system at all (or quantity exceeded) - check if exists in OTHER location
         console.log(`⚠️ NOT MATCHED: Scanned item (${scanned.trackingMode}, qty=${scanned.quantity}) - marking as found`);
         const otherLocation = scanned.scannedLocation === 'car' ? 'home' : 'car';
-        const existsInOtherLocation = inventoryWithProduct.some(inv => {
+        
+        // For car counts, check allHomeInventory; for total counts, use inventoryWithProduct
+        const inventoryToCheck = (session.countType === 'car' && otherLocation === 'home') 
+          ? allHomeInventory 
+          : inventoryWithProduct;
+        
+        const existsInOtherLocation = inventoryToCheck.some(inv => {
           if (inv.location !== otherLocation) return false;
           if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
             return inv.serialNumber === scanned.serialNumber;
