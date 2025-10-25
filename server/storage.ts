@@ -1483,6 +1483,13 @@ export class DatabaseStorage implements IStorage {
           eq(inventory.location, 'home')
         )
       );
+    
+    console.log('🏠 Home inventory items:', allHomeInventory.length, 'items');
+    if (session.countType === 'car') {
+      allHomeInventory.slice(0, 5).forEach(item => {
+        console.log(`  - Product: ${item.productId}, Tracking: ${item.trackingMode}, Qty: ${item.quantity}, Serial: ${item.serialNumber}, Lot: ${item.lotNumber}`);
+      });
+    }
 
     // Track which inventory items have been matched (to prevent double-matching)
     const matchedInventoryIds = new Set<string>();
