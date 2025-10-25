@@ -1568,130 +1568,129 @@ export class DatabaseStorage implements IStorage {
     let markedMissingCount = 0;
     let derecognizedCount = 0;
 
-    await db.transaction(async (tx) => {
-      // Apply transfers
-      for (const transfer of adjustments.transfers) {
-        const scannedItem = await tx
-          .select()
-          .from(stockCountItems)
-          .where(eq(stockCountItems.id, transfer.itemId))
-          .limit(1);
+    // Note: Neon HTTP driver doesn't support transactions, so we execute sequentially
+    // Apply transfers
+    for (const transfer of adjustments.transfers) {
+      const scannedItem = await db
+        .select()
+        .from(stockCountItems)
+        .where(eq(stockCountItems.id, transfer.itemId))
+        .limit(1);
 
-        if (scannedItem[0]) {
-          // Find the inventory item in wrong location
-          let invItem;
-          if (scannedItem[0].trackingMode === 'serial' && scannedItem[0].serialNumber) {
-            const result = await tx
-              .select()
-              .from(inventory)
-              .where(
-                and(
-                  eq(inventory.userId, userId),
-                  eq(inventory.serialNumber, scannedItem[0].serialNumber)
-                )
-              )
-              .limit(1);
-            invItem = result[0];
-          } else if (scannedItem[0].trackingMode === 'lot' && scannedItem[0].lotNumber) {
-            const result = await tx
-              .select()
-              .from(inventory)
-              .where(
-                and(
-                  eq(inventory.userId, userId),
-                  eq(inventory.productId, scannedItem[0].productId),
-                  eq(inventory.lotNumber, scannedItem[0].lotNumber),
-                  eq(inventory.location, transfer.fromLocation)
-                )
-              )
-              .limit(1);
-            invItem = result[0];
-          }
-
-          if (invItem) {
-            const transferQty = transfer.quantity || invItem.quantity;
-
-            if (transferQty >= invItem.quantity) {
-              // Transfer entire item
-              await tx
-                .update(inventory)
-                .set({ location: transfer.toLocation, updatedAt: sql`now()` })
-                .where(eq(inventory.id, invItem.id));
-            } else {
-              // Partial transfer for lot-tracked items
-              await tx
-                .update(inventory)
-                .set({ quantity: invItem.quantity - transferQty, updatedAt: sql`now()` })
-                .where(eq(inventory.id, invItem.id));
-
-              // Create new item in target location
-              await tx.insert(inventory).values({
-                userId,
-                productId: invItem.productId,
-                location: transfer.toLocation,
-                quantity: transferQty,
-                trackingMode: invItem.trackingMode,
-                lotNumber: invItem.lotNumber,
-                expirationDate: invItem.expirationDate,
-              });
-            }
-          }
-        }
-      }
-
-      // Handle missing items
-      for (const missing of adjustments.missing) {
-        if (missing.action === 'derecognized') {
-          derecognizedCount++;
-          // Delete immediately
-          await tx
-            .delete(inventory)
+      if (scannedItem[0]) {
+        // Find the inventory item in wrong location
+        let invItem;
+        if (scannedItem[0].trackingMode === 'serial' && scannedItem[0].serialNumber) {
+          const result = await db
+            .select()
+            .from(inventory)
             .where(
               and(
-                eq(inventory.id, missing.inventoryId),
-                eq(inventory.userId, userId)
+                eq(inventory.userId, userId),
+                eq(inventory.serialNumber, scannedItem[0].serialNumber)
               )
-            );
-        } else {
-          markedMissingCount++;
+            )
+            .limit(1);
+          invItem = result[0];
+        } else if (scannedItem[0].trackingMode === 'lot' && scannedItem[0].lotNumber) {
+          const result = await db
+            .select()
+            .from(inventory)
+            .where(
+              and(
+                eq(inventory.userId, userId),
+                eq(inventory.productId, scannedItem[0].productId),
+                eq(inventory.lotNumber, scannedItem[0].lotNumber),
+                eq(inventory.location, transfer.fromLocation)
+              )
+            )
+            .limit(1);
+          invItem = result[0];
         }
-        // For 'mark_missing', we just leave them in system for investigation
-      }
 
-      // Add new items from scanned
-      for (const newItem of adjustments.newItems) {
-        const scannedItem = await tx
-          .select()
-          .from(stockCountItems)
-          .where(eq(stockCountItems.id, newItem.scannedItemId))
-          .limit(1);
+        if (invItem) {
+          const transferQty = transfer.quantity || invItem.quantity;
 
-        if (scannedItem[0]) {
-          await tx.insert(inventory).values({
-            userId,
-            productId: scannedItem[0].productId,
-            location: newItem.location,
-            quantity: scannedItem[0].quantity,
-            trackingMode: scannedItem[0].trackingMode,
-            serialNumber: scannedItem[0].serialNumber,
-            lotNumber: scannedItem[0].lotNumber,
-            expirationDate: scannedItem[0].expirationDate,
-          });
+          if (transferQty >= invItem.quantity) {
+            // Transfer entire item
+            await db
+              .update(inventory)
+              .set({ location: transfer.toLocation, updatedAt: sql`now()` })
+              .where(eq(inventory.id, invItem.id));
+          } else {
+            // Partial transfer for lot-tracked items
+            await db
+              .update(inventory)
+              .set({ quantity: invItem.quantity - transferQty, updatedAt: sql`now()` })
+              .where(eq(inventory.id, invItem.id));
+
+            // Create new item in target location
+            await db.insert(inventory).values({
+              userId,
+              productId: invItem.productId,
+              location: transfer.toLocation,
+              quantity: transferQty,
+              trackingMode: invItem.trackingMode,
+              lotNumber: invItem.lotNumber,
+              expirationDate: invItem.expirationDate,
+            });
+          }
         }
       }
+    }
 
-      // Delete investigated items user confirmed to remove
-      if (adjustments.deleteInvestigated.length > 0) {
-        await tx
+    // Handle missing items
+    for (const missing of adjustments.missing) {
+      if (missing.action === 'derecognized') {
+        derecognizedCount++;
+        // Delete immediately
+        await db
           .delete(inventory)
           .where(
             and(
-              eq(inventory.userId, userId),
-              inArray(inventory.id, adjustments.deleteInvestigated)
+              eq(inventory.id, missing.inventoryId),
+              eq(inventory.userId, userId)
             )
           );
+      } else {
+        markedMissingCount++;
       }
-    });
+      // For 'mark_missing', we just leave them in system for investigation
+    }
+
+    // Add new items from scanned
+    for (const newItem of adjustments.newItems) {
+      const scannedItem = await db
+        .select()
+        .from(stockCountItems)
+        .where(eq(stockCountItems.id, newItem.scannedItemId))
+        .limit(1);
+
+      if (scannedItem[0]) {
+        await db.insert(inventory).values({
+          userId,
+          productId: scannedItem[0].productId,
+          location: newItem.location,
+          quantity: scannedItem[0].quantity,
+          trackingMode: scannedItem[0].trackingMode,
+          serialNumber: scannedItem[0].serialNumber,
+          lotNumber: scannedItem[0].lotNumber,
+          expirationDate: scannedItem[0].expirationDate,
+        });
+      }
+    }
+
+    // Delete investigated items user confirmed to remove
+    if (adjustments.deleteInvestigated.length > 0) {
+      await db
+        .delete(inventory)
+        .where(
+          and(
+            eq(inventory.userId, userId),
+            inArray(inventory.id, adjustments.deleteInvestigated)
+          )
+        );
+    }
 
     return {
       matched: matchedCount,
