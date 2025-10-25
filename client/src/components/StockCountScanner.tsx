@@ -32,7 +32,7 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
   // Add item mutation
   const addItemMutation = useMutation({
     mutationFn: async (itemData: any) => {
-      return await apiRequest(`/api/stock-count/sessions/${sessionId}/items`, "POST", itemData);
+      return await apiRequest("POST", `/api/stock-count/sessions/${sessionId}/items`, itemData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
