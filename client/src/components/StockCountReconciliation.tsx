@@ -20,7 +20,7 @@ interface StockCountReconciliationProps {
 interface Adjustment {
   transfers: { itemId: string; fromLocation: string; toLocation: string; quantity?: number }[];
   missing: { inventoryId: string; action: "mark_missing" | "derecognized" }[];
-  newItems: { scannedItemId: string; location: string }[];
+  newItems: { scannedItemId: string; location: string; quantity: number }[];
   deleteInvestigated: string[];
 }
 
@@ -89,12 +89,12 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
     }));
   };
 
-  const handleAddNewItem = (scannedItemId: string, location: string) => {
+  const handleAddNewItem = (scannedItemId: string, location: string, quantity: number) => {
     setAdjustments((prev) => ({
       ...prev,
       newItems: [
         ...prev.newItems.filter((n) => n.scannedItemId !== scannedItemId),
-        { scannedItemId, location },
+        { scannedItemId, location, quantity },
       ],
     }));
   };
@@ -253,7 +253,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                           onValueChange={(value) => {
                             // Found items should always be added as new (not transferred)
                             // User just selects which location to add them to
-                            handleAddNewItem(item.id, value);
+                            handleAddNewItem(item.id, value, item.quantity);
                           }}
                         >
                           <SelectTrigger data-testid={`select-action-${item.id}`}>

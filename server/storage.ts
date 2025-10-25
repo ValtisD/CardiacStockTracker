@@ -120,7 +120,7 @@ export interface IStorage {
     adjustments: {
       transfers: { itemId: string; fromLocation: string; toLocation: string; quantity?: number }[];
       missing: { inventoryId: string; action: 'mark_missing' | 'derecognized' }[];
-      newItems: { scannedItemId: string; location: string }[];
+      newItems: { scannedItemId: string; location: string; quantity: number }[];
       deleteInvestigated: string[]; // IDs of items to delete from investigation
     },
     matchedCount: number
@@ -1611,7 +1611,7 @@ export class DatabaseStorage implements IStorage {
     adjustments: {
       transfers: { itemId: string; fromLocation: string; toLocation: string; quantity?: number }[];
       missing: { inventoryId: string; action: 'mark_missing' | 'derecognized' }[];
-      newItems: { scannedItemId: string; location: string }[];
+      newItems: { scannedItemId: string; location: string; quantity: number }[];
       deleteInvestigated: string[];
     },
     matchedCount: number
@@ -1718,7 +1718,7 @@ export class DatabaseStorage implements IStorage {
     // Add new items from scanned
     console.log(`\n📦 Adding ${adjustments.newItems.length} new items to inventory...`);
     for (const newItem of adjustments.newItems) {
-      console.log(`  Processing scannedItemId: ${newItem.scannedItemId}, location: ${newItem.location}`);
+      console.log(`  Processing scannedItemId: ${newItem.scannedItemId}, location: ${newItem.location}, quantity: ${newItem.quantity}`);
       const scannedItem = await db
         .select()
         .from(stockCountItems)
@@ -1728,24 +1728,63 @@ export class DatabaseStorage implements IStorage {
       if (scannedItem[0]) {
         console.log(`  Found scanned item:`, {
           productId: scannedItem[0].productId,
-          qty: scannedItem[0].quantity,
+          qty: newItem.quantity, // Use the quantity from the frontend (surplus quantity)
           tracking: scannedItem[0].trackingMode,
           serial: scannedItem[0].serialNumber,
           lot: scannedItem[0].lotNumber
         });
         
-        await db.insert(inventory).values({
-          userId,
-          productId: scannedItem[0].productId,
-          location: newItem.location,
-          quantity: scannedItem[0].quantity,
-          trackingMode: scannedItem[0].trackingMode,
-          serialNumber: scannedItem[0].serialNumber,
-          lotNumber: scannedItem[0].lotNumber,
-          expirationDate: scannedItem[0].expirationDate,
-        });
-        
-        console.log(`  ✅ Added to inventory at ${newItem.location}`);
+        // For lot-tracked items, check if we already have inventory with this lot number at this location
+        if (scannedItem[0].trackingMode === 'lot' && scannedItem[0].lotNumber) {
+          const existingItem = await db
+            .select()
+            .from(inventory)
+            .where(
+              and(
+                eq(inventory.userId, userId),
+                eq(inventory.productId, scannedItem[0].productId),
+                eq(inventory.lotNumber, scannedItem[0].lotNumber),
+                eq(inventory.location, newItem.location)
+              )
+            )
+            .limit(1);
+          
+          if (existingItem[0]) {
+            // Update existing inventory quantity
+            console.log(`  📝 Updating existing lot inventory (${existingItem[0].quantity} + ${newItem.quantity} = ${existingItem[0].quantity + newItem.quantity})`);
+            await db
+              .update(inventory)
+              .set({ quantity: existingItem[0].quantity + newItem.quantity })
+              .where(eq(inventory.id, existingItem[0].id));
+            console.log(`  ✅ Updated existing inventory at ${newItem.location}`);
+          } else {
+            // Create new inventory item
+            await db.insert(inventory).values({
+              userId,
+              productId: scannedItem[0].productId,
+              location: newItem.location,
+              quantity: newItem.quantity, // Use the quantity from the frontend
+              trackingMode: scannedItem[0].trackingMode,
+              serialNumber: scannedItem[0].serialNumber,
+              lotNumber: scannedItem[0].lotNumber,
+              expirationDate: scannedItem[0].expirationDate,
+            });
+            console.log(`  ✅ Added new inventory at ${newItem.location}`);
+          }
+        } else {
+          // Serial-tracked or non-tracked items - always create new
+          await db.insert(inventory).values({
+            userId,
+            productId: scannedItem[0].productId,
+            location: newItem.location,
+            quantity: newItem.quantity, // Use the quantity from the frontend
+            trackingMode: scannedItem[0].trackingMode,
+            serialNumber: scannedItem[0].serialNumber,
+            lotNumber: scannedItem[0].lotNumber,
+            expirationDate: scannedItem[0].expirationDate,
+          });
+          console.log(`  ✅ Added to inventory at ${newItem.location}`);
+        }
       } else {
         console.log(`  ⚠️ Scanned item not found!`);
       }
