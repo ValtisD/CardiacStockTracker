@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Scan, Package, Calendar, Hash, Trash2 } from "lucide-react";
+import { Camera, Package, Calendar, Hash, Trash2, Loader2 } from "lucide-react";
 import { StockCountBarcodeScanner } from "@/components/StockCountBarcodeScanner";
 import { parseGS1Barcode } from "@/lib/gs1Parser";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -20,14 +20,21 @@ interface StockCountScannerProps {
 export function StockCountScanner({ sessionId, scannedLocation }: StockCountScannerProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [showScanner, setShowScanner] = useState(false);
-  const [manualGtin, setManualGtin] = useState("");
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
+  const [scannerInput, setScannerInput] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const scannerInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch scanned items
   const { data: scannedItems = [] } = useQuery<any[]>({
     queryKey: ["/api/stock-count/sessions", sessionId, "items"],
     refetchInterval: 2000,
   });
+
+  // Auto-focus scanner input on mount
+  useEffect(() => {
+    scannerInputRef.current?.focus();
+  }, []);
 
   // Add item mutation
   const addItemMutation = useMutation({
@@ -38,14 +45,23 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
       queryClient.invalidateQueries({
         queryKey: ["/api/stock-count/sessions", sessionId, "items"],
       });
-      setShowScanner(false);
-      setManualGtin("");
+      setScannerInput("");
+      setIsProcessing(false);
+      // Re-focus input for next scan
+      setTimeout(() => {
+        scannerInputRef.current?.focus();
+      }, 100);
     },
     onError: (error: any) => {
+      setIsProcessing(false);
       toast({
         variant: "destructive",
         description: error.message || t("stockCount.errors.addItemFailed"),
       });
+      // Re-focus input even on error
+      setTimeout(() => {
+        scannerInputRef.current?.focus();
+      }, 100);
     },
   });
 
@@ -107,38 +123,21 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
     });
   };
 
-  const handleManualGtinSubmit = async () => {
-    if (!manualGtin.trim()) return;
-    
-    try {
-      // Fetch product by GTIN
-      const response = await apiRequest("GET", `/api/products?gtin=${manualGtin.trim()}`);
-      const products = await response.json();
-      const product = products?.[0];
-
-      if (!product) {
+  const handleScannerInput = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && scannerInput.trim() && !isProcessing) {
+      e.preventDefault();
+      setIsProcessing(true);
+      
+      try {
+        await handleBarcodeScan(scannerInput.trim());
+      } catch (error: any) {
         toast({
           variant: "destructive",
-          description: t("stockCount.errors.productNotFound"),
+          description: error.message || t("stockCount.errors.scanFailed"),
         });
-        return;
+        setIsProcessing(false);
+        setScannerInput("");
       }
-
-      // Add item without serial/lot (manual entry)
-      await addItemMutation.mutateAsync({
-        productId: product.id,
-        scannedLocation,
-        trackingMode: null,
-        serialNumber: null,
-        lotNumber: null,
-        expirationDate: null,
-        quantity: 1,
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        description: error.message || t("stockCount.errors.addItemFailed"),
-      });
     }
   };
 
@@ -159,36 +158,52 @@ export function StockCountScanner({ sessionId, scannedLocation }: StockCountScan
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex gap-4">
-        <Button
-          onClick={() => setShowScanner(true)}
-          className="flex-1"
-          data-testid="button-scan-barcode"
-        >
-          <Scan className="mr-2 h-4 w-4" />
-          {t("stockCount.actions.scanBarcode")}
-        </Button>
-        <div className="flex gap-2 flex-1">
-          <Input
-            placeholder={t("stockCount.labels.enterGtin")}
-            value={manualGtin}
-            onChange={(e) => setManualGtin(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleManualGtinSubmit()}
-            data-testid="input-manual-gtin"
-          />
-          <Button
-            onClick={handleManualGtinSubmit}
-            disabled={!manualGtin.trim() || addItemMutation.isPending}
-            data-testid="button-add-manual"
-          >
-            {t("stockCount.actions.add")}
-          </Button>
-        </div>
-      </div>
+      {/* Scanner Input Section */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <div className="relative">
+                  <Input
+                    ref={scannerInputRef}
+                    type="text"
+                    value={scannerInput}
+                    onChange={(e) => setScannerInput(e.target.value)}
+                    onKeyDown={handleScannerInput}
+                    placeholder="Scan barcode or enter GTIN..."
+                    className="font-mono text-lg pr-10"
+                    data-testid="input-scanner"
+                    autoFocus
+                    disabled={isProcessing}
+                  />
+                  {isProcessing && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Focus here and scan with your Bluetooth scanner, or press Enter after typing
+                </p>
+              </div>
+              <Button
+                onClick={() => setShowCameraScanner(true)}
+                variant="outline"
+                size="icon"
+                className="shrink-0 h-[52px] w-[52px]"
+                data-testid="button-camera-scan"
+              >
+                <Camera className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <StockCountBarcodeScanner
-        isOpen={showScanner}
-        onClose={() => setShowScanner(false)}
+        isOpen={showCameraScanner}
+        onClose={() => setShowCameraScanner(false)}
         onScan={handleBarcodeScan}
       />
 
