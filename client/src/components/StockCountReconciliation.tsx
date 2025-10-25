@@ -249,27 +249,26 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
 
                       <div className="flex gap-2">
                         <Select
-                          value={adjustment?.location || transferAdjustment?.toLocation || ""}
+                          value={adjustment?.location || ""}
                           onValueChange={(value) => {
-                            if (value === "add_new") {
-                              handleAddNewItem(item.id, item.scannedLocation);
-                            } else {
-                              handleTransferItem(item.id, value === "car" ? "home" : "car", value);
-                            }
+                            // Found items should always be added as new (not transferred)
+                            // User just selects which location to add them to
+                            handleAddNewItem(item.id, value);
                           }}
                         >
                           <SelectTrigger data-testid={`select-action-${item.id}`}>
                             <SelectValue placeholder={t("stockCount.reconciliation.selectAction")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="add_new">
-                              {t("stockCount.reconciliation.actions.addNew")}
+                            <SelectItem value={item.scannedLocation}>
+                              {item.scannedLocation === "car" 
+                                ? t("stockCount.reconciliation.actions.addNewInCar")
+                                : t("stockCount.reconciliation.actions.addNewInHome")}
                             </SelectItem>
-                            <SelectItem value="car">
-                              {t("stockCount.reconciliation.actions.transferToCar")}
-                            </SelectItem>
-                            <SelectItem value="home">
-                              {t("stockCount.reconciliation.actions.transferToHome")}
+                            <SelectItem value={item.scannedLocation === "car" ? "home" : "car"}>
+                              {item.scannedLocation === "car"
+                                ? t("stockCount.reconciliation.actions.addNewInHome")
+                                : t("stockCount.reconciliation.actions.addNewInCar")}
                             </SelectItem>
                           </SelectContent>
                         </Select>

@@ -439,6 +439,8 @@
       },
       "actions": {
         "addNew": "Add as new item",
+        "addNewInHome": "Add as new item in Home",
+        "addNewInCar": "Add as new item in Car",
         "transferToCar": "Transfer to car",
         "transferToHome": "Transfer to home",
         "keepForInvestigation": "Keep for investigation",

@@ -439,6 +439,8 @@
       },
       "actions": {
         "addNew": "Als neuen Artikel hinzufügen",
+        "addNewInHome": "Als neuen Artikel in Zuhause hinzufügen",
+        "addNewInCar": "Als neuen Artikel im Fahrzeug hinzufügen",
         "transferToCar": "Zum Fahrzeug verschieben",
         "transferToHome": "Nach Zuhause verschieben",
         "keepForInvestigation": "Zur Untersuchung behalten",
