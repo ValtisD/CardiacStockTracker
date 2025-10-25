@@ -5,7 +5,7 @@ import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Package, CheckCircle, AlertTriangle, Loader2, History } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -61,7 +61,7 @@ export default function StockCount() {
 
   useEffect(() => {
     if (activeSession) {
-      setSelectedCountType(activeSession.countType);
+      setSelectedCountType(activeSession.countType as CountType);
     }
   }, [activeSession]);
 
@@ -149,24 +149,21 @@ export default function StockCount() {
           </div>
 
           {(activeSession.countType === "total" || activeSession.countType === "serialized") && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 p-3 bg-card border rounded-lg">
               <span className="text-sm font-medium">{t("stockCount.labels.currentLocation")}:</span>
-              <Select
-                value={currentLocation}
-                onValueChange={(value) => setCurrentLocation(value as "home" | "car")}
-              >
-                <SelectTrigger className="w-40" data-testid="select-scan-location">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="car" data-testid="option-location-car">
-                    {t("stockCount.locations.car")}
-                  </SelectItem>
-                  <SelectItem value="home" data-testid="option-location-home">
-                    {t("stockCount.locations.home")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${currentLocation === "home" ? "text-foreground" : "text-muted-foreground"}`}>
+                  {t("stockCount.locations.home")}
+                </span>
+                <Switch
+                  checked={currentLocation === "car"}
+                  onCheckedChange={(checked) => setCurrentLocation(checked ? "car" : "home")}
+                  data-testid="switch-scan-location"
+                />
+                <span className={`text-sm font-medium ${currentLocation === "car" ? "text-foreground" : "text-muted-foreground"}`}>
+                  {t("stockCount.locations.car")}
+                </span>
+              </div>
             </div>
           )}
         </div>
