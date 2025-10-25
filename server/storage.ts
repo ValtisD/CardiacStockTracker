@@ -1516,12 +1516,14 @@ export class DatabaseStorage implements IStorage {
         // Check if location matches
         if (matchedInv.location === scanned.scannedLocation) {
           matched.push({ ...scanned, inventoryId: matchedInv.id });
-          matchedInventoryIds.add(matchedInv.id);
           
           // Track quantity matched for lot-tracked and non-tracked items
           if (scanned.trackingMode === 'lot' || !scanned.trackingMode) {
             const currentMatched = matchedQuantities.get(matchedInv.id) || 0;
             matchedQuantities.set(matchedInv.id, currentMatched + scanned.quantity);
+          } else {
+            // Only add to matchedInventoryIds for serial-tracked items (1:1 matching)
+            matchedInventoryIds.add(matchedInv.id);
           }
         } else {
           // Found in different location than system thinks
@@ -1551,9 +1553,15 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    // Find missing items (in system but not scanned)
+    // Find missing items (in system but not scanned, or not fully scanned for lot-tracked)
     const missing = inventoryWithProduct.filter(inv => {
-      return !matchedInventoryIds.has(inv.id);
+      // For serial-tracked items, check if ID was matched
+      if (inv.trackingMode === 'serial') {
+        return !matchedInventoryIds.has(inv.id);
+      }
+      // For lot-tracked and non-tracked, check if quantity was fully matched
+      const matchedQty = matchedQuantities.get(inv.id) || 0;
+      return matchedQty < inv.quantity;
     });
 
     return { missing, found, matched };
