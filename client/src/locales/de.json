@@ -427,7 +427,8 @@
       "productNotFound": "Produkt nicht in Datenbank gefunden",
       "scanFailed": "Barcode-Scan fehlgeschlagen",
       "addItemFailed": "Artikel konnte nicht zur Zählung hinzugefügt werden",
-      "reconciliationFailed": "Abgleich-Anpassungen konnten nicht übernommen werden"
+      "reconciliationFailed": "Abgleich-Anpassungen konnten nicht übernommen werden",
+      "reconciliationFailedDetails": "Einige Anpassungen wurden möglicherweise nicht gespeichert. Bitte überprüfen Sie Ihr Inventar und versuchen Sie es erneut."
     },
     "reconciliation": {
       "title": "Bestandszählung Abgleich",

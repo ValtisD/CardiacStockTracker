@@ -427,7 +427,8 @@
       "productNotFound": "Product not found in database",
       "scanFailed": "Failed to scan barcode",
       "addItemFailed": "Failed to add item to count",
-      "reconciliationFailed": "Failed to apply reconciliation adjustments"
+      "reconciliationFailed": "Failed to apply reconciliation adjustments",
+      "reconciliationFailedDetails": "Some adjustments may not have been saved. Please check your inventory and try again."
     },
     "reconciliation": {
       "title": "Stock Count Reconciliation",

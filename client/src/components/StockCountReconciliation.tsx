@@ -61,10 +61,12 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
       setCompletionSummary(data.summary);
       setShowSummary(true);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Stock count reconciliation error:", error);
       toast({
         variant: "destructive",
-        description: t("stockCount.errors.reconciliationFailed"),
+        title: t("stockCount.errors.reconciliationFailed"),
+        description: error.message || t("stockCount.errors.reconciliationFailedDetails"),
       });
     },
   });
@@ -260,32 +262,40 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
 
                       <div className="flex gap-2">
                         {item.existsInHome ? (
-                          // Item exists in other location - offer transfer or add new
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
+                          // Item exists in other location - offer transfer or add new via dropdown
+                          <Select
+                            value={
+                              transferAdjustment 
+                                ? "transfer" 
+                                : adjustment 
+                                ? "addnew" 
+                                : ""
+                            }
+                            onValueChange={(value) => {
+                              if (value === "transfer") {
                                 const otherLocation = item.scannedLocation === "car" ? "home" : "car";
                                 handleTransferItem(item.id, otherLocation, item.scannedLocation);
-                              }}
-                              data-testid={`button-transfer-${item.id}`}
-                            >
-                              {item.scannedLocation === "car"
-                                ? t("stockCount.reconciliation.actions.transferFromHome")
-                                : t("stockCount.reconciliation.actions.transferFromCar")}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleAddNewItem(item.id, item.scannedLocation, item.quantity)}
-                              data-testid={`button-addnew-${item.id}`}
-                            >
-                              {item.scannedLocation === "car" 
-                                ? t("stockCount.reconciliation.actions.addNewInCar")
-                                : t("stockCount.reconciliation.actions.addNewInHome")}
-                            </Button>
-                          </>
+                              } else if (value === "addnew") {
+                                handleAddNewItem(item.id, item.scannedLocation, item.quantity);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-full" data-testid={`select-action-${item.id}`}>
+                              <SelectValue placeholder={t("stockCount.reconciliation.selectAction")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="transfer">
+                                {item.scannedLocation === "car"
+                                  ? t("stockCount.reconciliation.actions.transferFromHome")
+                                  : t("stockCount.reconciliation.actions.transferFromCar")}
+                              </SelectItem>
+                              <SelectItem value="addnew">
+                                {item.scannedLocation === "car" 
+                                  ? t("stockCount.reconciliation.actions.addNewInCar")
+                                  : t("stockCount.reconciliation.actions.addNewInHome")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         ) : (
                           // Item doesn't exist elsewhere - only offer add new
                           <Select
