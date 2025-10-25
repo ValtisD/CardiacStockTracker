@@ -1445,6 +1445,10 @@ export class DatabaseStorage implements IStorage {
 
     // Get all scanned items
     const scannedItems = await this.getStockCountItems(sessionId);
+    console.log('📊 Scanned items:', scannedItems.length, 'items');
+    scannedItems.forEach(item => {
+      console.log(`  - Product: ${item.productId}, Tracking: ${item.trackingMode}, Qty: ${item.quantity}, Serial: ${item.serialNumber}, Lot: ${item.lotNumber}`);
+    });
 
     // Get current inventory based on count type
     const locations = session.countType === 'car' ? ['car'] : ['home', 'car'];
@@ -1463,6 +1467,11 @@ export class DatabaseStorage implements IStorage {
       ...row.inventory,
       product: row.products
     }));
+    
+    console.log('📦 Inventory items:', inventoryWithProduct.length, 'items');
+    inventoryWithProduct.forEach(item => {
+      console.log(`  - Product: ${item.productId}, Tracking: ${item.trackingMode}, Qty: ${item.quantity}, Serial: ${item.serialNumber}, Lot: ${item.lotNumber}, Location: ${item.location}`);
+    });
 
     // Get ALL home inventory for checking if items exist in home
     const allHomeInventory = await db
@@ -1515,12 +1524,15 @@ export class DatabaseStorage implements IStorage {
       if (matchedInv) {
         // Check if location matches
         if (matchedInv.location === scanned.scannedLocation) {
+          console.log(`✅ MATCHED: Scanned item (${scanned.trackingMode}, qty=${scanned.quantity}) matched to inventory (id=${matchedInv.id}, qty=${matchedInv.quantity})`);
           matched.push({ ...scanned, inventoryId: matchedInv.id });
           
           // Track quantity matched for lot-tracked and non-tracked items
           if (scanned.trackingMode === 'lot' || !scanned.trackingMode) {
             const currentMatched = matchedQuantities.get(matchedInv.id) || 0;
-            matchedQuantities.set(matchedInv.id, currentMatched + scanned.quantity);
+            const newMatched = currentMatched + scanned.quantity;
+            console.log(`  📊 Quantity tracking: ${currentMatched} + ${scanned.quantity} = ${newMatched} (inv has ${matchedInv.quantity})`);
+            matchedQuantities.set(matchedInv.id, newMatched);
           } else {
             // Only add to matchedInventoryIds for serial-tracked items (1:1 matching)
             matchedInventoryIds.add(matchedInv.id);
@@ -1540,6 +1552,7 @@ export class DatabaseStorage implements IStorage {
         }
       } else {
         // Not in system at all (or quantity exceeded) - check if exists in home
+        console.log(`⚠️ NOT MATCHED: Scanned item (${scanned.trackingMode}, qty=${scanned.quantity}) - marking as found`);
         const existsInHome = allHomeInventory.some(homeInv => {
           if (scanned.trackingMode === 'serial' && scanned.serialNumber) {
             return homeInv.serialNumber === scanned.serialNumber;
@@ -1549,9 +1562,12 @@ export class DatabaseStorage implements IStorage {
             return homeInv.productId === scanned.productId && !homeInv.serialNumber && !homeInv.lotNumber;
           }
         });
+        console.log(`  📦 Exists in home: ${existsInHome}`);
         found.push({ ...scanned, existsInHome });
       }
     }
+    
+    console.log(`\n📋 Results: ${matched.length} matched, ${found.length} found, ${inventoryWithProduct.length} total inventory`);
 
     // Find missing items (in system but not scanned, or not fully scanned for lot-tracked)
     const missing = inventoryWithProduct.filter(inv => {
