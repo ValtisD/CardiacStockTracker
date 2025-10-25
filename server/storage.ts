@@ -1571,18 +1571,40 @@ export class DatabaseStorage implements IStorage {
             
             if (surplus > 0) {
               // Add surplus portion to found items
-              // Check if item exists in the OTHER location (not the one being scanned)
+              // Split surplus based on what's available in the OTHER location
               console.log(`  ⚠️ SURPLUS: ${surplus} units exceed inventory`);
               const otherLocation = scanned.scannedLocation === 'car' ? 'home' : 'car';
-              const existsInOtherLocation = inventoryWithProduct.some(inv => {
-                if (inv.location !== otherLocation) return false;
-                if (scanned.trackingMode === 'lot' && scanned.lotNumber) {
-                  return inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId;
-                } else {
-                  return inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber;
+              
+              // Calculate available quantity in other location
+              let availableInOther = 0;
+              for (const inv of inventoryWithProduct) {
+                if (inv.location !== otherLocation) continue;
+                
+                const matches = scanned.trackingMode === 'lot' && scanned.lotNumber
+                  ? inv.lotNumber === scanned.lotNumber && inv.productId === scanned.productId
+                  : inv.productId === scanned.productId && !inv.serialNumber && !inv.lotNumber;
+                
+                if (matches) {
+                  const alreadyMatched = matchedQuantities.get(inv.id) || 0;
+                  availableInOther += (inv.quantity - alreadyMatched);
                 }
-              });
-              found.push({ ...scanned, quantity: surplus, existsInHome: existsInOtherLocation });
+              }
+              
+              console.log(`  📍 Available in ${otherLocation}: ${availableInOther} units`);
+              
+              // Split surplus: transferable from other location vs truly new
+              const transferable = Math.min(surplus, availableInOther);
+              const trulyNew = surplus - transferable;
+              
+              if (transferable > 0) {
+                console.log(`  ➡️ ${transferable} units can be transferred from ${otherLocation}`);
+                found.push({ ...scanned, quantity: transferable, existsInHome: true });
+              }
+              
+              if (trulyNew > 0) {
+                console.log(`  ➕ ${trulyNew} units are truly new (not in system)`);
+                found.push({ ...scanned, quantity: trulyNew, existsInHome: false });
+              }
             }
           } else {
             // Serial-tracked items: 1:1 matching
