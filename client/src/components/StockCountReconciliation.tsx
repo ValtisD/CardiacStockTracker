@@ -193,10 +193,10 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" data-testid="text-reconciliation-title">
+    <div className="px-4 py-4 md:px-6 md:py-6 space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex-1">
+          <h1 className="text-xl md:text-2xl font-bold" data-testid="text-reconciliation-title">
             {t("stockCount.reconciliation.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -204,13 +204,19 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel} data-testid="button-back-to-scanning">
+          <Button 
+            variant="outline" 
+            onClick={onCancel} 
+            data-testid="button-back-to-scanning"
+            className="flex-1 md:flex-none"
+          >
             {t("stockCount.actions.backToScanning")}
           </Button>
           <Button
             onClick={() => applyMutation.mutate()}
             disabled={applyMutation.isPending}
             data-testid="button-apply-adjustments"
+            className="flex-1 md:flex-none"
           >
             {applyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t("stockCount.actions.applyAdjustments")}
@@ -218,15 +224,15 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
         </div>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 md:gap-6">
         {/* Matched Items */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3 md:pb-6">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <CardTitle>{t("stockCount.reconciliation.matched.title")}</CardTitle>
+              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+              <CardTitle className="text-base md:text-lg">{t("stockCount.reconciliation.matched.title")}</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-xs md:text-sm">
               {t("stockCount.reconciliation.matched.description")} ({matched.length})
             </CardDescription>
           </CardHeader>
@@ -236,13 +242,13 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                 {matched.slice(0, 5).map((item: any) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-2 rounded-md bg-muted/50 text-sm"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 rounded-md bg-muted/50 text-xs md:text-sm"
                     data-testid={`item-matched-${item.id}`}
                   >
-                    <div>
-                      <span className="font-medium">{item.product.name}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium break-words">{item.product.name}</span>
                       {item.serialNumber && (
-                        <span className="ml-2 font-mono text-muted-foreground">
+                        <span className="ml-2 font-mono text-muted-foreground truncate block sm:inline">
                           {item.serialNumber}
                         </span>
                       )}
@@ -252,7 +258,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                         </span>
                       )}
                     </div>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="text-xs shrink-0 w-fit">
                       {item.scannedLocation === "car"
                         ? t("stockCount.locations.car")
                         : t("stockCount.locations.home")}
@@ -260,7 +266,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                   </div>
                 ))}
                 {matched.length > 5 && (
-                  <p className="text-sm text-muted-foreground text-center pt-2">
+                  <p className="text-xs md:text-sm text-muted-foreground text-center pt-2">
                     {t("stockCount.reconciliation.andMore", { count: matched.length - 5 })}
                   </p>
                 )}
@@ -272,17 +278,17 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
         {/* Found Items - Wrong Location or New */}
         {found.length > 0 && (
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3 md:pb-6">
               <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-600" />
-                <CardTitle>{t("stockCount.reconciliation.found.title")}</CardTitle>
+                <Package className="h-5 w-5 text-blue-600 shrink-0" />
+                <CardTitle className="text-base md:text-lg">{t("stockCount.reconciliation.found.title")}</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="text-xs md:text-sm">
                 {t("stockCount.reconciliation.found.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {found.map((item: any) => {
                   const adjustment = adjustments.newItems.find((a) => a.scannedItemId === item.id);
                   const transferAdjustment = adjustments.transfers.find((t) => t.itemId === item.id);
@@ -290,30 +296,30 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                   return (
                     <div
                       key={item.id}
-                      className="p-4 rounded-lg border space-y-3"
+                      className="p-3 md:p-4 rounded-lg border space-y-3"
                       data-testid={`item-found-${item.id}`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{item.product.name}</p>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <p className="font-medium text-sm md:text-base break-words">{item.product.name}</p>
                             {item.existsInHome && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs w-fit">
                                 📦 {item.scannedLocation === "car" 
                                   ? t("stockCount.reconciliation.badges.inHomeStock")
                                   : t("stockCount.reconciliation.badges.inCarStock")}
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">{item.product.modelNumber}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">{item.product.modelNumber}</p>
                           {item.serialNumber && (
-                            <p className="text-sm font-mono mt-1">S/N: {item.serialNumber}</p>
+                            <p className="text-xs md:text-sm font-mono mt-1 truncate">S/N: {item.serialNumber}</p>
                           )}
                           {item.lotNumber && (
-                            <p className="text-sm font-mono mt-1">Lot: {item.lotNumber}</p>
+                            <p className="text-xs md:text-sm font-mono mt-1">Lot: {item.lotNumber}</p>
                           )}
                         </div>
-                        <Badge>
+                        <Badge className="text-xs w-fit shrink-0">
                           {t("stockCount.reconciliation.found.scannedIn")}{" "}
                           {item.scannedLocation === "car"
                             ? t("stockCount.locations.car")
@@ -394,17 +400,17 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
         {/* Missing Items */}
         {visibleMissingItems.length > 0 && (
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3 md:pb-6">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
-                <CardTitle>{t("stockCount.reconciliation.missing.title")}</CardTitle>
+                <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
+                <CardTitle className="text-base md:text-lg">{t("stockCount.reconciliation.missing.title")}</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="text-xs md:text-sm">
                 {t("stockCount.reconciliation.missing.description")} ({visibleMissingItems.length})
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {visibleMissingItems.map((item: any) => {
                   const adjustment = adjustments.missing.find((a) => a.inventoryId === item.id);
                   const isDeleted = adjustments.deleteInvestigated.includes(item.id);
@@ -414,23 +420,23 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                   return (
                     <div
                       key={item.id}
-                      className="p-4 rounded-lg border space-y-3"
+                      className="p-3 md:p-4 rounded-lg border space-y-3"
                       data-testid={`item-missing-${item.id}`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">{item.product.name}</p>
-                          <p className="text-sm text-muted-foreground">{item.product.modelNumber}</p>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm md:text-base break-words">{item.product.name}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">{item.product.modelNumber}</p>
                           {item.serialNumber && (
-                            <p className="text-sm font-mono mt-1">S/N: {item.serialNumber}</p>
+                            <p className="text-xs md:text-sm font-mono mt-1 truncate">S/N: {item.serialNumber}</p>
                           )}
                           {item.lotNumber && (
-                            <p className="text-sm font-mono mt-1">
+                            <p className="text-xs md:text-sm font-mono mt-1">
                               Lot: {item.lotNumber} (Qty: {item.quantity})
                             </p>
                           )}
                         </div>
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-xs w-fit shrink-0">
                           {item.location === "car"
                             ? t("stockCount.locations.car")
                             : t("stockCount.locations.home")}
@@ -444,7 +450,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                             handleMarkMissing(item.id, value)
                           }
                         >
-                          <SelectTrigger data-testid={`select-missing-action-${item.id}`}>
+                          <SelectTrigger data-testid={`select-missing-action-${item.id}`} className="text-xs md:text-sm">
                             <SelectValue
                               placeholder={t("stockCount.reconciliation.selectAction")}
                             />
@@ -464,6 +470,7 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
                             size="icon"
                             onClick={() => handleDeleteInvestigated(item.id)}
                             data-testid={`button-delete-investigated-${item.id}`}
+                            className="shrink-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
