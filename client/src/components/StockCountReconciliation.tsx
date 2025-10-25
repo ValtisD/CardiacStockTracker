@@ -81,6 +81,8 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
         ...prev.transfers.filter((t) => t.itemId !== scannedItemId),
         { itemId: scannedItemId, fromLocation, toLocation },
       ],
+      // Remove from newItems if it was previously added there
+      newItems: prev.newItems.filter((n) => n.scannedItemId !== scannedItemId),
     }));
   };
 
@@ -101,6 +103,8 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
         ...prev.newItems.filter((n) => n.scannedItemId !== scannedItemId),
         { scannedItemId, location, quantity },
       ],
+      // Remove from transfers if it was previously added there
+      transfers: prev.transfers.filter((t) => t.itemId !== scannedItemId),
     }));
   };
 

@@ -1676,29 +1676,90 @@ export class DatabaseStorage implements IStorage {
         if (invItem) {
           const transferQty = transfer.quantity || invItem.quantity;
 
-          if (transferQty >= invItem.quantity) {
-            // Transfer entire item
-            await db
-              .update(inventory)
-              .set({ location: transfer.toLocation, updatedAt: sql`now()` })
-              .where(eq(inventory.id, invItem.id));
-          } else {
-            // Partial transfer for lot-tracked items
-            await db
-              .update(inventory)
-              .set({ quantity: invItem.quantity - transferQty, updatedAt: sql`now()` })
-              .where(eq(inventory.id, invItem.id));
+          // For lot-tracked items, check if target location already has this lot
+          if (scannedItem[0].trackingMode === 'lot' && scannedItem[0].lotNumber && invItem.lotNumber) {
+            const targetItem = await db
+              .select()
+              .from(inventory)
+              .where(
+                and(
+                  eq(inventory.userId, userId),
+                  eq(inventory.productId, invItem.productId),
+                  eq(inventory.lotNumber, scannedItem[0].lotNumber),
+                  eq(inventory.location, transfer.toLocation)
+                )
+              )
+              .limit(1);
 
-            // Create new item in target location
-            await db.insert(inventory).values({
-              userId,
-              productId: invItem.productId,
-              location: transfer.toLocation,
-              quantity: transferQty,
-              trackingMode: invItem.trackingMode,
-              lotNumber: invItem.lotNumber,
-              expirationDate: invItem.expirationDate,
-            });
+            if (targetItem[0]) {
+              // Target location already has this lot - merge quantities
+              await db
+                .update(inventory)
+                .set({ quantity: targetItem[0].quantity + transferQty, updatedAt: sql`now()` })
+                .where(eq(inventory.id, targetItem[0].id));
+
+              if (transferQty >= invItem.quantity) {
+                // Delete the source item (fully transferred)
+                await db.delete(inventory).where(eq(inventory.id, invItem.id));
+              } else {
+                // Reduce source item quantity (partial transfer)
+                await db
+                  .update(inventory)
+                  .set({ quantity: invItem.quantity - transferQty, updatedAt: sql`now()` })
+                  .where(eq(inventory.id, invItem.id));
+              }
+            } else {
+              // Target location doesn't have this lot yet
+              if (transferQty >= invItem.quantity) {
+                // Transfer entire item by changing location
+                await db
+                  .update(inventory)
+                  .set({ location: transfer.toLocation, updatedAt: sql`now()` })
+                  .where(eq(inventory.id, invItem.id));
+              } else {
+                // Partial transfer - create new item in target location
+                await db
+                  .update(inventory)
+                  .set({ quantity: invItem.quantity - transferQty, updatedAt: sql`now()` })
+                  .where(eq(inventory.id, invItem.id));
+
+                await db.insert(inventory).values({
+                  userId,
+                  productId: invItem.productId,
+                  location: transfer.toLocation,
+                  quantity: transferQty,
+                  trackingMode: invItem.trackingMode,
+                  lotNumber: invItem.lotNumber,
+                  expirationDate: invItem.expirationDate,
+                });
+              }
+            }
+          } else {
+            // Serial-tracked items - just change location (no merging)
+            if (transferQty >= invItem.quantity) {
+              // Transfer entire item
+              await db
+                .update(inventory)
+                .set({ location: transfer.toLocation, updatedAt: sql`now()` })
+                .where(eq(inventory.id, invItem.id));
+            } else {
+              // Partial transfer for lot-tracked items
+              await db
+                .update(inventory)
+                .set({ quantity: invItem.quantity - transferQty, updatedAt: sql`now()` })
+                .where(eq(inventory.id, invItem.id));
+
+              // Create new item in target location
+              await db.insert(inventory).values({
+                userId,
+                productId: invItem.productId,
+                location: transfer.toLocation,
+                quantity: transferQty,
+                trackingMode: invItem.trackingMode,
+                lotNumber: invItem.lotNumber,
+                expirationDate: invItem.expirationDate,
+              });
+            }
           }
         }
       }
