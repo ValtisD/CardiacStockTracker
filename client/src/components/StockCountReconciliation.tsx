@@ -53,6 +53,11 @@ export function StockCountReconciliation({ session, onComplete, onCancel }: Stoc
       return await apiRequest("POST", `/api/stock-count/sessions/${session.id}/apply`, adjustments);
     },
     onSuccess: (data: any) => {
+      // Invalidate all inventory-related queries to refresh the data
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false,
+      });
+      
       setCompletionSummary(data.summary);
       setShowSummary(true);
     },
