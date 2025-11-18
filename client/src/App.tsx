@@ -11,6 +11,7 @@ import type { Inventory } from "@shared/schema";
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import { useLanguageSync } from "@/hooks/useLanguageSync";
 import { useTranslation } from "react-i18next";
+import { formStateManager } from "@/lib/formStateManager";
 
 // Components
 import AppHeader from "@/components/AppHeader";
@@ -160,6 +161,25 @@ function HospitalsPage() {
 function ImplantReportsPage() {
   const [showNewReport, setShowNewReport] = useState(false);
   const { t } = useTranslation();
+  const { user } = useAuth0();
+  const draftCheckComplete = useRef(false);
+
+  // Check for existing draft and auto-open form
+  useEffect(() => {
+    const checkForDraft = async () => {
+      if (!user?.sub || draftCheckComplete.current) return;
+      
+      const draft = await formStateManager.getDraft('implant-report');
+      if (draft) {
+        console.log('📄 Found existing draft, auto-opening form...');
+        setShowNewReport(true);
+      }
+      
+      draftCheckComplete.current = true;
+    };
+    
+    checkForDraft();
+  }, [user]);
 
   const handleSubmitSuccess = () => {
     setShowNewReport(false);

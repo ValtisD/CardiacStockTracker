@@ -858,7 +858,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('procedures.procedureType')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-procedure-type">
                             <SelectValue placeholder={t('procedures.selectProcedureType')} />
