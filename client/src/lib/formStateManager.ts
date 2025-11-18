@@ -4,7 +4,7 @@ import { debugLogger } from './debugLogger';
 export type FormDraftData = {
   // Implant Report Form fields
   hospitalId?: string;
-  procedureDate?: string;
+  implantDate?: string;
   procedureType?: string;
   deviceUsed?: string;
   deviceSource?: 'car' | 'external' | 'hospital';
@@ -71,6 +71,8 @@ export class FormStateManager {
       hospitalId, 
       procedureType,
       deviceUsed,
+      deviceSerialNumber,
+      deviceLotNumber,
       notes,
       materials,
       leads,
@@ -79,7 +81,9 @@ export class FormStateManager {
 
     const hasText = 
       !!(procedureType && procedureType.trim().length > 0) ||
-      !!(notes && notes.trim().length > 0);
+      !!(notes && notes.trim().length > 0) ||
+      !!(deviceSerialNumber && deviceSerialNumber.trim().length > 0) ||
+      !!(deviceLotNumber && deviceLotNumber.trim().length > 0);
 
     const hasSelections = 
       !!hospitalId ||

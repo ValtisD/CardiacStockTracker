@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -84,7 +84,8 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
   const [scannedDeviceId, setScannedDeviceId] = useState<string>('');
   const [isAddHospitalDialogOpen, setIsAddHospitalDialogOpen] = useState(false);
   const [isRestoredDraft, setIsRestoredDraft] = useState(false);
-  const [draftRestored, setDraftRestored] = useState(false); // Track if draft restore has been attempted
+  const restorationAttempted = useRef(false);
+  const restorationComplete = useRef(false);
 
   const [materials, setMaterials] = useState<MaterialItem[]>([
     { id: '1', name: '', quantity: 1, source: 'car' },
@@ -192,7 +193,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
   // Restore draft on component mount
   useEffect(() => {
     const restoreDraft = async () => {
-      if (!user?.sub || draftRestored) return;
+      if (!user?.sub || restorationAttempted.current) return;
       
       const draft = await formStateManager.getDraft('implant-report');
       if (draft) {
@@ -200,10 +201,12 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         
         // Restore form fields
         if (draft.formData.hospitalId) form.setValue('hospitalId', draft.formData.hospitalId);
-        if (draft.formData.procedureDate) form.setValue('implantDate', draft.formData.procedureDate);
+        if (draft.formData.implantDate) form.setValue('implantDate', draft.formData.implantDate);
         if (draft.formData.procedureType) form.setValue('procedureType', draft.formData.procedureType);
         if (draft.formData.deviceUsed) form.setValue('deviceUsed', draft.formData.deviceUsed);
         if (draft.formData.deviceSource) form.setValue('deviceSource', draft.formData.deviceSource);
+        if (draft.formData.deviceSerialNumber) form.setValue('deviceSerialNumber', draft.formData.deviceSerialNumber);
+        if (draft.formData.deviceLotNumber) form.setValue('deviceLotNumber', draft.formData.deviceLotNumber);
         if (draft.formData.notes) form.setValue('notes', draft.formData.notes);
         
         // Restore materials
@@ -218,51 +221,78 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         }
         
         setIsRestoredDraft(true);
+      } else {
+        // No draft found - mark restoration complete immediately
+        restorationComplete.current = true;
+        console.log('✅ No draft to restore, auto-save enabled');
       }
       
-      setDraftRestored(true);
+      restorationAttempted.current = true;
     };
     
     restoreDraft();
-  }, [user, draftRestored, form]);
+  }, [user, form]);
 
-  // Auto-save form data
+  // Mark restoration complete after materials have been set
   useEffect(() => {
-    if (!user?.sub || !draftRestored) return;
+    if (restorationAttempted.current && !restorationComplete.current) {
+      restorationComplete.current = true;
+      console.log('✅ Draft restoration complete, enabling auto-save');
+    }
+  }, [materials, leads, otherMaterials]);
+
+  // Auto-save form data (form fields + materials state)
+  useEffect(() => {
+    if (!user?.sub) return;
     
-    // Get current form values
-    const formValues = form.getValues();
-    
-    // Build draft data
-    const draftData = {
-      hospitalId: formValues.hospitalId,
-      procedureDate: formValues.implantDate,
-      procedureType: formValues.procedureType,
-      deviceUsed: formValues.deviceUsed,
-      deviceSource: formValues.deviceSource,
-      notes: formValues.notes,
-      materials,
-      leads,
-      otherMaterials,
+    // Build draft data from current form values and state
+    const saveDraft = () => {
+      // Guard: only save after restoration is complete
+      if (!restorationComplete.current) return;
+      
+      const formValues = form.getValues();
+      const draftData = {
+        hospitalId: formValues.hospitalId,
+        implantDate: formValues.implantDate,
+        procedureType: formValues.procedureType,
+        deviceUsed: formValues.deviceUsed,
+        deviceSource: formValues.deviceSource,
+        deviceSerialNumber: formValues.deviceSerialNumber,
+        deviceLotNumber: formValues.deviceLotNumber,
+        notes: formValues.notes,
+        materials,
+        leads,
+        otherMaterials,
+      };
+      
+      // Auto-save with debouncing
+      formStateManager.autoSave('implant-report', user.sub!, draftData, '/reports');
     };
     
-    // Auto-save with debouncing
-    formStateManager.autoSave('implant-report', user.sub, draftData, '/procedures');
+    // Always subscribe to form field changes (but saveDraft guards against early saves)
+    const subscription = form.watch(() => {
+      saveDraft();
+    });
+    
+    // Defer initial save to next tick to ensure materials state has been updated
+    // This prevents race condition where restoration completes before materials are set
+    const initialSaveTimer = setTimeout(() => {
+      saveDraft();
+    }, 0);
+    
+    // Cleanup subscription and timer
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(initialSaveTimer);
+      formStateManager.cancelAutoSave();
+    };
   }, [
-    form.watch(), 
     materials, 
     leads, 
     otherMaterials, 
-    user, 
-    draftRestored
+    user,
+    form
   ]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      formStateManager.cancelAutoSave();
-    };
-  }, []);
 
   // Handle cancel with draft cleanup
   const handleCancel = async () => {

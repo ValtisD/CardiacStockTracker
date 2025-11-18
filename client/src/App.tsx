@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Switch, Route, useLocation, Link } from "wouter";
 import { queryClient, setTokenProvider } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
@@ -474,14 +474,15 @@ function AuthenticatedApp() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { getAccessTokenSilently, user } = useAuth0();
   const [location, setLocation] = useLocation();
+  const navigationRestored = useRef(false);
   
   // Sync user's language preference from backend
   useLanguageSync();
 
-  // Restore navigation state on mount
+  // Restore navigation state on mount (once)
   useEffect(() => {
     const restoreNavigation = async () => {
-      if (!user?.sub) return;
+      if (!user?.sub || navigationRestored.current) return;
       
       try {
         const savedState = await offlineStorage.getNavigationState();
@@ -490,13 +491,15 @@ function AuthenticatedApp() {
           setLocation(savedState.route);
           setCurrentPath(savedState.route);
         }
+        navigationRestored.current = true;
       } catch (error) {
         console.error('Failed to restore navigation state:', error);
+        navigationRestored.current = true; // Mark as attempted even on error
       }
     };
 
     restoreNavigation();
-  }, [user]); // Run once when user is available
+  }, [user, location, setLocation]); // Include deps to avoid stale closures
 
   // Save navigation state when route changes
   useEffect(() => {
