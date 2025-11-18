@@ -472,10 +472,47 @@ function AppContent() {
 function AuthenticatedApp() {
   const [currentPath, setCurrentPath] = useState('/');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently, user } = useAuth0();
+  const [location, setLocation] = useLocation();
   
   // Sync user's language preference from backend
   useLanguageSync();
+
+  // Restore navigation state on mount
+  useEffect(() => {
+    const restoreNavigation = async () => {
+      if (!user?.sub) return;
+      
+      try {
+        const savedState = await offlineStorage.getNavigationState();
+        if (savedState?.route && savedState.route !== location) {
+          console.log('📍 Restoring last route:', savedState.route);
+          setLocation(savedState.route);
+          setCurrentPath(savedState.route);
+        }
+      } catch (error) {
+        console.error('Failed to restore navigation state:', error);
+      }
+    };
+
+    restoreNavigation();
+  }, [user]); // Run once when user is available
+
+  // Save navigation state when route changes
+  useEffect(() => {
+    const saveNavigation = async () => {
+      if (!user?.sub) return;
+      
+      try {
+        await offlineStorage.saveNavigationState(user.sub, location);
+        console.log('💾 Saved navigation state:', location);
+      } catch (error) {
+        console.error('Failed to save navigation state:', error);
+      }
+    };
+
+    saveNavigation();
+  }, [location, user]);
 
   // Check if user is admin via API
   const { data: currentUser } = useQuery<{ userId: string; email: string; isAdmin: boolean; isPrimeAdmin: boolean }>({
