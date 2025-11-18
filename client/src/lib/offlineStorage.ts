@@ -1,7 +1,7 @@
 import type { Product, Inventory, Hospital, ImplantProcedure } from '@shared/schema';
 
 const DB_NAME = 'crm-stock-offline';
-const DB_VERSION = 4; // v4: Added sync state store for persistent retry tracking
+const DB_VERSION = 5; // v5: Added form drafts and navigation state for PWA state persistence
 
 // Store names
 const STORES = {
@@ -12,6 +12,8 @@ const STORES = {
   SYNC_QUEUE: 'syncQueue',
   USER: 'user',
   SYNC_STATE: 'syncState', // v4: Persistent sync retry state
+  FORM_DRAFTS: 'formDrafts', // v5: Auto-saved form state
+  NAVIGATION_STATE: 'navigationState', // v5: Last visited route
 } as const;
 
 export interface SyncQueueItem {
@@ -31,6 +33,21 @@ export interface SyncState {
   needsSync: boolean;
   lastAttempt: number;
   reason: string; // Why sync is needed (e.g., "pending_changes", "auth_ready")
+}
+
+export interface FormDraft {
+  id: string; // Form identifier (e.g., 'implant-report')
+  userId: string; // User who created the draft
+  formData: any; // The actual form state
+  timestamp: number; // When draft was saved
+  route: string; // Which route to restore to
+}
+
+export interface NavigationState {
+  id: 'navigation-state'; // Singleton key
+  userId: string; // Current user
+  route: string; // Last visited route
+  timestamp: number; // When route was saved
 }
 
 class OfflineStorage {
@@ -133,6 +150,18 @@ class OfflineStorage {
         if (!db.objectStoreNames.contains(STORES.SYNC_STATE)) {
           db.createObjectStore(STORES.SYNC_STATE, { keyPath: 'id' });
           console.log('🔄 DB v4 upgrade: Created sync state store for persistent retry tracking');
+        }
+
+        if (!db.objectStoreNames.contains(STORES.FORM_DRAFTS)) {
+          const formDraftsStore = db.createObjectStore(STORES.FORM_DRAFTS, { keyPath: 'id' });
+          formDraftsStore.createIndex('userId', 'userId', { unique: false });
+          formDraftsStore.createIndex('timestamp', 'timestamp', { unique: false });
+          console.log('🔄 DB v5 upgrade: Created form drafts store for PWA state persistence');
+        }
+
+        if (!db.objectStoreNames.contains(STORES.NAVIGATION_STATE)) {
+          db.createObjectStore(STORES.NAVIGATION_STATE, { keyPath: 'id' });
+          console.log('🔄 DB v5 upgrade: Created navigation state store for PWA state persistence');
         }
       };
     });
@@ -486,6 +515,60 @@ class OfflineStorage {
 
   async clearSyncState(): Promise<void> {
     await this.delete(STORES.SYNC_STATE, 'sync-state');
+  }
+
+  // Form Draft Management (v5)
+  async saveFormDraft(id: string, userId: string, formData: any, route: string): Promise<void> {
+    const draft: FormDraft = {
+      id,
+      userId,
+      formData,
+      route,
+      timestamp: Date.now(),
+    };
+    await this.put(STORES.FORM_DRAFTS, draft);
+    console.log(`💾 Form draft saved: ${id}`);
+  }
+
+  async getFormDraft(id: string): Promise<FormDraft | undefined> {
+    return await this.get<FormDraft>(STORES.FORM_DRAFTS, id);
+  }
+
+  async getAllFormDrafts(userId: string): Promise<FormDraft[]> {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(STORES.FORM_DRAFTS, 'readonly');
+      const store = transaction.objectStore(STORES.FORM_DRAFTS);
+      const index = store.index('userId');
+      const request = index.getAll(userId);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteFormDraft(id: string): Promise<void> {
+    await this.delete(STORES.FORM_DRAFTS, id);
+    console.log(`🗑️ Form draft deleted: ${id}`);
+  }
+
+  // Navigation State Management (v5)
+  async saveNavigationState(userId: string, route: string): Promise<void> {
+    const state: NavigationState = {
+      id: 'navigation-state',
+      userId,
+      route,
+      timestamp: Date.now(),
+    };
+    await this.put(STORES.NAVIGATION_STATE, state);
+  }
+
+  async getNavigationState(): Promise<NavigationState | undefined> {
+    return await this.get<NavigationState>(STORES.NAVIGATION_STATE, 'navigation-state');
+  }
+
+  async clearNavigationState(): Promise<void> {
+    await this.delete(STORES.NAVIGATION_STATE, 'navigation-state');
   }
 }
 
