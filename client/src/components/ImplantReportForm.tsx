@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Heart, Calendar, Building2, Plus, Minus, Scan, AlertCircle, X } from "lucide-react";
+import { Heart, Calendar, Building2, Plus, Minus, Scan, AlertCircle, X, FileText } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
+import { useAuth0 } from "@auth0/auth0-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,12 +32,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Hospital, Product, Inventory, InsertProcedureMaterial } from "@shared/schema";
 import { clientInsertHospitalSchema } from "@shared/schema";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import { GS1Data } from "@/lib/gs1Parser";
+import { formStateManager } from "@/lib/formStateManager";
 
 const getImplantReportSchema = (t: any) => z.object({
   hospitalId: z.string().min(1, t('procedures.hospitalRequired')),
@@ -74,11 +77,14 @@ interface InventoryWithProduct extends Inventory {
 export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportFormProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth0();
   
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [scanningItem, setScanningItem] = useState<{ type: 'materials' | 'leads' | 'others' | 'device', id: string } | null>(null);
   const [scannedDeviceId, setScannedDeviceId] = useState<string>('');
   const [isAddHospitalDialogOpen, setIsAddHospitalDialogOpen] = useState(false);
+  const [isRestoredDraft, setIsRestoredDraft] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false); // Track if draft restore has been attempted
 
   const [materials, setMaterials] = useState<MaterialItem[]>([
     { id: '1', name: '', quantity: 1, source: 'car' },
@@ -114,11 +120,17 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       const res = await apiRequest('POST', '/api/implant-procedures', data);
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/implant-procedures'] });
       queryClient.invalidateQueries({ 
         predicate: (query) => query.queryKey[0]?.toString().startsWith('/api/inventory') ?? false
       });
+      
+      // Clear saved draft after successful submission
+      if (user?.sub) {
+        await formStateManager.deleteDraft('implant-report');
+        console.log('🗑️ Draft cleared after successful submission');
+      }
       
       toast({
         title: t('common.success'),
@@ -176,6 +188,92 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
       notes: "",
     },
   });
+
+  // Restore draft on component mount
+  useEffect(() => {
+    const restoreDraft = async () => {
+      if (!user?.sub || draftRestored) return;
+      
+      const draft = await formStateManager.getDraft('implant-report');
+      if (draft) {
+        console.log('📄 Restoring form draft...', draft);
+        
+        // Restore form fields
+        if (draft.formData.hospitalId) form.setValue('hospitalId', draft.formData.hospitalId);
+        if (draft.formData.procedureDate) form.setValue('implantDate', draft.formData.procedureDate);
+        if (draft.formData.procedureType) form.setValue('procedureType', draft.formData.procedureType);
+        if (draft.formData.deviceUsed) form.setValue('deviceUsed', draft.formData.deviceUsed);
+        if (draft.formData.deviceSource) form.setValue('deviceSource', draft.formData.deviceSource);
+        if (draft.formData.notes) form.setValue('notes', draft.formData.notes);
+        
+        // Restore materials
+        if (draft.formData.materials && draft.formData.materials.length > 0) {
+          setMaterials(draft.formData.materials);
+        }
+        if (draft.formData.leads && draft.formData.leads.length > 0) {
+          setLeads(draft.formData.leads);
+        }
+        if (draft.formData.otherMaterials && draft.formData.otherMaterials.length > 0) {
+          setOtherMaterials(draft.formData.otherMaterials);
+        }
+        
+        setIsRestoredDraft(true);
+      }
+      
+      setDraftRestored(true);
+    };
+    
+    restoreDraft();
+  }, [user, draftRestored, form]);
+
+  // Auto-save form data
+  useEffect(() => {
+    if (!user?.sub || !draftRestored) return;
+    
+    // Get current form values
+    const formValues = form.getValues();
+    
+    // Build draft data
+    const draftData = {
+      hospitalId: formValues.hospitalId,
+      procedureDate: formValues.implantDate,
+      procedureType: formValues.procedureType,
+      deviceUsed: formValues.deviceUsed,
+      deviceSource: formValues.deviceSource,
+      notes: formValues.notes,
+      materials,
+      leads,
+      otherMaterials,
+    };
+    
+    // Auto-save with debouncing
+    formStateManager.autoSave('implant-report', user.sub, draftData, '/procedures');
+  }, [
+    form.watch(), 
+    materials, 
+    leads, 
+    otherMaterials, 
+    user, 
+    draftRestored
+  ]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      formStateManager.cancelAutoSave();
+    };
+  }, []);
+
+  // Handle cancel with draft cleanup
+  const handleCancel = async () => {
+    if (user?.sub) {
+      await formStateManager.deleteDraft('implant-report');
+      console.log('🗑️ Draft cleared on cancel');
+    }
+    if (onCancel) {
+      onCancel();
+    }
+  };
 
   const deviceProducts = products; // All products can be used as devices
 
@@ -658,6 +756,15 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              {isRestoredDraft && (
+                <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                  <FileText className="h-4 w-4" />
+                  <AlertDescription>
+                    {t('procedures.draftRestored', { defaultValue: 'Your unsaved work has been restored. You can continue where you left off.' })}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -908,7 +1015,7 @@ export default function ImplantReportForm({ onSubmit, onCancel }: ImplantReportF
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={onCancel}
+                    onClick={handleCancel}
                     disabled={createProcedureMutation.isPending}
                     data-testid="button-cancel-report"
                   >

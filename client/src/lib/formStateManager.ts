@@ -3,15 +3,13 @@ import { debugLogger } from './debugLogger';
 
 export type FormDraftData = {
   // Implant Report Form fields
-  patientName?: string;
-  patientId?: string;
   hospitalId?: string;
   procedureDate?: string;
+  procedureType?: string;
+  deviceUsed?: string;
   deviceSource?: 'car' | 'external' | 'hospital';
-  primaryDeviceProductId?: string;
-  primaryDeviceSerialNumber?: string;
-  primaryDeviceLotNumber?: string;
-  primaryDeviceExpirationDate?: string;
+  deviceSerialNumber?: string;
+  deviceLotNumber?: string;
   notes?: string;
   materials?: any[];
   leads?: any[];
@@ -70,10 +68,9 @@ export class FormStateManager {
   private hasSignificantData(formData: FormDraftData): boolean {
     // Check if at least one field has meaningful content
     const { 
-      patientName, 
-      patientId, 
       hospitalId, 
-      primaryDeviceProductId,
+      procedureType,
+      deviceUsed,
       notes,
       materials,
       leads,
@@ -81,13 +78,12 @@ export class FormStateManager {
     } = formData;
 
     const hasText = 
-      !!(patientName && patientName.trim().length > 0) ||
-      !!(patientId && patientId.trim().length > 0) ||
+      !!(procedureType && procedureType.trim().length > 0) ||
       !!(notes && notes.trim().length > 0);
 
     const hasSelections = 
       !!hospitalId ||
-      !!primaryDeviceProductId;
+      !!deviceUsed;
 
     const hasMaterials =
       !!(materials && materials.some(m => m.name && m.name.trim().length > 0)) ||
